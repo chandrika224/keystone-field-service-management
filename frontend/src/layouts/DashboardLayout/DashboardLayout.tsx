@@ -7,8 +7,8 @@ import {
   Wrench,
   Settings,
 } from "lucide-react";
-import SideBar from "../SideBar";
-import NavBar from "../NavBar";
+import NavBar from "@/components/layout/NavBar";
+import SideBar from "@/components/layout/SideBar";
 
 const menu = [
   {
@@ -37,22 +37,23 @@ const menu = [
     href: "/settings",
   },
 ];
+
 export default function DashboardLayout() {
   return (
     <div className="flex min-h-screen bg-slate-100">
-
+      {/* Sidebar */}
       <SideBar menu={menu} />
 
+      {/* Main Section */}
       <div className="flex flex-1 flex-col">
-
+        {/* Top Navbar */}
         <NavBar />
 
-        <main className="flex-1 p-8 overflow-y-auto">
+        {/* Dynamic Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
-
       </div>
-
     </div>
   );
 }
