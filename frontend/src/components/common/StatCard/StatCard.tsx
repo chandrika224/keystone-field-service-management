@@ -18,14 +18,14 @@ export default function StatCard({
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="flex items-center justify-between p-6">
         <div>
-          <p className="text-sm text-slate-500">{title}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
 
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">
+          <h2 className="mt-2 text-3xl font-bold text-foreground">
             {value}
           </h2>
         </div>
 
-        <div className={`rounded-full bg-slate-100 p-4 ${iconColor}`}>
+        <div className={`rounded-full bg-muted p-4 ${iconColor}`}>
           {icon}
         </div>
       </CardContent>

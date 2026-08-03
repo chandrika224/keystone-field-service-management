@@ -12,11 +12,11 @@ export default function PageHeader({
   action,
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-center">
+    <div className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-center">
 
       {/* Left Section */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {title}
         </h1>
 

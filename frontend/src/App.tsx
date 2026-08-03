@@ -1,62 +1,8 @@
-import { Routes, Route } from "react-router-dom";
-import { Route as RouteIcon } from "lucide-react";
-import PublicLayout from "./layouts/PublicLayout";
-import Home from "./pages/public/Home";
-import About from "./pages/public/About";
-import Services from "./pages/public/Services";
-import Contact from "./pages/public/Contact";
-import AuthLayout from "./layouts/AuthLayout";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import DashboardLayout from "./layouts/DashboardLayout";
-import CustomerDashboard from "./pages/customer/Dashboard";
-import DispatcherDashboard from "./pages/dispatcher/Dashboard";
-import TechnicianDashboard from "./pages/technician/Dashboard";
-import ManagerDashboard from './pages/manager/Dashboard';
+import AppRoutes from "./routes/AppRoutes";
 
-export default function AppRoutes() {
-  return (
-    <Routes>
-      {/* Public */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/contact" element={<Contact />} />
-      </Route>
 
-      {/* Authentication */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-      </Route>
-
-      {/* Dashboard */}
-      <Route element={<DashboardLayout />}>
-        <Route
-          path="/customer/dashboard"
-          element={<CustomerDashboard />}
-        />
-
-        <Route
-          path="/dispatcher/dashboard"
-          element={<DispatcherDashboard />}
-        />
-
-        <Route
-          path="/technician/dashboard"
-          element={<TechnicianDashboard />}
-        />
-
-        <Route
-          path="/manager/dashboard"
-          element={<ManagerDashboard />}
-        />
-      </Route>
-    </Routes>
-  );
+function App() {
+  return <AppRoutes />;
 }
+
+export default App;

@@ -1,30 +1,48 @@
 import { NavLink } from "react-router-dom";
-import type { SidebarItemType } from "./types";
+import { useSidebar } from "@/contexts/SidebarContext";
+import type { SidebarNavigationItem } from "./types";
 
 interface SidebarItemProps {
-  item: SidebarItemType;
+  item: SidebarNavigationItem;
 }
 
 export default function SidebarItem({
   item,
 }: SidebarItemProps) {
+  const { collapsed } = useSidebar();
+
   const Icon = item.icon;
 
   return (
     <NavLink
-      to={item.href}
+      to={item.path}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-4 py-3 transition-all
+        `
+        flex items-center
+        rounded-lg
+        px-4
+        py-3
+        transition-all
+
+        ${
+          collapsed
+            ? "justify-center"
+            : "gap-3"
+        }
+
         ${
           isActive
             ? "bg-blue-600 text-white"
-            : "text-slate-600 hover:bg-slate-100"
-        }`
+            : "text-muted-foreground hover:bg-muted"
+        }
+        `
       }
     >
       <Icon size={20} />
 
-      <span>{item.title}</span>
+      {!collapsed && (
+        <span>{item.title}</span>
+      )}
     </NavLink>
   );
 }

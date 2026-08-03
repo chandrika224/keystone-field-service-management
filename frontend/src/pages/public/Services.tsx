@@ -1,3 +1,7 @@
 export default function Services() {
-  return <h1 className="p-8 text-3xl font-bold">Services Page</h1>;
+  return (
+    <div className="p-10">
+      Services Page
+    </div>
+  );
 }

@@ -1,25 +1,43 @@
-import UserAvatar from "@/components/common/UserAvatar";
-import { ChevronDown } from "lucide-react";
+import { UserCircle2 } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import Dropdown, { DropdownContent, DropdownTrigger } from "@/common/Dropdown";
 
 export default function UserMenu() {
   return (
-    <button className="flex items-center gap-3 rounded-lg px-2 py-1 transition hover:bg-slate-100">
-      <UserAvatar
-        name="John Doe"
-        size="sm"
-      />
+    <Dropdown>
 
-      <div className="text-left">
-        <p className="text-sm font-semibold">
-          John Doe
-        </p>
+      <DropdownTrigger>
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            rounded-lg
+            p-2
+            transition-colors
+            hover:bg-slate-100
+          "
+        >
+          <UserCircle2 size={28} />
 
-        <p className="text-xs text-slate-500">
-          Dispatcher
-        </p>
-      </div>
+          <div className="text-left">
+            <p className="text-sm font-medium">
+              John Doe
+            </p>
 
-      <ChevronDown size={18} />
-    </button>
+            <p className="text-xs text-slate-500">
+              Manager
+            </p>
+          </div>
+        </div>
+      </DropdownTrigger>
+
+      <DropdownContent>
+        <ProfileDropdown open={false} onClose={function (): void {
+          throw new Error("Function not implemented.");
+        } } />
+      </DropdownContent>
+
+    </Dropdown>
   );
 }

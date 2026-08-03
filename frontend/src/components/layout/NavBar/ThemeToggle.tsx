@@ -1,13 +1,40 @@
-import { Moon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Moon,
+  Sun,
+} from "lucide-react";
+
+
+import ThemeDropdown from "./ThemeDropdown";
+import { useTheme } from "@/contexts/ThemeContext";
+import Dropdown, { DropdownContent, DropdownTrigger } from "@/common/Dropdown";
 
 export default function ThemeToggle() {
+  const { theme } = useTheme();
+
+  const Icon =
+    theme === "dark"
+      ? Moon
+      : Sun;
+
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-    >
-      <Moon size={20} />
-    </Button>
+    <Dropdown>
+
+      <DropdownTrigger>
+
+        <div className="rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+
+          <Icon size={20} />
+
+        </div>
+
+      </DropdownTrigger>
+
+      <DropdownContent>
+
+        <ThemeDropdown />
+
+      </DropdownContent>
+
+    </Dropdown>
   );
 }
