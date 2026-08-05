@@ -19,6 +19,9 @@ import DispatcherDashboard from "@/pages/dispatcher/Dashboard";
 import TechnicianDashboard from "@/pages/technician/Dashboard";
 import ManagerDashboard from "@/pages/manager/Dashboard";
 
+import ProtectedRoute from "@/guards/ProtectedRoute";
+import PublicRoute from "@/guards/PublicRoute";
+
 
 export default function AppRoutes() {
   return (
@@ -32,14 +35,17 @@ export default function AppRoutes() {
       </Route>
 
       {/* Authentication */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+      <Route element={<PublicRoute />}>
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
       </Route>
 
       {/* Dashboard */}
+      <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
         <Route
           path="/customer/dashboard"
@@ -60,6 +66,7 @@ export default function AppRoutes() {
           path="/manager/dashboard"
           element={<ManagerDashboard />}
         />
+        </Route>
       </Route>
     </Routes>
   );

@@ -1,3 +1,18 @@
+import AuthCard from "@/components/auth/AuthCard";
+import AuthHeader from "@/components/auth/AuthHeader";
+import RegisterForm from "@/components/auth/forms/RegisterForm";
+
 export default function Register() {
-  return <h1 className="p-8 text-3xl font-bold">Register Page</h1>;
+  return (
+    <AuthCard>
+
+      <AuthHeader
+        title="Create Account"
+        subtitle="Create your Keystone account"
+      />
+
+      <RegisterForm />
+
+    </AuthCard>
+  );
 }
