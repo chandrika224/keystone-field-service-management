@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { saveAccessToken } from "@/utils/token";
+import { authService } from "@/services/authService";
+
 import {
   loginSchema,
   type LoginFormData,
@@ -15,13 +18,17 @@ import AuthButton from "../AuthButton";
 import AuthHeader from "../AuthHeader";
 
 export default function LoginForm() {
+
   const [rememberMe, setRememberMe] = useState(false);
 
   const {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
 
@@ -31,14 +38,24 @@ export default function LoginForm() {
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    console.log({
-      ...data,
-      rememberMe,
-    });
+  const onSubmit = async (data: LoginFormData) => {
+    try {
 
-    // Next step:
-    // authContext.login(data)
+      const response = await authService.login(data);
+
+      saveAccessToken(response.accessToken);
+
+      console.log("Token Saved Successfully");
+      console.log(response);
+
+      // Next Step
+      // navigate("/dashboard");
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
   };
 
   return (
@@ -91,7 +108,7 @@ export default function LoginForm() {
           </Link>
         </div>
 
-        <AuthButton>
+        <AuthButton loading={isSubmitting}>
           Sign In
         </AuthButton>
 

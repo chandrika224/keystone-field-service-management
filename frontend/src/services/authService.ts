@@ -11,25 +11,28 @@ import type {
 const AUTH_URL = "/auth";
 
 export const authService = {
+
+  register: async (
+    request: RegisterRequest
+  ): Promise<string> => {
+    const response = await api.post<string>(
+      "/user/v1/register",
+      request
+    );
+    return response.data;
+  },
+
   login: async (
-    credentials: LoginRequest
+  credentials: LoginRequest
   ): Promise<LoginResponse> => {
+
     const response = await api.post<LoginResponse>(
-      `${AUTH_URL}/login`,
+      "/user/v1/login",
       credentials
     );
 
     return response.data;
   },
-
-  register: async (
-      request: RegisterRequest
-    ): Promise<void> => {
-      await api.post(
-        `${AUTH_URL}/register`,
-        request
-      );
-    },
 
   refreshToken: async (
     request: RefreshTokenRequest
@@ -44,7 +47,7 @@ export const authService = {
 
   getProfile: async (): Promise<User> => {
     const response = await api.get<User>(
-      `${AUTH_URL}/me`
+      `${AUTH_URL}/profile`
     );
 
     return response.data;

@@ -22,6 +22,7 @@ import ManagerDashboard from "@/pages/manager/Dashboard";
 import ProtectedRoute from "@/guards/ProtectedRoute";
 import PublicRoute from "@/guards/PublicRoute";
 
+import WorkOrders from "@/pages/customer/WorkOrders";
 
 export default function AppRoutes() {
   return (
@@ -45,28 +46,42 @@ export default function AppRoutes() {
       </Route>
 
       {/* Dashboard */}
+      {/* Protected Dashboard */}
       <Route element={<ProtectedRoute />}>
-      <Route element={<DashboardLayout />}>
-        <Route
-          path="/customer/dashboard"
-          element={<CustomerDashboard />}
-        />
 
-        <Route
-          path="/dispatcher/dashboard"
-          element={<DispatcherDashboard />}
-        />
+        <Route element={<DashboardLayout />}>
 
-        <Route
-          path="/technician/dashboard"
-          element={<TechnicianDashboard />}
-        />
+          <Route
+            path="/customer/dashboard"
+            element={<CustomerDashboard />}
+          />
+          <Route
+            path="/customer"
+            element={<CustomerDashboard />}
+          />
 
-        <Route
-          path="/manager/dashboard"
-          element={<ManagerDashboard />}
-        />
+          <Route
+            path="/customer/work-orders"
+            element={<WorkOrders />}
+          />
+
+          <Route
+            path="/dispatcher/dashboard"
+            element={<DispatcherDashboard />}
+          />
+
+          <Route
+            path="/technician/dashboard"
+            element={<TechnicianDashboard />}
+          />
+
+          <Route
+            path="/manager/dashboard"
+            element={<ManagerDashboard />}
+          />
+
         </Route>
+
       </Route>
     </Routes>
   );

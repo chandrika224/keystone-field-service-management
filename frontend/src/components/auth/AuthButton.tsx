@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 interface AuthButtonProps {
   children: React.ReactNode;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 export default function AuthButton({

@@ -4,12 +4,13 @@ import PasswordField from "../PasswordField";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { authService } from "@/services/authService";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   registerSchema,
   type RegisterFormValues,
 } from "@/schemas/registerSchema";
-import { authService } from "@/services/authService";
 
 export default function RegisterForm() {
 
@@ -35,25 +36,30 @@ export default function RegisterForm() {
     },
   });
 
+  const navigate = useNavigate();
+
   const onSubmit = async (
-      data: RegisterFormValues
-    ) => {
-      try {
+  data: RegisterFormValues
+) => {
+  try {
+    const message = await authService.register({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+      termsAccepted: data.acceptTerms,
+    });
 
-        await authService.register({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          password: data.password,
-        });
+    console.log(message);
 
-        console.log("Registration Successful");
+    navigate("/login");
 
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <form
@@ -160,6 +166,8 @@ export default function RegisterForm() {
       <AuthButton>
         Create Account
       </AuthButton>
+
+      
 
     </form>
   );

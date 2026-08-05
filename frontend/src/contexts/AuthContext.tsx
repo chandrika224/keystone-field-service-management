@@ -14,9 +14,9 @@ import type {
 import { authService } from "@/services/authService";
 
 import {
-  saveTokens,
   clearTokens,
   getAccessToken,
+  saveAccessToken,
 } from "@/utils/token";
 
 interface AuthContextType {
@@ -57,42 +57,28 @@ export function AuthProvider({
   }, []);
 
   async function initializeAuth() {
-    try {
-      const token =
-        getAccessToken();
 
-      if (!token) {
-        setLoading(false);
-        return;
+      const token = getAccessToken();
+
+      if (token) {
+        // Temporary
+        setUser({} as User);
       }
 
-      const profile =
-        await authService.getProfile();
-
-      setUser(profile);
-    } catch (error) {
-      clearTokens();
-      setUser(null);
-    } finally {
       setLoading(false);
     }
-  }
 
   async function login(
-    credentials: LoginRequest
-  ) {
-    const response =
-      await authService.login(
-        credentials
-      );
+      credentials: LoginRequest
+    ) {
+      const response =
+        await authService.login(credentials);
 
-    saveTokens(
-      response.accessToken,
-      response.refreshToken
-    );
+      saveAccessToken(response.accessToken);
 
-    setUser(response.user);
-  }
+      // Temporary until profile API is ready
+      setUser({} as User);
+    }
 
   async function logout() {
     try {

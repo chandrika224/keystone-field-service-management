@@ -1,17 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 
+
+type WorkOrderStatus =
+  | "NEW"
+  | "ASSIGNED"
+  | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "CLOSED"
+  | "CANCELLED";
+
 interface StatusBadgeProps {
-  status:
-    | "NEW"
-    | "ASSIGNED"
-    | "IN_PROGRESS"
-    | "ON_HOLD"
-    | "COMPLETED"
-    | "CLOSED"
-    | "CANCELLED";
+  status: WorkOrderStatus;
 }
 
-const statusStyles = {
+const statusStyles: Record<WorkOrderStatus, string> = {
   NEW: "bg-blue-100 text-blue-700",
   ASSIGNED: "bg-purple-100 text-purple-700",
   IN_PROGRESS: "bg-orange-100 text-orange-700",
@@ -24,7 +27,7 @@ const statusStyles = {
 export default function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <Badge className={statusStyles[status]}>
-      {status.replace("_", " ")}
+      {status.replaceAll("_", " ")}
     </Badge>
   );
 }

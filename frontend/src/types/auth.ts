@@ -16,6 +16,8 @@ export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
+  confirmPassword: string;
+  termsAccepted: boolean;
 }
 
 export interface LoginRequest {
@@ -24,9 +26,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
+  "accessToken": "...",
+  "tokenType": "Bearer",
+  "expiresIn": 3600
 }
 
 export interface RefreshTokenRequest {
