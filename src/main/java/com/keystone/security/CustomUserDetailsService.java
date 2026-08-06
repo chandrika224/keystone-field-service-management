@@ -1,7 +1,9 @@
 package com.keystone.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.keystone.entity.User;
@@ -22,10 +24,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                         new UsernameNotFoundException("User not found"));
 
         return org.springframework.security.core.userdetails.User
-                .builder()
-                .username(user.getEmail())
+                .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .roles(user.getRole().name())
+                .roles(user.getRole().name())   // ADMIN, DISPATCHER, TECHNICIAN, CUSTOMER
                 .build();
     }
 }

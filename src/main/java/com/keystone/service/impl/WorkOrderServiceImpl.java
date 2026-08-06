@@ -11,6 +11,7 @@ import com.keystone.dto.WorkOrderResponse;
 import com.keystone.entity.Customer;
 import com.keystone.entity.Technician;
 import com.keystone.entity.WorkOrder;
+import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
@@ -114,6 +115,40 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                         new ResourceNotFoundException("Work Order not found"));
 
         workOrderRepository.delete(workOrder);
+    }
+    @Override
+    public List<WorkOrderResponse> getWorkOrdersByStatus(WorkOrderStatus status) {
+
+        return workOrderRepository.findByStatus(status)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<WorkOrderResponse> getWorkOrdersByPriority(Priority priority) {
+
+        return workOrderRepository.findByPriority(priority)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    @Override
+    public List<WorkOrderResponse> getByCustomer(Long customerId) {
+
+        return workOrderRepository.findByCustomerCustomerId(customerId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<WorkOrderResponse> getByTechnician(Long technicianId) {
+
+        return workOrderRepository.findByTechnicianId(technicianId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     private WorkOrderResponse mapToResponse(WorkOrder workOrder) {

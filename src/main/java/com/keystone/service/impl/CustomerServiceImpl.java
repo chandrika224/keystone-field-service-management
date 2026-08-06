@@ -5,6 +5,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.keystone.entity.Customer;
 import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
@@ -28,8 +32,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+    public Page<Customer> getAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable);
     }
 
     @Override
@@ -59,6 +63,11 @@ public class CustomerServiceImpl implements CustomerService {
         existingCustomer.setAddress(customer.getAddress());
 
         return customerRepository.save(existingCustomer);
+    }
+    @Override
+    public List<Customer> searchCustomers(String customerName) {
+
+        return customerRepository.findByCustomerNameContainingIgnoreCase(customerName);
     }
 
     @Override
