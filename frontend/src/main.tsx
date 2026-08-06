@@ -7,6 +7,7 @@ import App from "./App";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "sonner";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
         <SidebarProvider>
           <AuthProvider>
             <App />
+            <Toaster richColors position="top-right" />
           </AuthProvider>
         </SidebarProvider>
       </ThemeProvider>

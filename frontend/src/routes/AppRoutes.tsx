@@ -23,6 +23,7 @@ import ProtectedRoute from "@/guards/ProtectedRoute";
 import PublicRoute from "@/guards/PublicRoute";
 
 import WorkOrders from "@/pages/customer/WorkOrders";
+import Profile from "@/pages/customer/Profile";
 
 export default function AppRoutes() {
   return (
@@ -66,6 +67,11 @@ export default function AppRoutes() {
           />
 
           <Route
+            path="/customer/profile"
+            element={<Profile />}
+          />
+
+          <Route
             path="/dispatcher/dashboard"
             element={<DispatcherDashboard />}
           />
@@ -79,6 +85,8 @@ export default function AppRoutes() {
             path="/manager/dashboard"
             element={<ManagerDashboard />}
           />
+
+          
 
         </Route>
 
