@@ -17,6 +17,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+	@ExceptionHandler(InvalidCredentialsException.class)
+	public ResponseEntity<Object> handleInvalidCredentials(
+	        InvalidCredentialsException ex) {
+
+	    Map<String, Object> body = new LinkedHashMap<>();
+	    body.put("timestamp", LocalDateTime.now());
+	    body.put("status", HttpStatus.UNAUTHORIZED.value());
+	    body.put("message", ex.getMessage());
+
+	    return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+	}
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Object> handleResourceNotFound(ResourceNotFoundException ex) {

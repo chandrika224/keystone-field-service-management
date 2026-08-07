@@ -9,6 +9,7 @@ import com.keystone.dto.LoginRequest;
 import com.keystone.dto.RegisterRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.entity.User;
+import com.keystone.exception.InvalidCredentialsException;
 import com.keystone.repository.UserRepository;
 import com.keystone.security.JwtService;
 import com.keystone.service.UserService;
@@ -57,10 +58,10 @@ public class UserServiceImpl implements UserService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid Email"));
+        		.orElseThrow(() -> new InvalidCredentialsException("Invalid Email"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid Password");
+        	throw new InvalidCredentialsException("Invalid Password");
         }
 
         String token = jwtService.generateToken(user.getEmail());
