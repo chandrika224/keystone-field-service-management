@@ -20,7 +20,7 @@ export default function NotificationItem({
         py-3
         text-left
         transition-colors
-        hover:bg-slate-50
+        hover:bg-background
       "
     >
       <div className="flex w-full justify-between">
@@ -35,7 +35,7 @@ export default function NotificationItem({
 
       </div>
 
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted-foreground">
         {notification.message}
       </p>
 

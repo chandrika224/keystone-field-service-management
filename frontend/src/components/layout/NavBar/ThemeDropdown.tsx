@@ -32,7 +32,7 @@ export default function ThemeDropdown() {
   ] as const;
 
   return (
-    <div className="w-52 rounded-xl border bg-white shadow-xl dark:bg-slate-900">
+    <div className="w-52 rounded-xl border bg-card shadow-xl dark:bg-slate-900">
 
       <div className="border-b px-4 py-3">
         <h3 className="font-semibold">
@@ -61,7 +61,7 @@ export default function ThemeDropdown() {
               ${
                 theme === option.value
                   ? "bg-blue-50 text-blue-600 dark:bg-slate-800"
-                  : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "hover:bg-background dark:hover:bg-slate-800"
               }
             `}
           >

@@ -21,7 +21,7 @@ export default function ThemeToggle() {
 
       <DropdownTrigger>
 
-        <div className="rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+        <div className="rounded-lg p-2 transition-colors hover:bg-muted dark:hover:bg-slate-800">
 
           <Icon size={20} />
 

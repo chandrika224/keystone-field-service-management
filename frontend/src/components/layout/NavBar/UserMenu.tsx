@@ -1,4 +1,6 @@
 import { UserCircle2 } from "lucide-react";
+
+
 import ProfileDropdown from "./ProfileDropdown";
 import Dropdown, { DropdownContent, DropdownTrigger } from "@/common/Dropdown";
 
@@ -15,7 +17,7 @@ export default function UserMenu() {
             rounded-lg
             p-2
             transition-colors
-            hover:bg-slate-100
+            hover:bg-muted
           "
         >
           <UserCircle2 size={28} />
@@ -25,7 +27,7 @@ export default function UserMenu() {
               John Doe
             </p>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Manager
             </p>
           </div>
@@ -33,9 +35,7 @@ export default function UserMenu() {
       </DropdownTrigger>
 
       <DropdownContent>
-        <ProfileDropdown open={false} onClose={function (): void {
-          throw new Error("Function not implemented.");
-        } } />
+        <ProfileDropdown />
       </DropdownContent>
 
     </Dropdown>

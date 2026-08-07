@@ -16,7 +16,7 @@ export default function NavItem({
         `transition-colors duration-200 ${
           isActive
             ? "text-blue-600 font-semibold"
-            : "text-slate-600 hover:text-blue-600"
+            : "text-muted-foreground hover:text-blue-600"
         }`
       }
     >

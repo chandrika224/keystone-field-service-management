@@ -13,7 +13,7 @@ export default function FilterBar({
   onReset,
 }: FilterBarProps) {
   return (
-    <div className="rounded-xl border bg-white shadow-sm">
+    <div className="rounded-xl border bg-card shadow-sm">
 
       <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
 

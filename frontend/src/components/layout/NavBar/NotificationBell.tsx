@@ -8,7 +8,7 @@ export default function NotificationBell() {
 
       <DropdownTrigger>
 
-        <div className="relative rounded-lg p-2 transition-colors hover:bg-slate-100">
+        <div className="relative rounded-lg p-2 transition-colors hover:bg-muted">
 
           <Bell size={22} />
 

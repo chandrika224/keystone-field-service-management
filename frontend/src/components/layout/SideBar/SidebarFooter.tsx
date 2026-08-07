@@ -6,13 +6,13 @@ export default function SidebarFooter() {
 
   return (
     <div className="border-t p-4">
-      <button className="flex w-full items-center rounded-lg p-2 hover:bg-slate-100">
+      <button className="flex w-full items-center rounded-lg p-2 hover:bg-muted">
         <UserCircle2 size={22} />
 
         {!collapsed && (
           <div className="ml-3 text-left">
             <p className="font-medium">John Doe</p>
-            <p className="text-xs text-slate-500">Manager</p>
+            <p className="text-xs text-muted-foreground">Manager</p>
           </div>
         )}
       </button>

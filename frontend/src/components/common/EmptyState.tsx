@@ -14,7 +14,7 @@ export default function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-card p-10 text-center shadow-sm">
       <div className="mb-4 text-blue-600">
         {icon}
       </div>
@@ -23,7 +23,7 @@ export default function EmptyState({
         {title}
       </h2>
 
-      <p className="mt-2 max-w-md text-slate-500">
+      <p className="mt-2 max-w-md text-muted-foreground">
         {description}
       </p>
 

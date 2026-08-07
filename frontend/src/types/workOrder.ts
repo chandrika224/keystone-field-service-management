@@ -14,3 +14,18 @@ export interface CustomerWorkOrder {
   status: WorkOrderStatus;
   date: string;
 }
+
+export interface DispatcherWorkOrder extends CustomerWorkOrder {
+  customer: string;
+  priority: "High" | "Medium" | "Low";
+}
+
+export interface Technician {
+  id: string;
+  name: string;
+  specialization: string;
+  email: string;
+  phone: string;
+  status: "Available" | "Busy";
+  currentJobs: number;
+}

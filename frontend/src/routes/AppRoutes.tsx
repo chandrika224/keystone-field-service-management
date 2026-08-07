@@ -24,6 +24,8 @@ import PublicRoute from "@/guards/PublicRoute";
 
 import WorkOrders from "@/pages/customer/WorkOrders";
 import Profile from "@/pages/customer/Profile";
+import DispatcherWorkOrders from "@/pages/dispatcher/WorkOrders";
+import DispatcherTechnicians from "@/pages/dispatcher/Technicians";
 
 export default function AppRoutes() {
   return (
@@ -75,6 +77,17 @@ export default function AppRoutes() {
             path="/dispatcher/dashboard"
             element={<DispatcherDashboard />}
           />
+
+          <Route
+            path="/dispatcher/work-orders"
+            element={<DispatcherWorkOrders />}
+          />
+
+          <Route
+            path="/dispatcher/technicians"
+            element={<DispatcherTechnicians />}
+          />
+
 
           <Route
             path="/technician/dashboard"
