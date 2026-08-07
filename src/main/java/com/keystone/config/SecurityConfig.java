@@ -34,43 +34,30 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .csrf(csrf -> csrf.disable())
-
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                .authorizeHttpRequests(auth -> auth
-
-                        // Public APIs
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        // Swagger/OpenAPI
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-
-                        // Admin Only
-                        .requestMatchers("/api/customers/**").hasRole("ADMIN")
-                        .requestMatchers("/api/inventory/**").hasRole("ADMIN")
-                        .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
-                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
-
-                        // Admin & Dispatcher
-                        .requestMatchers("/api/workorders/**")
-                        .hasAnyRole("ADMIN", "DISPATCHER")
-
-                        // Admin & Dispatcher
-                        .requestMatchers("/api/technicians/**")
-                        .hasAnyRole("ADMIN", "DISPATCHER")
-
-                        .anyRequest().authenticated()
-                )
-
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+    	http
+        .cors(cors -> {})
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html")
+                .permitAll()
+                .requestMatchers("/api/customers/**").hasRole("ADMIN")
+                .requestMatchers("/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
+                .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                .requestMatchers("/api/workorders/**")
+                .hasAnyRole("ADMIN", "DISPATCHER")
+                .requestMatchers("/api/technicians/**")
+                .hasAnyRole("ADMIN", "DISPATCHER")
+                .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
