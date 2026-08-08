@@ -5,7 +5,7 @@ export default function Home() {
         Meridian Field Service Management
       </h1>
 
-      <p className="mt-4 text-slate-600">
+      <p className="mt-4 text-muted-foreground">
         Welcome to the home page.
       </p>
     </section>

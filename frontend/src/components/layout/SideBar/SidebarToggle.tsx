@@ -7,7 +7,7 @@ export default function SidebarToggle() {
   return (
     <button
       onClick={toggleSidebar}
-      className="rounded-md p-2 transition hover:bg-slate-100"
+      className="rounded-md p-2 transition hover:bg-muted"
     >
       {collapsed ? (
         <PanelLeftOpen size={20} />

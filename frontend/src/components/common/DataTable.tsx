@@ -22,7 +22,7 @@ export default function DataTable<T extends Record<string, any>>({
   data,
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
 
         <TableHeader>

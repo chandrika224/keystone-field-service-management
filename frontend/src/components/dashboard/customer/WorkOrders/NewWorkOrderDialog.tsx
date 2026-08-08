@@ -13,8 +13,6 @@ import { toast } from "sonner";
 import type { CustomerWorkOrder } from "@/types/workOrder";
 import { useEffect, useState } from "react";
 
-
-
 interface NewWorkOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

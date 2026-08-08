@@ -13,7 +13,7 @@ export default function ProfileDropdown() {
         overflow-hidden
         rounded-xl
         border
-        bg-white
+        bg-card
         shadow-xl
       "
     >
@@ -28,7 +28,7 @@ export default function ProfileDropdown() {
           John Doe
         </h3>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           john.doe@keystone.com
         </p>
 
@@ -62,7 +62,7 @@ export default function ProfileDropdown() {
           py-3
           text-left
           transition-colors
-          hover:bg-slate-50
+          hover:bg-background
         "
       >
         <User size={18} />
@@ -79,7 +79,7 @@ export default function ProfileDropdown() {
           py-3
           text-left
           transition-colors
-          hover:bg-slate-50
+          hover:bg-background
         "
       >
         <Settings size={18} />
@@ -96,7 +96,7 @@ export default function ProfileDropdown() {
           py-3
           text-left
           transition-colors
-          hover:bg-slate-50
+          hover:bg-background
         "
       >
         <HelpCircle size={18} />
