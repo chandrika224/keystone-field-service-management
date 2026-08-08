@@ -1,6 +1,7 @@
 package com.keystone.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
@@ -14,6 +15,26 @@ public class WorkOrderResponse {
     private WorkOrderStatus status;
     private LocalDate scheduledDate;
     private LocalDate completedDate;
+    private LocalDateTime slaDueDate;
+    
+
+    public LocalDateTime getSlaDueDate() {
+		return slaDueDate;
+	}
+
+	public void setSlaDueDate(LocalDateTime slaDueDate) {
+		this.slaDueDate = slaDueDate;
+	}
+
+	public Boolean getSlaBreached() {
+		return slaBreached;
+	}
+
+	public void setSlaBreached(Boolean slaBreached) {
+		this.slaBreached = slaBreached;
+	}
+
+	private Boolean slaBreached;
 
     private String customerName;
     private String technicianName;

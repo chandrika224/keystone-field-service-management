@@ -9,8 +9,18 @@ public class DashboardResponse {
     private long assignedWorkOrders;
     private long inProgressWorkOrders;
     private long completedWorkOrders;
+    private long slaBreachedCount;
+    
 
-    public DashboardResponse() {
+    public long getSlaBreachedCount() {
+		return slaBreachedCount;
+	}
+
+	public void setSlaBreachedCount(long slaBreachedCount) {
+		this.slaBreachedCount = slaBreachedCount;
+	}
+
+	public DashboardResponse() {
     }
 
     public long getTotalCustomers() {
@@ -68,4 +78,6 @@ public class DashboardResponse {
     public void setCompletedWorkOrders(long completedWorkOrders) {
         this.completedWorkOrders = completedWorkOrders;
     }
+
+	
 }

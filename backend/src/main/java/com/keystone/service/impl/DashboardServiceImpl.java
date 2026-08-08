@@ -31,19 +31,36 @@ public class DashboardServiceImpl implements DashboardService {
 
         response.setTotalTechnicians(technicianRepository.count());
 
-        response.setTotalWorkOrders(workOrderRepository.count());
+        response.setTotalWorkOrders(
+        		workOrderRepository.count());
 
         response.setOpenWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.OPEN).size());
+                workOrderRepository.findByStatus(WorkOrderStatus.NEW).size());
 
         response.setAssignedWorkOrders(
                 workOrderRepository.findByStatus(WorkOrderStatus.ASSIGNED).size());
 
         response.setInProgressWorkOrders(
                 workOrderRepository.findByStatus(WorkOrderStatus.IN_PROGRESS).size());
+        
+
+        response.setInProgressWorkOrders(
+                workOrderRepository.findByStatus(WorkOrderStatus.ON_HOLD).size());
+        
+       
 
         response.setCompletedWorkOrders(
                 workOrderRepository.findByStatus(WorkOrderStatus.COMPLETED).size());
+        
+
+        response.setInProgressWorkOrders(
+                workOrderRepository.findByStatus(WorkOrderStatus.CLOSED).size());
+        
+
+        response.setInProgressWorkOrders(
+                workOrderRepository.findByStatus(WorkOrderStatus.CANCELLED).size());
+        response.setSlaBreachedCount(
+                workOrderRepository.countBySlaBreachedTrue());
 
         return response;
     }

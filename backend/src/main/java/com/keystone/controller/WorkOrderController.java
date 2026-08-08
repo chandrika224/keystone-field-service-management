@@ -3,10 +3,17 @@ package com.keystone.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.keystone.dto.ChangeStatusRequest;
+import com.keystone.dto.PartUsageRequest;
+import com.keystone.dto.PartUsageResponse;
+import com.keystone.dto.TimeLogRequest;
+import com.keystone.dto.TimeLogResponse;
 import com.keystone.dto.WorkOrderRequest;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderStatusHistoryResponse;
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.service.WorkOrderService;
@@ -28,6 +35,7 @@ public class WorkOrderController {
     public WorkOrderResponse createWorkOrder(@Valid @RequestBody WorkOrderRequest request) {
         return workOrderService.createWorkOrder(request);
     }
+    
 
     @Operation(summary = "Get All Work Orders")
     @GetMapping
@@ -47,6 +55,14 @@ public class WorkOrderController {
                                              @Valid @RequestBody WorkOrderRequest request) {
         return workOrderService.updateWorkOrder(id, request);
     }
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<WorkOrderResponse> changeStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangeStatusRequest request) {
+
+        return ResponseEntity.ok(
+                workOrderService.changeStatus(id, request));
+    }
 
     @Operation(summary = "Delete Work Order")
     @DeleteMapping("/{id}")
@@ -61,6 +77,13 @@ public class WorkOrderController {
             @RequestParam WorkOrderStatus status) {
 
         return workOrderService.getWorkOrdersByStatus(status);
+    }
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<WorkOrderStatusHistoryResponse>>
+    getStatusHistory(@PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                workOrderService.getStatusHistory(id));
     }
 
     @Operation(summary = "Get Work Orders By Priority")
@@ -77,6 +100,38 @@ public class WorkOrderController {
             @PathVariable Long customerId) {
 
         return workOrderService.getByCustomer(customerId);
+    }
+    @PostMapping("/{id}/time")
+    public ResponseEntity<TimeLogResponse> addTimeLog(
+            @PathVariable Long id,
+            @Valid @RequestBody TimeLogRequest request) {
+
+        return ResponseEntity.ok(
+                workOrderService.addTimeLog(id, request));
+    }
+    @PostMapping("/{id}/parts")
+    public ResponseEntity<PartUsageResponse> addPartUsage(
+            @PathVariable Long id,
+            @Valid @RequestBody PartUsageRequest request) {
+
+        return ResponseEntity.ok(
+                workOrderService.addPartUsage(id, request));
+    }
+
+    @GetMapping("/{id}/parts")
+    public ResponseEntity<List<PartUsageResponse>> getPartUsage(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                workOrderService.getPartUsage(id));
+    }
+
+    @GetMapping("/{id}/time")
+    public ResponseEntity<List<TimeLogResponse>> getTimeLogs(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                workOrderService.getTimeLogs(id));
     }
 
     @Operation(summary = "Get Work Orders By Technician")
