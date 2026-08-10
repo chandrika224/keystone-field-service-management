@@ -29,6 +29,16 @@ import DispatcherTechnicians from "@/pages/dispatcher/Technicians";
 import DispatcherAssignment from "@/pages/dispatcher/Assignment";
 import DispatcherCustomers from "@/pages/dispatcher/Customers";
 import DispatcherSites from "@/pages/dispatcher/Sites";
+import TechnicianAssignedJobsTable from "@/components/dashboard/technician/AssignedJobs/TechnicianAssignedJobsTable";
+import AssignedJobs from "@/pages/technician/AssignedJobs";
+import JobTrack from "@/pages/technician/JobTrack";
+import ManagerWorkOrders from "@/pages/manager/ManagerWorkOrders";
+import ManagerTechnicians from "@/pages/manager/ManagerTechnicians";
+import ManagerCustomers from "@/pages/manager/ManagerCustomers";
+import ManagerSites from "@/pages/manager/ManagerSites";
+import ManagerInventory from "@/pages/manager/ManagerInventory";
+import ManagerReportsStats from "@/components/dashboard/manager/Reports/ManagerReportsStats";
+import ManagerReports from "@/pages/manager/ManagerReports";
 
 export default function AppRoutes() {
   return (
@@ -113,9 +123,48 @@ export default function AppRoutes() {
           />
 
           <Route
+            path="/technician/work-orders"
+            element={<AssignedJobs />}
+          />
+          <Route
+            path="/technician/track-jobs"
+            element={<JobTrack />}
+          />
+
+          <Route
             path="/manager/dashboard"
             element={<ManagerDashboard />}
           />
+
+          <Route
+            path="/manager/work-orders"
+            element={<ManagerWorkOrders />}
+          />
+
+          <Route
+            path="/manager/technicians"
+            element={<ManagerTechnicians />}
+          />
+
+          <Route
+            path="/manager/customers"
+            element={<ManagerCustomers />}
+          />
+
+          <Route
+            path="/manager/sites"
+            element={<ManagerSites />}
+          />
+
+          <Route
+            path="/manager/inventory"
+            element={<ManagerInventory />}
+          />
+
+          <Route
+              path="/manager/reports"
+              element={<ManagerReports />}
+            />
 
         </Route>
 

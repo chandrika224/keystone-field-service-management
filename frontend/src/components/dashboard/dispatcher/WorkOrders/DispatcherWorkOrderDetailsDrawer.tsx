@@ -36,7 +36,7 @@ interface DispatcherWorkOrderDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workOrder: DispatcherWorkOrder | null;
-  onAssign: (order: DispatcherWorkOrder) => void;
+  onAssign?: (workOrder: DispatcherWorkOrder) => void;
 }
 
 export default function DispatcherWorkOrderDetailsDrawer({
@@ -124,11 +124,13 @@ export default function DispatcherWorkOrderDetailsDrawer({
 
           <div className="flex justify-end">
 
-            <Button
+            {onAssign && (
+              <Button
                 onClick={() => onAssign(workOrder)}
               >
                 Assign Technician
               </Button>
+            )}
 
           </div>
 
