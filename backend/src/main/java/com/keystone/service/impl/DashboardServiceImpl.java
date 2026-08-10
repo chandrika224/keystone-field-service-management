@@ -27,38 +27,58 @@ public class DashboardServiceImpl implements DashboardService {
 
         DashboardResponse response = new DashboardResponse();
 
-        response.setTotalCustomers(customerRepository.count());
+        response.setTotalCustomers(
+                customerRepository.count());
 
-        response.setTotalTechnicians(technicianRepository.count());
+        response.setTotalTechnicians(
+                technicianRepository.count());
 
         response.setTotalWorkOrders(
-        		workOrderRepository.count());
+                workOrderRepository.count());
 
-        response.setOpenWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.NEW).size());
+        // 1. NEW
+        response.setNewWorkOrders(
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.NEW)
+                        .size());
 
+        // 2. ASSIGNED
         response.setAssignedWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.ASSIGNED).size());
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.ASSIGNED)
+                        .size());
 
+        // 3. IN_PROGRESS
         response.setInProgressWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.IN_PROGRESS).size());
-        
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.IN_PROGRESS)
+                        .size());
 
-        response.setInProgressWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.ON_HOLD).size());
-        
-       
+        // 4. ON_HOLD
+        response.setOnHoldWorkOrders(
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.ON_HOLD)
+                        .size());
 
+        // 5. COMPLETED
         response.setCompletedWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.COMPLETED).size());
-        
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.COMPLETED)
+                        .size());
 
-        response.setInProgressWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.CLOSED).size());
-        
+        // 6. CLOSED
+        response.setClosedWorkOrders(
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.CLOSED)
+                        .size());
 
-        response.setInProgressWorkOrders(
-                workOrderRepository.findByStatus(WorkOrderStatus.CANCELLED).size());
+        // 7. CANCELLED
+        response.setCancelledWorkOrders(
+                workOrderRepository
+                        .findByStatus(WorkOrderStatus.CANCELLED)
+                        .size());
+
+        // SLA
         response.setSlaBreachedCount(
                 workOrderRepository.countBySlaBreachedTrue());
 

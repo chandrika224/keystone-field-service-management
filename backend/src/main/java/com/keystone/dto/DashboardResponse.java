@@ -5,22 +5,18 @@ public class DashboardResponse {
     private long totalCustomers;
     private long totalTechnicians;
     private long totalWorkOrders;
-    private long openWorkOrders;
+
+    private long newWorkOrders;
     private long assignedWorkOrders;
     private long inProgressWorkOrders;
+    private long onHoldWorkOrders;
     private long completedWorkOrders;
+    private long closedWorkOrders;
+    private long cancelledWorkOrders;
+
     private long slaBreachedCount;
-    
 
-    public long getSlaBreachedCount() {
-		return slaBreachedCount;
-	}
-
-	public void setSlaBreachedCount(long slaBreachedCount) {
-		this.slaBreachedCount = slaBreachedCount;
-	}
-
-	public DashboardResponse() {
+    public DashboardResponse() {
     }
 
     public long getTotalCustomers() {
@@ -47,12 +43,12 @@ public class DashboardResponse {
         this.totalWorkOrders = totalWorkOrders;
     }
 
-    public long getOpenWorkOrders() {
-        return openWorkOrders;
+    public long getNewWorkOrders() {
+        return newWorkOrders;
     }
 
-    public void setOpenWorkOrders(long openWorkOrders) {
-        this.openWorkOrders = openWorkOrders;
+    public void setNewWorkOrders(long newWorkOrders) {
+        this.newWorkOrders = newWorkOrders;
     }
 
     public long getAssignedWorkOrders() {
@@ -71,6 +67,14 @@ public class DashboardResponse {
         this.inProgressWorkOrders = inProgressWorkOrders;
     }
 
+    public long getOnHoldWorkOrders() {
+        return onHoldWorkOrders;
+    }
+
+    public void setOnHoldWorkOrders(long onHoldWorkOrders) {
+        this.onHoldWorkOrders = onHoldWorkOrders;
+    }
+
     public long getCompletedWorkOrders() {
         return completedWorkOrders;
     }
@@ -79,5 +83,27 @@ public class DashboardResponse {
         this.completedWorkOrders = completedWorkOrders;
     }
 
-	
+    public long getClosedWorkOrders() {
+        return closedWorkOrders;
+    }
+
+    public void setClosedWorkOrders(long closedWorkOrders) {
+        this.closedWorkOrders = closedWorkOrders;
+    }
+
+    public long getCancelledWorkOrders() {
+        return cancelledWorkOrders;
+    }
+
+    public void setCancelledWorkOrders(long cancelledWorkOrders) {
+        this.cancelledWorkOrders = cancelledWorkOrders;
+    }
+
+    public long getSlaBreachedCount() {
+        return slaBreachedCount;
+    }
+
+    public void setSlaBreachedCount(long slaBreachedCount) {
+        this.slaBreachedCount = slaBreachedCount;
+    }
 }
