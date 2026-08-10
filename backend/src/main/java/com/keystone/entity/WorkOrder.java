@@ -1,6 +1,7 @@
 package com.keystone.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
@@ -34,10 +35,82 @@ public class WorkOrder {
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
+    
+    
+    
 
     @ManyToOne
     @JoinColumn(name = "technician_id")
     private Technician technician;
+    
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+
+        this.slaDueDate = createdAt.plusHours(24);
+
+        this.slaBreached = false;
+    }
+    
+    public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public LocalDateTime getAssignedAt() {
+		return assignedAt;
+	}
+
+	public void setAssignedAt(LocalDateTime assignedAt) {
+		this.assignedAt = assignedAt;
+	}
+
+	public LocalDateTime getStartedAt() {
+		return startedAt;
+	}
+
+	public void setStartedAt(LocalDateTime startedAt) {
+		this.startedAt = startedAt;
+	}
+
+	public LocalDateTime getCompletedAt() {
+		return completedAt;
+	}
+
+	public void setCompletedAt(LocalDateTime completedAt) {
+		this.completedAt = completedAt;
+	}
+
+	public LocalDateTime getSlaDueDate() {
+		return slaDueDate;
+	}
+
+	public void setSlaDueDate(LocalDateTime slaDueDate) {
+		this.slaDueDate = slaDueDate;
+	}
+
+	public Boolean getSlaBreached() {
+		return slaBreached;
+	}
+
+	public void setSlaBreached(Boolean slaBreached) {
+		this.slaBreached = slaBreached;
+	}
+
+	private LocalDateTime createdAt;
+
+    private LocalDateTime assignedAt;
+
+    private LocalDateTime startedAt;
+
+    private LocalDateTime completedAt;
+
+    private LocalDateTime slaDueDate;
+
+    private Boolean slaBreached = false;
 
     public WorkOrder() {
     }

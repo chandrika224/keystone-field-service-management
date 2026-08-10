@@ -20,4 +20,10 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
     List<WorkOrder> findByCustomerCustomerId(Long customerId);
 
     List<WorkOrder> findByTechnicianId(Long technicianId);
+    
+    long countBySlaBreachedTrue();
+
+	List<WorkOrder> findBySlaBreachedFalse();
+
+
 }
