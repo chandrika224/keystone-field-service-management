@@ -18,5 +18,24 @@ export const dispatcherWorkOrders: {
     technician: "Unassigned",
     date: "07 Aug 2026",
   },
-  // ...
+
+  {
+    id: "WO-1002",
+    customer: "ABC Industries",
+    service: "Electrical Maintenance",
+    priority: "Medium",
+    status: "ASSIGNED",
+    technician: "Rohit Kumar",
+    date: "07 Aug 2026",
+  },
+  
+   {
+    id: "WO-1003",
+    customer: "XYZ Corporation",
+    service: "Plumbing Repair",
+    priority: "Low",
+    status: "IN_PROGRESS",
+    technician: "Mike Johnson",
+    date: "08 Aug 2026",
+  },
 ];

@@ -26,6 +26,9 @@ import WorkOrders from "@/pages/customer/WorkOrders";
 import Profile from "@/pages/customer/Profile";
 import DispatcherWorkOrders from "@/pages/dispatcher/WorkOrders";
 import DispatcherTechnicians from "@/pages/dispatcher/Technicians";
+import DispatcherAssignment from "@/pages/dispatcher/Assignment";
+import DispatcherCustomers from "@/pages/dispatcher/Customers";
+import DispatcherSites from "@/pages/dispatcher/Sites";
 
 export default function AppRoutes() {
   return (
@@ -84,8 +87,23 @@ export default function AppRoutes() {
           />
 
           <Route
+            path="/dispatcher/assignments"
+            element={<DispatcherAssignment />}
+          />
+
+          <Route
             path="/dispatcher/technicians"
             element={<DispatcherTechnicians />}
+          />
+
+          <Route
+            path="/dispatcher/customers"
+            element={<DispatcherCustomers />}
+          />
+
+          <Route
+            path="/dispatcher/sites"
+            element={<DispatcherSites/>}
           />
 
 
@@ -98,8 +116,6 @@ export default function AppRoutes() {
             path="/manager/dashboard"
             element={<ManagerDashboard />}
           />
-
-          
 
         </Route>
 
