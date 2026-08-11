@@ -9,6 +9,7 @@ import {
   Settings,
   User,
   Clock3,
+  CalendarDays,
 } from "lucide-react";
 import type { SidebarNavigationItem } from "./types";
 
@@ -71,6 +72,8 @@ export const dispatcherNavigation: SidebarNavigationItem[] = [
 
 /* ---------------- Technician ---------------- */
 
+/* ---------------- Technician ---------------- */
+
 export const technicianNavigation: SidebarNavigationItem[] = [
   {
     title: "Dashboard",
@@ -83,14 +86,25 @@ export const technicianNavigation: SidebarNavigationItem[] = [
     path: "/technician/work-orders",
   },
   {
-    title: "Time Logs",
-    icon: Clock3,
-    path: "/technician/time-logs",
+    title: "Schedule",
+    icon: CalendarDays,
+    path: "/technician/schedule",
+  },
+
+  {
+    title: "Inventory",
+    icon: Package,
+    path: "/technician/inventory",
   },
   {
-    title: "Profile",
-    icon: User,
-    path: "/technician/profile",
+    title: "Reports",
+    icon: BarChart3,
+    path: "/technician/reports",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    path: "/technician/settings",
   },
 ];
 

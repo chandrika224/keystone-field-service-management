@@ -1,7 +1,23 @@
+import AboutHero
+  from "@/components/public/About/AboutHero";
+
+import AboutOverview
+  from "@/components/public/About/AboutOverview";
+
+import AboutRoles
+  from "@/components/public/About/AboutRoles";
+
+
 export default function About() {
   return (
-    <div className="p-10">
-      About Page
+    <div>
+
+      <AboutHero />
+
+      <AboutOverview />
+
+      <AboutRoles />
+
     </div>
   );
 }

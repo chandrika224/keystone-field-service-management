@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logos/keystone_std_logo.svg";
-import { publicNavigation } from "./navigation";
-import NavItem from "./NavItem";
+import { publicNavigation } from "../navigation/PublicNavbar/navigation";
+import NavItem from "../navigation/PublicNavbar/NavItem";
 import { Button } from "@base-ui/react/button";
-import MobileMenu from "./MobileMenu";
+import MobileMenu from "../navigation/PublicNavbar/MobileMenu";
 
 export default function PublicNavbar() {
   return (

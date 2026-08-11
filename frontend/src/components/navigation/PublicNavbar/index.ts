@@ -1,1 +1,1 @@
-export { default } from "./PublicNavbar";
+export { default } from "../../public/PublicNavbar";

@@ -39,6 +39,12 @@ import ManagerSites from "@/pages/manager/ManagerSites";
 import ManagerInventory from "@/pages/manager/ManagerInventory";
 import ManagerReportsStats from "@/components/dashboard/manager/Reports/ManagerReportsStats";
 import ManagerReports from "@/pages/manager/ManagerReports";
+import ManagerStaff from "@/pages/manager/ManagerStaff";
+import ManagerSettings from "@/pages/manager/ManagerSettings";
+import TechnicianSchedule from "@/pages/technician/TechnicianSchedule";
+import TechnicianInventory from "@/pages/technician/TechnicianInventory";
+import TechnicianReports from "@/pages/technician/TechnicianReports";
+import TechnicianSettings from "@/pages/technician/TechnicianSettings";
 
 export default function AppRoutes() {
   return (
@@ -132,6 +138,26 @@ export default function AppRoutes() {
           />
 
           <Route
+            path="/technician/schedule"
+            element={<TechnicianSchedule />}
+          />
+
+          <Route
+            path="/technician/inventory"
+            element={<TechnicianInventory />}
+          />
+
+          <Route
+            path="/technician/reports"
+            element={<TechnicianReports />}
+          />
+
+          <Route
+            path="/technician/settings"
+            element={<TechnicianSettings />}
+          />
+
+          <Route
             path="/manager/dashboard"
             element={<ManagerDashboard />}
           />
@@ -165,6 +191,17 @@ export default function AppRoutes() {
               path="/manager/reports"
               element={<ManagerReports />}
             />
+
+          <Route
+            path="/manager/staff"
+            element={<ManagerStaff />}
+          />
+
+          <Route
+            path="/manager/settings"
+            element={<ManagerSettings />}
+          />
+
 
         </Route>
 

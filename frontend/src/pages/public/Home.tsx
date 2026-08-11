@@ -1,13 +1,38 @@
+import HeroSection
+  from "@/components/public/Home/HeroSection";
+
+import CoreFeaturesSection
+  from "@/components/public/Home/CoreFeaturesSection";
+
+import HowItWorksSection
+  from "@/components/public/Home/HowItWorksSection";
+
+import RolesSection
+  from "@/components/public/Home/RolesSection";
+
+import ProductPreviewSection
+  from "@/components/public/Home/ProductPreviewSection";
+
+import CallToActionSection
+  from "@/components/public/Home/CallToActionSection";
+
+
 export default function Home() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <h1 className="text-5xl font-bold">
-        Meridian Field Service Management
-      </h1>
+    <div>
 
-      <p className="mt-4 text-muted-foreground">
-        Welcome to the home page.
-      </p>
-    </section>
+      <HeroSection />
+
+      <CoreFeaturesSection />
+
+      <HowItWorksSection />
+
+      <RolesSection />
+
+      <ProductPreviewSection />
+
+      <CallToActionSection />
+
+    </div>
   );
 }
