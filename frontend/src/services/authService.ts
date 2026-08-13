@@ -11,23 +11,22 @@ import type {
 const AUTH_URL = "/auth";
 
 export const authService = {
-
   register: async (
     request: RegisterRequest
   ): Promise<string> => {
     const response = await api.post<string>(
-      "/user/v1/register",
+      `${AUTH_URL}/register`,
       request
     );
+
     return response.data;
   },
 
   login: async (
-  credentials: LoginRequest
+    credentials: LoginRequest
   ): Promise<LoginResponse> => {
-
     const response = await api.post<LoginResponse>(
-      "/user/v1/login",
+      `${AUTH_URL}/login`,
       credentials
     );
 

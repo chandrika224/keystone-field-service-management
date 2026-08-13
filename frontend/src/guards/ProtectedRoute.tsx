@@ -1,4 +1,5 @@
-import { Navigate, Outlet } from "react-router-dom";
+
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProtectedRoute() {
@@ -7,20 +8,33 @@ export default function ProtectedRoute() {
     isAuthenticated,
   } = useAuth();
 
-  // Wait until authentication is initialized
+  const location = useLocation();
+
+  // Wait until authentication state is known
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         Loading...
       </div>
     );
   }
 
-  // Not logged in
+  // User is not authenticated
+  // Redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: location,
+        }}
+      />
+    );
   }
 
-  // Logged in
+  // User is authenticated
+  // Allow access to protected pages
   return <Outlet />;
 }
+
