@@ -40,20 +40,24 @@ public class SecurityConfig {
         .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+        		.requestMatchers(
+                        "/api/auth/register",
+                        "/api/auth/login"
+                    ).permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html")
                 .permitAll()
-                .requestMatchers("/api/customers/**").hasRole("ADMIN")
-                .requestMatchers("/api/inventory/**").hasRole("ADMIN")
-                .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
-                .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                .requestMatchers("/api/customers/**").hasRole("MANAGER")
+                .requestMatchers("/api/inventory/**").hasRole("MANAGER")
+                .requestMatchers("/api/dashboard/**").hasRole("MANAGER")
+                .requestMatchers("/api/reports/**").hasRole("MANAGER")
                 .requestMatchers("/api/workorders/**")
-                .hasAnyRole("ADMIN", "DISPATCHER")
+                .hasAnyRole("MANAGER", "DISPATCHER")
                 .requestMatchers("/api/technicians/**")
-                .hasAnyRole("ADMIN", "DISPATCHER")
+                .hasAnyRole("MANAGER", "DISPATCHER")
                 .anyRequest().authenticated()
         )
         .addFilterBefore(jwtAuthenticationFilter,

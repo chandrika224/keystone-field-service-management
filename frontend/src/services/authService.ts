@@ -23,15 +23,16 @@ export const authService = {
   },
 
   login: async (
-    credentials: LoginRequest
-  ): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>(
-      `${AUTH_URL}/login`,
-      credentials
-    );
+      credentials: LoginRequest
+    ): Promise<LoginResponse> => {
 
-    return response.data;
-  },
+      const response = await api.post<LoginResponse>(
+        "/auth/login",
+        credentials
+      );
+
+      return response.data;
+    },
 
   refreshToken: async (
     request: RefreshTokenRequest

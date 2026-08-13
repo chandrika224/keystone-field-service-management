@@ -26,9 +26,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  "accessToken": "...",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
+  token: string;
+  message: string;
 }
 
 export interface RefreshTokenRequest {

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,8 @@ export default function LoginForm() {
 
   const [rememberMe, setRememberMe] = useState(false);
 
+  const navigate = useNavigate();
+
   const {
     handleSubmit,
     watch,
@@ -41,19 +43,23 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
 
+      // ==========================================
+      // LOGIN
+      // ==========================================
+
       const response = await authService.login(data);
 
-      saveAccessToken(response.accessToken);
+      console.log("Login Response:", response);
+
+      saveAccessToken(response.token);
 
       console.log("Token Saved Successfully");
-      console.log(response);
 
-      // Next Step
-      // navigate("/dashboard");
+      navigate("/customer/dashboard");
 
     } catch (error) {
 
-      console.error(error);
+      console.error("Login failed:", error);
 
     }
   };
@@ -69,6 +75,7 @@ export default function LoginForm() {
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-6"
       >
+
         <InputField
           label="Email"
           type="email"
@@ -95,6 +102,7 @@ export default function LoginForm() {
         />
 
         <div className="flex items-center justify-between">
+
           <RememberMe
             checked={rememberMe}
             onCheckedChange={setRememberMe}
@@ -106,6 +114,7 @@ export default function LoginForm() {
           >
             Forgot Password?
           </Link>
+
         </div>
 
         <AuthButton loading={isSubmitting}>
@@ -114,13 +123,16 @@ export default function LoginForm() {
 
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
+
           <Link
             to="/register"
             className="font-semibold text-primary hover:underline"
           >
             Register
           </Link>
+
         </p>
+
       </form>
     </>
   );

@@ -9,22 +9,23 @@ import com.keystone.dto.LoginRequest;
 import com.keystone.dto.RegisterRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.entity.User;
+import com.keystone.enums.Role;
 import com.keystone.exception.InvalidCredentialsException;
 import com.keystone.repository.UserRepository;
 import com.keystone.security.JwtService;
 import com.keystone.service.UserService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+	private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -39,8 +40,7 @@ public class UserServiceImpl implements UserService {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
-
+        user.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(user);
 
         UserResponse response = new UserResponse();
