@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { saveAccessToken } from "@/utils/token";
+import { getUserRole } from "@/utils/jwt";
 import { authService } from "@/services/authService";
 
 import {
@@ -18,7 +19,6 @@ import AuthButton from "../AuthButton";
 import AuthHeader from "../AuthHeader";
 
 export default function LoginForm() {
-
   const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
@@ -42,25 +42,50 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-
-      // ==========================================
-      // LOGIN
-      // ==========================================
-
+      // Login
       const response = await authService.login(data);
 
       console.log("Login Response:", response);
 
+      // Save JWT
       saveAccessToken(response.token);
 
       console.log("Token Saved Successfully");
 
-      navigate("/customer/dashboard");
+      // Read role from JWT
+      const role = getUserRole(response.token);
+
+      console.log("Logged-in Role:", role);
+
+      if (!role) {
+        console.error("Role not found in JWT");
+        return;
+      }
+
+      // Redirect based on backend-provided role
+      switch (role.toUpperCase()) {
+        case "ADMIN":
+          navigate("/manager/dashboard");
+          break;
+
+        case "DISPATCHER":
+          navigate("/dispatcher/dashboard");
+          break;
+
+        case "TECHNICIAN":
+          navigate("/technician/dashboard");
+          break;
+
+        case "CUSTOMER":
+          navigate("/customer/dashboard");
+          break;
+
+        default:
+          console.error("Unknown user role:", role);
+      }
 
     } catch (error) {
-
       console.error("Login failed:", error);
-
     }
   };
 
@@ -75,7 +100,6 @@ export default function LoginForm() {
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-6"
       >
-
         <InputField
           label="Email"
           type="email"
@@ -102,7 +126,6 @@ export default function LoginForm() {
         />
 
         <div className="flex items-center justify-between">
-
           <RememberMe
             checked={rememberMe}
             onCheckedChange={setRememberMe}
@@ -114,7 +137,6 @@ export default function LoginForm() {
           >
             Forgot Password?
           </Link>
-
         </div>
 
         <AuthButton loading={isSubmitting}>
@@ -130,9 +152,7 @@ export default function LoginForm() {
           >
             Register
           </Link>
-
         </p>
-
       </form>
     </>
   );

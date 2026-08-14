@@ -127,14 +127,19 @@ export const managerNavigation: SidebarNavigationItem[] = [
     path: "/manager/customers",
   },
   {
-    title: "Sites",
-    icon: MapPinned,
-    path: "/manager/sites",
+    title: "Staffs",
+    icon: Users,
+    path: "/manager/staff",
   },
   {
     title: "Technicians",
     icon: User,
     path: "/manager/technicians",
+  },
+   {
+    title: "Sites",
+    icon: MapPinned,
+    path: "/manager/sites",
   },
   {
     title: "Inventory",

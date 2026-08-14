@@ -27,11 +27,12 @@ import type {
 
 interface ManagerEditStaffDrawerProps {
   open: boolean;
+
   onOpenChange: (open: boolean) => void;
 
   staff: ManagerStaff | null;
 
-  onSave: (staff: ManagerStaff) => void;
+  onSave: (staff: ManagerStaff) => Promise<void>;
 }
 
 export default function ManagerEditStaffDrawer({
@@ -42,8 +43,9 @@ export default function ManagerEditStaffDrawer({
 }: ManagerEditStaffDrawerProps) {
 
   const [name, setName] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
+
   const [email, setEmail] = useState("");
+
   const [phone, setPhone] = useState("");
 
   const [role, setRole] =
@@ -52,51 +54,134 @@ export default function ManagerEditStaffDrawer({
   const [specialization, setSpecialization] =
     useState("");
 
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+
+  /* -----------------------------------------------
+     LOAD STAFF
+  ------------------------------------------------ */
+
   useEffect(() => {
+
     if (!staff) {
       return;
     }
 
+    console.log(
+      "Loading staff into edit drawer:",
+      staff
+    );
+
     setName(staff.name);
-    setEmployeeId(staff.employeeId);
     setEmail(staff.email);
     setPhone(staff.phone);
     setRole(staff.role);
     setSpecialization(staff.specialization);
+
   }, [staff]);
+
 
   if (!staff) {
     return null;
   }
 
-  const handleSubmit = (
+
+  /* -----------------------------------------------
+     SUBMIT
+  ------------------------------------------------ */
+
+  const handleSubmit = async (
     event: React.FormEvent
   ) => {
+
     event.preventDefault();
 
-    const updatedStaff: ManagerStaff = {
-      ...staff,
-      name: name.trim(),
-      employeeId: employeeId.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      role,
-      specialization: specialization.trim(),
-    };
+    console.log(
+      "EDIT FORM SUBMITTED"
+    );
 
-    onSave(updatedStaff);
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !specialization.trim()
+    ) {
 
-    onOpenChange(false);
+      console.log(
+        "Validation failed"
+      );
+
+      return;
+    }
+
+
+    try {
+
+      setIsSubmitting(true);
+
+
+      const updatedStaff: ManagerStaff = {
+
+        ...staff,
+
+        name: name.trim(),
+
+        email: email.trim(),
+
+        phone: phone.trim(),
+
+        role,
+
+        specialization:
+          specialization.trim(),
+
+      };
+
+
+      console.log(
+        "Sending updated staff to parent:",
+        updatedStaff
+      );
+
+
+      await onSave(updatedStaff);
+
+
+      console.log(
+        "Parent update completed successfully"
+      );
+
+
+      onOpenChange(false);
+
+    } catch (error) {
+
+      console.error(
+        "Failed to update staff:",
+        error
+      );
+
+    } finally {
+
+      setIsSubmitting(false);
+
+    }
   };
+
 
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
     >
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+
+      <SheetContent
+        className="w-full overflow-y-auto sm:max-w-lg"
+      >
 
         <SheetHeader>
+
           <SheetTitle>
             Edit Staff
           </SheetTitle>
@@ -104,16 +189,19 @@ export default function ManagerEditStaffDrawer({
           <SheetDescription>
             Update employee information and role.
           </SheetDescription>
+
         </SheetHeader>
+
 
         <form
           onSubmit={handleSubmit}
           className="mt-6 space-y-5"
         >
 
-          {/* Name */}
+          {/* NAME */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Full Name
             </label>
@@ -123,27 +211,38 @@ export default function ManagerEditStaffDrawer({
               onChange={(event) =>
                 setName(event.target.value)
               }
+              disabled={isSubmitting}
             />
+
           </div>
 
-          {/* Employee ID */}
+
+          {/* EMPLOYEE ID */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Employee ID
             </label>
 
             <Input
-              value={employeeId}
-              onChange={(event) =>
-                setEmployeeId(event.target.value)
-              }
+              value={staff.employeeId}
+              disabled
+              className="bg-muted"
             />
+
+            <p className="text-xs text-muted-foreground">
+              Employee ID is generated automatically
+              and cannot be changed.
+            </p>
+
           </div>
 
-          {/* Email */}
+
+          {/* EMAIL */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Company Email
             </label>
@@ -154,12 +253,16 @@ export default function ManagerEditStaffDrawer({
               onChange={(event) =>
                 setEmail(event.target.value)
               }
+              disabled={isSubmitting}
             />
+
           </div>
 
-          {/* Phone */}
+
+          {/* PHONE */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Phone
             </label>
@@ -169,12 +272,16 @@ export default function ManagerEditStaffDrawer({
               onChange={(event) =>
                 setPhone(event.target.value)
               }
+              disabled={isSubmitting}
             />
+
           </div>
 
-          {/* Role */}
+
+          {/* ROLE */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Role
             </label>
@@ -184,12 +291,15 @@ export default function ManagerEditStaffDrawer({
               onValueChange={(value) =>
                 setRole(value as StaffRole)
               }
+              disabled={isSubmitting}
             >
+
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
 
               <SelectContent>
+
                 <SelectItem value="Dispatcher">
                   Dispatcher
                 </SelectItem>
@@ -197,13 +307,18 @@ export default function ManagerEditStaffDrawer({
                 <SelectItem value="Technician">
                   Technician
                 </SelectItem>
+
               </SelectContent>
+
             </Select>
+
           </div>
 
-          {/* Specialization */}
+
+          {/* SPECIALIZATION */}
 
           <div className="space-y-2">
+
             <label className="text-sm font-medium">
               Specialization
             </label>
@@ -215,16 +330,20 @@ export default function ManagerEditStaffDrawer({
                   event.target.value
                 )
               }
+              disabled={isSubmitting}
             />
+
           </div>
 
-          {/* Actions */}
+
+          {/* ACTIONS */}
 
           <div className="flex justify-end gap-3 border-t pt-5">
 
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmitting}
               onClick={() =>
                 onOpenChange(false)
               }
@@ -232,8 +351,15 @@ export default function ManagerEditStaffDrawer({
               Cancel
             </Button>
 
-            <Button type="submit">
-              Save Changes
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+
+              {isSubmitting
+                ? "Saving..."
+                : "Save Changes"}
+
             </Button>
 
           </div>
@@ -241,6 +367,7 @@ export default function ManagerEditStaffDrawer({
         </form>
 
       </SheetContent>
+
     </Sheet>
   );
 }

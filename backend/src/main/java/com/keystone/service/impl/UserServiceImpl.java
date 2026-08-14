@@ -1,6 +1,5 @@
 package com.keystone.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +40,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CUSTOMER);
+        user.setPhone(request.getPhone());
         User savedUser = userRepository.save(user);
 
         UserResponse response = new UserResponse();
@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
         response.setEmail(savedUser.getEmail());
         response.setRole(savedUser.getRole());
 
+        
         return response;
     }
 
@@ -64,7 +65,10 @@ public class UserServiceImpl implements UserService {
         	throw new InvalidCredentialsException("Invalid Password");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(
+        	    user.getEmail(),
+        	    user.getRole().name()
+        	);
 
         return new AuthResponse(token, "Login Successful");
     }
