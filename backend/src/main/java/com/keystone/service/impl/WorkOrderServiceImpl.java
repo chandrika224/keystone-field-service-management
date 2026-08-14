@@ -1,7 +1,6 @@
 package com.keystone.service.impl;
 
 import java.time.LocalDateTime;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.keystone.dto.ChangeStatusRequest;
+import com.keystone.dto.CustomerWorkOrderRequest;
 import com.keystone.dto.PartUsageRequest;
 import com.keystone.dto.PartUsageResponse;
 import com.keystone.dto.TimeLogRequest;
@@ -76,6 +76,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     // =========================================================
     // CREATE WORK ORDER
+    // Used by ADMIN / DISPATCHER / MANAGER
     // =========================================================
 
     @Override
@@ -104,9 +105,67 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         workOrder.setScheduledDate(
                 request.getScheduledDate());
 
-        // Initial status
         workOrder.setStatus(
                 WorkOrderStatus.NEW);
+
+        workOrder.setCreatedAt(
+                LocalDateTime.now());
+
+        workOrder.setSlaDueDate(
+                LocalDateTime.now().plusHours(24));
+
+        workOrder.setSlaBreached(false);
+
+        workOrder.setCustomer(customer);
+        workOrder.setTechnician(technician);
+
+        WorkOrder saved =
+                workOrderRepository.save(workOrder);
+
+        return mapToResponse(saved);
+    }
+
+
+    // =========================================================
+    // CREATE WORK ORDER BY CUSTOMER
+    // Customer is identified by logged-in email
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse createCustomerWorkOrder(
+            String email,
+            CustomerWorkOrderRequest request) {
+
+        Customer customer =
+                customerRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Customer not found for email: "
+                                + email));
+
+        WorkOrder workOrder = new WorkOrder();
+
+        workOrder.setTitle(
+                request.getTitle());
+
+        workOrder.setDescription(
+                request.getDescription());
+
+        workOrder.setPriority(
+                request.getPriority());
+
+        workOrder.setScheduledDate(
+                request.getScheduledDate());
+
+        // New customer requests start as NEW
+        workOrder.setStatus(
+                WorkOrderStatus.NEW);
+
+        // Customer comes from authenticated user
+        workOrder.setCustomer(customer);
+
+        // No technician when customer creates request
+        workOrder.setTechnician(null);
 
         // SLA
         workOrder.setCreatedAt(
@@ -117,14 +176,34 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         workOrder.setSlaBreached(false);
 
-        // Customer & Technician
-        workOrder.setCustomer(customer);
-        workOrder.setTechnician(technician);
-
         WorkOrder saved =
                 workOrderRepository.save(workOrder);
 
         return mapToResponse(saved);
+    }
+
+
+    // =========================================================
+    // GET MY WORK ORDERS
+    // =========================================================
+
+    @Override
+    public List<WorkOrderResponse> getMyWorkOrders(
+            String email) {
+
+        Customer customer =
+                customerRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Customer not found for email: "
+                                + email));
+
+        return workOrderRepository
+                .findByCustomerCustomerId(
+                        customer.getCustomerId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
 
@@ -157,191 +236,6 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                                 "Work Order not found"));
 
         return mapToResponse(workOrder);
-    }
-
-
-    // =========================================================
-    // CHANGE WORK ORDER STATUS
-    // =========================================================
-
-    @Override
-    public WorkOrderResponse changeStatus(
-            Long id,
-            ChangeStatusRequest request) {
-
-        WorkOrder workOrder =
-                workOrderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
-
-        // Store old status
-        WorkOrderStatus oldStatus =
-                workOrder.getStatus();
-
-        // Validate transition
-        if (!WorkOrderStatusValidator.isValidTransition(
-                oldStatus,
-                request.getStatus())) {
-
-            throw new IllegalArgumentException(
-                    "Invalid status transition from "
-                    + oldStatus
-                    + " to "
-                    + request.getStatus());
-        }
-
-        // Update status
-        workOrder.setStatus(
-                request.getStatus());
-
-
-        // -----------------------------------------------------
-        // ASSIGNED
-        // -----------------------------------------------------
-
-        if (request.getStatus()
-                == WorkOrderStatus.ASSIGNED) {
-
-            workOrder.setAssignedAt(
-                    LocalDateTime.now());
-
-            // Technician notification
-            emailService.sendEmail(
-
-                    workOrder.getTechnician()
-                            .getEmail(),
-
-                    "Work Order Assigned",
-
-                    "A new work order has been assigned.\n\n"
-                    + "Title : "
-                    + workOrder.getTitle());
-        }
-
-
-        // -----------------------------------------------------
-        // IN PROGRESS
-        // -----------------------------------------------------
-
-        if (request.getStatus()
-                == WorkOrderStatus.IN_PROGRESS) {
-
-            workOrder.setStartedAt(
-                    LocalDateTime.now());
-        }
-
-
-        // -----------------------------------------------------
-        // COMPLETED
-        // -----------------------------------------------------
-
-        if (request.getStatus()
-                == WorkOrderStatus.COMPLETED) {
-
-            workOrder.setCompletedAt(
-                    LocalDateTime.now());
-
-            // SLA check
-            if (workOrder.getSlaDueDate() != null
-                    && workOrder.getCompletedAt()
-                            .isAfter(
-                                    workOrder.getSlaDueDate())) {
-
-                workOrder.setSlaBreached(true);
-            }
-            if (Boolean.TRUE.equals(workOrder.getSlaBreached())) {
-
-                emailService.sendEmail(
-                        workOrder.getCustomer().getEmail(),
-                        "SLA Breached",
-                        "Your work order was completed after the SLA due date."
-                );
-            }
-
-            // Customer notification
-            emailService.sendEmail(
-
-                    workOrder.getCustomer()
-                            .getEmail(),
-
-                    "Work Order Completed",
-
-                    "Your work order has been "
-                    + "completed successfully.");
-        }
-
-
-        // Save updated work order
-        WorkOrder updated =
-                workOrderRepository.save(workOrder);
-
-
-        // -----------------------------------------------------
-        // SAVE STATUS HISTORY
-        // -----------------------------------------------------
-
-        WorkOrderStatusHistory history =
-                new WorkOrderStatusHistory();
-
-        history.setWorkOrder(updated);
-
-        history.setFromStatus(oldStatus);
-
-        history.setToStatus(
-                request.getStatus());
-
-        history.setChangedBy("SYSTEM");
-
-        history.setChangedAt(
-                LocalDateTime.now());
-
-        historyRepository.save(history);
-
-        return mapToResponse(updated);
-    }
-
-
-    // =========================================================
-    // GET STATUS HISTORY
-    // =========================================================
-
-    @Override
-    public List<WorkOrderStatusHistoryResponse>
-            getStatusHistory(Long workOrderId) {
-
-        WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
-
-        return historyRepository
-                .findByWorkOrderOrderByChangedAtDesc(
-                        workOrder)
-                .stream()
-                .map(history -> {
-
-                    WorkOrderStatusHistoryResponse response =
-                            new WorkOrderStatusHistoryResponse();
-
-                    response.setFromStatus(
-                            history.getFromStatus());
-
-                    response.setToStatus(
-                            history.getToStatus());
-
-                    response.setChangedBy(
-                            history.getChangedBy());
-
-                    response.setChangedAt(
-                            history.getChangedAt());
-
-                    return response;
-
-                })
-                .toList();
     }
 
 
@@ -392,6 +286,139 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         WorkOrder updated =
                 workOrderRepository.save(workOrder);
+
+        return mapToResponse(updated);
+    }
+
+
+    // =========================================================
+    // CHANGE STATUS
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse changeStatus(
+            Long id,
+            ChangeStatusRequest request) {
+
+        WorkOrder workOrder =
+                workOrderRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Work Order not found"));
+
+        WorkOrderStatus oldStatus =
+                workOrder.getStatus();
+
+        if (!WorkOrderStatusValidator.isValidTransition(
+                oldStatus,
+                request.getStatus())) {
+
+            throw new IllegalArgumentException(
+                    "Invalid status transition from "
+                    + oldStatus
+                    + " to "
+                    + request.getStatus());
+        }
+
+        workOrder.setStatus(
+                request.getStatus());
+
+        // -----------------------------------------------------
+        // ASSIGNED
+        // -----------------------------------------------------
+
+        if (request.getStatus()
+                == WorkOrderStatus.ASSIGNED) {
+
+            workOrder.setAssignedAt(
+                    LocalDateTime.now());
+
+            if (workOrder.getTechnician() != null) {
+
+                emailService.sendEmail(
+                        workOrder.getTechnician()
+                                .getEmail(),
+
+                        "Work Order Assigned",
+
+                        "A new work order has been assigned.\n\n"
+                        + "Title : "
+                        + workOrder.getTitle());
+            }
+        }
+
+        // -----------------------------------------------------
+        // IN PROGRESS
+        // -----------------------------------------------------
+
+        if (request.getStatus()
+                == WorkOrderStatus.IN_PROGRESS) {
+
+            workOrder.setStartedAt(
+                    LocalDateTime.now());
+        }
+
+        // -----------------------------------------------------
+        // COMPLETED
+        // -----------------------------------------------------
+
+        if (request.getStatus()
+                == WorkOrderStatus.COMPLETED) {
+
+            workOrder.setCompletedAt(
+                    LocalDateTime.now());
+
+            if (workOrder.getSlaDueDate() != null
+                    && workOrder.getCompletedAt()
+                            .isAfter(
+                                    workOrder.getSlaDueDate())) {
+
+                workOrder.setSlaBreached(true);
+            }
+
+            if (Boolean.TRUE.equals(
+                    workOrder.getSlaBreached())) {
+
+                emailService.sendEmail(
+                        workOrder.getCustomer()
+                                .getEmail(),
+
+                        "SLA Breached",
+
+                        "Your work order was completed "
+                        + "after the SLA due date.");
+            }
+
+            emailService.sendEmail(
+                    workOrder.getCustomer()
+                            .getEmail(),
+
+                    "Work Order Completed",
+
+                    "Your work order has been "
+                    + "completed successfully.");
+        }
+
+        WorkOrder updated =
+                workOrderRepository.save(workOrder);
+
+        // -----------------------------------------------------
+        // STATUS HISTORY
+        // -----------------------------------------------------
+
+        WorkOrderStatusHistory history =
+                new WorkOrderStatusHistory();
+
+        history.setWorkOrder(updated);
+        history.setFromStatus(oldStatus);
+        history.setToStatus(
+                request.getStatus());
+
+        history.setChangedBy("SYSTEM");
+        history.setChangedAt(
+                LocalDateTime.now());
+
+        historyRepository.save(history);
 
         return mapToResponse(updated);
     }
@@ -481,60 +508,50 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
 
     // =========================================================
-    // MAP ENTITY TO RESPONSE
+    // STATUS HISTORY
     // =========================================================
 
-    private WorkOrderResponse mapToResponse(
-            WorkOrder workOrder) {
+    @Override
+    public List<WorkOrderStatusHistoryResponse>
+            getStatusHistory(Long workOrderId) {
 
-        WorkOrderResponse response =
-                new WorkOrderResponse();
+        WorkOrder workOrder =
+                workOrderRepository.findById(
+                        workOrderId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Work Order not found"));
 
-        response.setId(
-                workOrder.getId());
+        return historyRepository
+                .findByWorkOrderOrderByChangedAtDesc(
+                        workOrder)
+                .stream()
+                .map(history -> {
 
-        response.setTitle(
-                workOrder.getTitle());
+                    WorkOrderStatusHistoryResponse response =
+                            new WorkOrderStatusHistoryResponse();
 
-        response.setDescription(
-                workOrder.getDescription());
+                    response.setFromStatus(
+                            history.getFromStatus());
 
-        response.setPriority(
-                workOrder.getPriority());
+                    response.setToStatus(
+                            history.getToStatus());
 
-        response.setStatus(
-                workOrder.getStatus());
+                    response.setChangedBy(
+                            history.getChangedBy());
 
-        response.setScheduledDate(
-                workOrder.getScheduledDate());
+                    response.setChangedAt(
+                            history.getChangedAt());
 
-        response.setCompletedDate(
-                workOrder.getCompletedDate());
+                    return response;
 
-        response.setCustomerName(
-                workOrder.getCustomer()
-                        .getCustomerName());
-
-        response.setTechnicianName(
-                workOrder.getTechnician()
-                        .getFirstName()
-                + " "
-                + workOrder.getTechnician()
-                        .getLastName());
-
-        // SLA
-        response.setSlaDueDate(
-                workOrder.getSlaDueDate());
-
-        response.setSlaBreached(
-                workOrder.getSlaBreached());
-
-        return response;
+                })
+                .toList();
     }
 
 
     // =========================================================
-    // ADD TIME LOG
+    // TIME LOG
     // =========================================================
 
     @Override
@@ -550,21 +567,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                                 "Work Order not found"));
 
         Technician technician =
-                technicianRepository
-                        .findById(
-                                request.getTechnicianId())
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Technician not found"));
+                technicianRepository.findById(
+                        request.getTechnicianId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Technician not found"));
 
         TimeLog timeLog =
                 new TimeLog();
 
-        timeLog.setWorkOrder(
-                workOrder);
-
-        timeLog.setTechnician(
-                technician);
+        timeLog.setWorkOrder(workOrder);
+        timeLog.setTechnician(technician);
 
         timeLog.setMinutesWorked(
                 request.getMinutesWorked());
@@ -581,9 +594,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         TimeLogResponse response =
                 new TimeLogResponse();
 
-        response.setId(
-                saved.getId());
-
+        response.setId(saved.getId());
         response.setMinutesWorked(
                 saved.getMinutesWorked());
 
@@ -625,8 +636,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                     TimeLogResponse response =
                             new TimeLogResponse();
 
-                    response.setId(
-                            log.getId());
+                    response.setId(log.getId());
 
                     response.setMinutesWorked(
                             log.getMinutesWorked());
@@ -637,12 +647,15 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                     response.setLoggedAt(
                             log.getLoggedAt());
 
-                    response.setTechnicianName(
-                            log.getTechnician()
-                                    .getFirstName()
-                            + " "
-                            + log.getTechnician()
-                                    .getLastName());
+                    if (log.getTechnician() != null) {
+
+                        response.setTechnicianName(
+                                log.getTechnician()
+                                        .getFirstName()
+                                + " "
+                                + log.getTechnician()
+                                        .getLastName());
+                    }
 
                     return response;
 
@@ -652,7 +665,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
 
     // =========================================================
-    // ADD PART USAGE
+    // PART USAGE
     // =========================================================
 
     @Override
@@ -668,14 +681,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                                 "Work Order not found"));
 
         Inventory inventory =
-                inventoryRepository
-                        .findById(
-                                request.getInventoryId())
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Inventory not found"));
+                inventoryRepository.findById(
+                        request.getInventoryId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Inventory not found"));
 
-        // Check stock
         if (inventory.getQuantity()
                 < request.getQuantityUsed()) {
 
@@ -683,22 +694,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                     "Insufficient stock available");
         }
 
-        // Deduct stock
         inventory.setQuantity(
                 inventory.getQuantity()
                 - request.getQuantityUsed());
 
         inventoryRepository.save(inventory);
 
-        // Create usage record
         PartUsage usage =
                 new PartUsage();
 
-        usage.setWorkOrder(
-                workOrder);
-
-        usage.setInventory(
-                inventory);
+        usage.setWorkOrder(workOrder);
+        usage.setInventory(inventory);
 
         usage.setQuantityUsed(
                 request.getQuantityUsed());
@@ -709,8 +715,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         PartUsageResponse response =
                 new PartUsageResponse();
 
-        response.setId(
-                saved.getId());
+        response.setId(saved.getId());
 
         response.setPartName(
                 inventory.getPartName());
@@ -745,8 +750,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                     PartUsageResponse response =
                             new PartUsageResponse();
 
-                    response.setId(
-                            part.getId());
+                    response.setId(part.getId());
 
                     response.setPartName(
                             part.getInventory()
@@ -760,4 +764,149 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 })
                 .toList();
     }
+
+
+    // =========================================================
+    // MAP ENTITY TO RESPONSE
+    // =========================================================
+
+    private WorkOrderResponse mapToResponse(
+            WorkOrder workOrder) {
+
+        WorkOrderResponse response =
+                new WorkOrderResponse();
+
+        response.setId(
+                workOrder.getId());
+
+        response.setTitle(
+                workOrder.getTitle());
+
+        response.setDescription(
+                workOrder.getDescription());
+
+        response.setPriority(
+                workOrder.getPriority());
+
+        response.setStatus(
+                workOrder.getStatus());
+
+        response.setScheduledDate(
+                workOrder.getScheduledDate());
+
+        response.setCompletedDate(
+                workOrder.getCompletedDate());
+
+        // Customer
+        if (workOrder.getCustomer() != null) {
+
+            response.setCustomerName(
+                    workOrder.getCustomer()
+                            .getCustomerName());
+        }
+
+        // Technician can be NULL for new customer requests
+        if (workOrder.getTechnician() != null) {
+
+            response.setTechnicianName(
+                    workOrder.getTechnician()
+                            .getFirstName()
+                    + " "
+                    + workOrder.getTechnician()
+                            .getLastName());
+
+        } else {
+
+            response.setTechnicianName(
+                    "Unassigned");
+        }
+
+        // SLA
+        response.setSlaDueDate(
+                workOrder.getSlaDueDate());
+
+        response.setSlaBreached(
+                workOrder.getSlaBreached());
+
+        return response;
+    }
+ // =========================================================
+ // UPDATE MY WORK ORDER
+ // Customer can update only their own work order
+ // =========================================================
+
+ @Override
+ public WorkOrderResponse updateMyWorkOrder(
+         String email,
+         Long workOrderId,
+         CustomerWorkOrderRequest request) {
+
+     // Find logged-in customer
+     Customer customer =
+             customerRepository.findByEmail(email)
+             .orElseThrow(() ->
+                     new ResourceNotFoundException(
+                             "Customer not found for email: " + email
+                     )
+             );
+
+     // Find work order
+     WorkOrder workOrder =
+             workOrderRepository.findById(workOrderId)
+             .orElseThrow(() ->
+                     new ResourceNotFoundException(
+                             "Work Order not found"
+                     )
+             );
+
+     // Security check:
+     // Make sure this work order belongs to
+     // the currently logged-in customer
+     if (workOrder.getCustomer() == null ||
+         !workOrder.getCustomer()
+                 .getCustomerId()
+                 .equals(customer.getCustomerId())) {
+
+         throw new ResourceNotFoundException(
+                 "Work Order not found for this customer"
+         );
+     }
+
+     // Don't allow editing cancelled/completed orders
+     if (workOrder.getStatus() == WorkOrderStatus.COMPLETED ||
+         workOrder.getStatus() == WorkOrderStatus.CLOSED ||
+         workOrder.getStatus() == WorkOrderStatus.CANCELLED) {
+
+         throw new IllegalArgumentException(
+                 "This work order cannot be edited"
+         );
+     }
+
+     // Update customer-editable fields
+     workOrder.setTitle(
+             request.getTitle()
+     );
+
+     workOrder.setDescription(
+             request.getDescription()
+     );
+
+     workOrder.setPriority(
+             request.getPriority()
+     );
+
+     workOrder.setScheduledDate(
+             request.getScheduledDate()
+     );
+
+     // IMPORTANT:
+     // Don't change customer
+     // Don't change technician
+     // Don't change status
+
+     WorkOrder updated =
+             workOrderRepository.save(workOrder);
+
+     return mapToResponse(updated);
+ }
 }

@@ -7,6 +7,20 @@ public class UserResponse {
 	private String firstName;
 	private String lastName;
 	private String email;
+	private String phone;
+	private String address;
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
 	private Role role;
 	public UserResponse() {
 		

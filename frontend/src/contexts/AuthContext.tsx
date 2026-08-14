@@ -25,8 +25,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
 
   login: (
-  credentials: LoginRequest
-) => Promise<User>;
+    credentials: LoginRequest
+  ) => Promise<User>;
 
   logout: () => Promise<void>;
 
@@ -34,9 +34,7 @@ interface AuthContextType {
 }
 
 const AuthContext =
-  createContext<AuthContextType | null>(
-    null
-  );
+  createContext<AuthContextType | null>(null);
 
 export function AuthProvider({
   children,
@@ -49,47 +47,75 @@ export function AuthProvider({
   const [loading, setLoading] =
     useState(true);
 
-  const isAuthenticated =
-    !!user;
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     initializeAuth();
   }, []);
 
+  // Restore logged-in user after page refresh
   async function initializeAuth() {
-
+    try {
       const token = getAccessToken();
 
-      if (token) {
-        // Temporary
-        setUser({} as User);
+      if (!token) {
+        setUser(null);
+        return;
       }
 
+      const profile =
+        await authService.getProfile();
+
+      setUser(profile);
+
+    } catch (error) {
+      console.error(
+        "Failed to initialize authentication:",
+        error
+      );
+
+      clearTokens();
+      setUser(null);
+
+    } finally {
       setLoading(false);
     }
-async function login(credentials: LoginRequest): Promise<User> {
-  const response = await authService.login(credentials);
+  }
 
-  console.log("Login Response:", response);
+  // Login
+  async function login(
+    credentials: LoginRequest
+  ): Promise<User> {
 
-  saveAccessToken(response.token);
+    const response =
+      await authService.login(credentials);
 
-  console.log("Token Saved Successfully");
-  console.log("User Role:", response.role);
+    console.log(
+      "Login Response:",
+      response
+    );
 
-  const loggedInUser: User = {
-    id: response.id,
-    firstName: response.firstName,
-    lastName: response.lastName,
-    email: response.email,
-    role: response.role,
-  };
+    saveAccessToken(response.token);
 
-  setUser(loggedInUser);
+    console.log(
+      "Token Saved Successfully"
+    );
 
-  return loggedInUser;
+    console.log(
+      "User Role:",
+      response.role
+    );
 
-}
+    // Get complete user data from database
+    const profile =
+      await authService.getProfile();
+
+    setUser(profile);
+
+    return profile;
+  }
+
+  // Logout
   async function logout() {
     try {
       await authService.logout();
@@ -98,17 +124,24 @@ async function login(credentials: LoginRequest): Promise<User> {
     }
 
     clearTokens();
-
     setUser(null);
   }
 
+  // Refresh current user
   async function refreshUser() {
     try {
       const profile =
         await authService.getProfile();
 
       setUser(profile);
-    } catch {
+
+    } catch (error) {
+      console.error(
+        "Failed to refresh user:",
+        error
+      );
+
+      clearTokens();
       setUser(null);
     }
   }

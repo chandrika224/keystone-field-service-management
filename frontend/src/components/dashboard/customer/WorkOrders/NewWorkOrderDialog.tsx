@@ -5,13 +5,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+
+import { workOrderService } from "@/services/workOrderService";
+
 import { toast } from "sonner";
-import type { CustomerWorkOrder } from "@/types/workOrder";
+
+import type {
+  CustomerWorkOrder,
+  WorkOrderPriority,
+} from "@/types/workOrder";
+
 import { useEffect, useState } from "react";
+
+
+// ============================================================
+// PROPS
+// ============================================================
 
 interface NewWorkOrderDialogProps {
   open: boolean;
@@ -21,6 +35,12 @@ interface NewWorkOrderDialogProps {
 
   editingWorkOrder?: CustomerWorkOrder | null;
 }
+
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 export default function NewWorkOrderDialog({
   open,
   onOpenChange,
@@ -29,198 +49,543 @@ export default function NewWorkOrderDialog({
 }: NewWorkOrderDialogProps) {
 
   const [service, setService] = useState("");
-  const [priority, setPriority] = useState("Medium");
+
+  const [priority, setPriority] =
+    useState<WorkOrderPriority>("MEDIUM");
+
   const [date, setDate] = useState("");
+
   const [time, setTime] = useState("");
+
   const [address, setAddress] = useState("");
-  const [description, setDescription] = useState("");
+
+  const [description, setDescription] =
+    useState("");
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+
+  // ==========================================================
+  // LOAD EDITING DATA
+  // ==========================================================
 
   useEffect(() => {
-  if (editingWorkOrder) {
-    setService(editingWorkOrder.service);
 
-    // These fields don't exist in CustomerWorkOrder yet,
-    // so leave defaults for now.
-    setPriority("Medium");
-    setDate(editingWorkOrder.date);
-    setTime("");
-    setAddress("");
-    setDescription("");
-  } else {
-    setService("");
-    setPriority("Medium");
-    setDate("");
-    setTime("");
-    setAddress("");
-    setDescription("");
-  }
-}, [editingWorkOrder, open]);
+    if (editingWorkOrder) {
 
-  const handleSubmit = () => {
+      setService(
+        editingWorkOrder.title
+      );
 
-      if (!service) {
-        toast.error("Please select a service.");
-        return;
-      }
+      setPriority(
+        editingWorkOrder.priority ?? "MEDIUM"
+      );
 
-      if (!date) {
-        toast.error("Please select a preferred date.");
-        return;
-      }
+      setDate(
+        editingWorkOrder.scheduledDate ?? ""
+      );
 
-      if (!time) {
-        toast.error("Please select a preferred time.");
-        return;
-      }
+      setTime("");
 
-      if (!address.trim()) {
-        toast.error("Please enter your address.");
-        return;
-      }
+      setAddress("");
 
-      if (description.trim().length < 10) {
-        toast.error("Description should be at least 10 characters.");
-        return;
-      }
+      setDescription(
+        editingWorkOrder.description ?? ""
+      );
 
-      const newWorkOrder: CustomerWorkOrder = {
-        id: editingWorkOrder
-          ? editingWorkOrder.id
-          : `WO-${1000 + Date.now()}`,
+    } else {
 
-        service,
+      setService("");
 
-        technician: editingWorkOrder
-          ? editingWorkOrder.technician
-          : "Unassigned",
+      setPriority("MEDIUM");
 
-        status: editingWorkOrder
-          ? editingWorkOrder.status
-          : "NEW",
+      setDate("");
 
-        date: editingWorkOrder
-          ? editingWorkOrder.date
-          : new Date().toLocaleDateString(),
+      setTime("");
+
+      setAddress("");
+
+      setDescription("");
+    }
+
+  }, [editingWorkOrder, open]);
+
+
+  // ==========================================================
+  // SUBMIT
+  // CREATE OR UPDATE
+  // ==========================================================
+
+  const handleSubmit = async () => {
+
+    // --------------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------------
+
+    if (!service.trim()) {
+
+      toast.error(
+        "Please select a service."
+      );
+
+      return;
+    }
+
+
+    if (!date) {
+
+      toast.error(
+        "Please select a preferred date."
+      );
+
+      return;
+    }
+
+
+    if (!time) {
+
+      toast.error(
+        "Please select a preferred time."
+      );
+
+      return;
+    }
+
+
+    if (!address.trim()) {
+
+      toast.error(
+        "Please enter your address."
+      );
+
+      return;
+    }
+
+
+    if (description.trim().length < 10) {
+
+      toast.error(
+        "Description should be at least 10 characters."
+      );
+
+      return;
+    }
+
+
+    // --------------------------------------------------------
+    // API REQUEST
+    // --------------------------------------------------------
+
+    try {
+
+      setSubmitting(true);
+
+
+      const request = {
+
+        title: service,
+
+        description:
+          description.trim(),
+
+        priority,
+
+        scheduledDate: date,
       };
-      console.log("Submitting:", newWorkOrder);
 
-      onSubmit(newWorkOrder);
+
+      let backendOrder;
+
+
+      // ======================================================
+      // UPDATE EXISTING WORK ORDER
+      // ======================================================
+
+      if (editingWorkOrder) {
+
+        backendOrder =
+          await workOrderService.updateMyWorkOrder(
+
+            Number(
+              editingWorkOrder.id
+            ),
+
+            request
+          );
+
+        console.log(
+          "Updated Work Order:",
+          backendOrder
+        );
+
+      }
+
+
+      // ======================================================
+      // CREATE NEW WORK ORDER
+      // ======================================================
+
+      else {
+
+        backendOrder =
+          await workOrderService.createMyWorkOrder(
+            request
+          );
+
+        console.log(
+          "Created Work Order:",
+          backendOrder
+        );
+      }
+
+
+      // ======================================================
+      // CONVERT BACKEND RESPONSE
+      // TO FRONTEND MODEL
+      // ======================================================
+
+      const frontendOrder: CustomerWorkOrder = {
+
+        id: String(
+          backendOrder.id
+        ),
+
+        title:
+          backendOrder.title,
+
+        description:
+          backendOrder.description,
+
+        priority:
+          backendOrder.priority,
+
+        status:
+          backendOrder.status,
+
+        scheduledDate:
+          backendOrder.scheduledDate,
+
+        service:
+          backendOrder.title,
+
+        technician:
+          backendOrder.technicianName ??
+          editingWorkOrder?.technician ??
+          "Unassigned",
+
+        date:
+          backendOrder.scheduledDate,
+      };
+
+
+      // ======================================================
+      // SEND TO WORKORDERS PAGE
+      // ======================================================
+
+      onSubmit(
+        frontendOrder
+      );
+
+
+      // ======================================================
+      // SUCCESS MESSAGE
+      // ======================================================
 
       toast.success(
+
         editingWorkOrder
           ? "Work Order Updated Successfully!"
           : "Service Request Submitted Successfully!"
+
       );
-    };
+
+
+      onOpenChange(false);
+
+
+    } catch (error: any) {
+
+      console.error(
+        "Failed to save work order:",
+        error
+      );
+
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        "Failed to save work order.";
+
+
+      toast.error(
+
+        typeof message === "string"
+          ? message
+          : "Failed to save work order."
+
+      );
+
+
+    } finally {
+
+      setSubmitting(false);
+    }
+  };
+
+
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
+
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
     >
+
       <DialogContent className="max-w-2xl">
 
         <DialogHeader>
 
           <DialogTitle>
-            Create Service Request
+
+            {editingWorkOrder
+              ? "Edit Work Order"
+              : "Create Service Request"}
+
           </DialogTitle>
+
+
+          <DialogDescription>
+
+            {editingWorkOrder
+              ? "Update your service request details."
+              : "Fill in the details below to create a new work order."}
+
+          </DialogDescription>
 
         </DialogHeader>
 
-          <DialogDescription>
-            Fill in the details below to create a new work order.
-          </DialogDescription>
-              <div className="space-y-2">
-                <Label>Service Type</Label>
 
-                <select
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
-                >
-                  <option value="">Select Service</option>
-                  <option>AC Repair</option>
-                  <option>Electrical</option>
-                  <option>Plumbing</option>
-                  <option>Painting</option>
-                  <option>Cleaning</option>
-                </select>
-              </div>
+        <div className="space-y-5">
 
-              <div className="space-y-2">
-                <Label>Priority</Label>
 
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
-                >
-                  <option>Low</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                </select>
-              </div>
+          {/* ==================================================
+              SERVICE
+              ================================================== */}
 
-              <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
 
-                <div className="space-y-2">
-                  <Label>Preferred Date</Label>
+            <Label>
+              Service Type
+            </Label>
 
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Preferred Time</Label>
+            <select
+              value={service}
+              onChange={(e) =>
+                setService(e.target.value)
+              }
+              className="w-full rounded-md border px-3 py-2"
+            >
 
-                  <Input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                  />
-                </div>
+              <option value="">
+                Select Service
+              </option>
 
-              </div>
+              <option value="AC Repair">
+                AC Repair
+              </option>
 
-              <div className="space-y-2">
-                <Label>Address</Label>
+              <option value="Electrical">
+                Electrical
+              </option>
 
-                <Textarea
-                  rows={3}
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
+              <option value="Plumbing">
+                Plumbing
+              </option>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
+              <option value="Painting">
+                Painting
+              </option>
 
-                <Textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-      <div className="mt-8 flex justify-end gap-3">
+              <option value="Cleaning">
+                Cleaning
+              </option>
 
-        <Button
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-        >
-          Cancel
-        </Button>
+            </select>
 
-        <Button onClick={handleSubmit}>
-          Submit Request
-        </Button>
-        
+          </div>
 
-      </div>
+
+          {/* ==================================================
+              PRIORITY
+              ================================================== */}
+
+          <div className="space-y-2">
+
+            <Label>
+              Priority
+            </Label>
+
+
+            <select
+              value={priority}
+              onChange={(e) =>
+                setPriority(
+                  e.target.value as WorkOrderPriority
+                )
+              }
+              className="w-full rounded-md border px-3 py-2"
+            >
+
+              <option value="LOW">
+                Low
+              </option>
+
+              <option value="MEDIUM">
+                Medium
+              </option>
+
+              <option value="HIGH">
+                High
+              </option>
+
+            </select>
+
+          </div>
+
+
+          {/* ==================================================
+              DATE + TIME
+              ================================================== */}
+
+          <div className="grid grid-cols-2 gap-4">
+
+            <div className="space-y-2">
+
+              <Label>
+                Preferred Date
+              </Label>
+
+
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) =>
+                  setDate(e.target.value)
+                }
+              />
+
+            </div>
+
+
+            <div className="space-y-2">
+
+              <Label>
+                Preferred Time
+              </Label>
+
+
+              <Input
+                type="time"
+                value={time}
+                onChange={(e) =>
+                  setTime(e.target.value)
+                }
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* ==================================================
+              ADDRESS
+              ================================================== */}
+
+          <div className="space-y-2">
+
+            <Label>
+              Address
+            </Label>
+
+
+            <Textarea
+              rows={3}
+              value={address}
+              onChange={(e) =>
+                setAddress(e.target.value)
+              }
+              placeholder="Enter service address"
+            />
+
+          </div>
+
+
+          {/* ==================================================
+              DESCRIPTION
+              ================================================== */}
+
+          <div className="space-y-2">
+
+            <Label>
+              Description
+            </Label>
+
+
+            <Textarea
+              rows={4}
+              value={description}
+              onChange={(e) =>
+                setDescription(e.target.value)
+              }
+              placeholder="Describe the problem..."
+            />
+
+          </div>
+
+        </div>
+
+
+        {/* ====================================================
+            BUTTONS
+            ==================================================== */}
+
+        <div className="mt-8 flex justify-end gap-3">
+
+          <Button
+            variant="outline"
+            disabled={submitting}
+            onClick={() =>
+              onOpenChange(false)
+            }
+          >
+            Cancel
+          </Button>
+
+
+          <Button
+            disabled={submitting}
+            onClick={handleSubmit}
+          >
+
+            {submitting
+              ? editingWorkOrder
+                ? "Updating..."
+                : "Submitting..."
+              : editingWorkOrder
+                ? "Update Request"
+                : "Submit Request"}
+
+          </Button>
+
+        </div>
+
       </DialogContent>
+
     </Dialog>
   );
 }

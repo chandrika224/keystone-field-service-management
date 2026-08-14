@@ -3,16 +3,33 @@ package com.keystone.dto;
 import com.keystone.enums.Role;
 
 public class AuthResponse {
+	private Long id;
+	private String firstName;
+	private String lastName;
+	private String email;
+	private String phone;
+	private String address;
+	private Role role;
+	private String token;
+	private String message;
 
-    private String token;
-    private String message;
-    private Role role;
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
+    public String getPhone() {
+		return phone;
+	}
 
-    public AuthResponse() {
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public AuthResponse() {
     }
 
     public AuthResponse(

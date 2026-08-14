@@ -48,15 +48,27 @@ export const authService = {
 
     return response.data;
   },
+getProfile: async (): Promise<User> => {
+  const response = await api.get<User>(
+    `${AUTH_URL}/profile`
+  );
 
-  getProfile: async (): Promise<User> => {
+  return response.data;
+},
 
-    const response = await api.get<User>(
-      `${AUTH_URL}/profile`
-    );
+updateProfile: async (request: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+}): Promise<User> => {
+  const response = await api.put<User>(
+    `${AUTH_URL}/profile`,
+    request
+  );
 
-    return response.data;
-  },
+  return response.data;
+},
 
   logout: async (): Promise<void> => {
     await api.post(`${AUTH_URL}/logout`);

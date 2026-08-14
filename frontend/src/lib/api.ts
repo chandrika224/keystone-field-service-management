@@ -9,31 +9,45 @@ const api = axios.create({
   },
 });
 
-// Attach JWT only to protected API requests
+
+// ============================================================
+// JWT INTERCEPTOR
+// ============================================================
+
 api.interceptors.request.use(
   (config) => {
+
     const publicEndpoints = [
-      "/user/v1/register",
-      "/user/v1/login",
+      "/auth/register",
+      "/auth/login",
     ];
 
-    const isPublicEndpoint = publicEndpoints.some((endpoint) =>
-      config.url?.includes(endpoint)
-    );
+    const isPublicEndpoint =
+      publicEndpoints.some((endpoint) =>
+        config.url?.includes(endpoint)
+      );
 
+
+    // Add JWT to protected endpoints
     if (!isPublicEndpoint) {
+
       const token = getAccessToken();
 
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+
+        config.headers.Authorization =
+          `Bearer ${token}`;
+
       }
     }
 
     return config;
   },
+
   (error) => {
     return Promise.reject(error);
   }
 );
+
 
 export default api;

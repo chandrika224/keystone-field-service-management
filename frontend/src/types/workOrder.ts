@@ -7,18 +7,37 @@ export type WorkOrderStatus =
   | "CLOSED"
   | "CANCELLED";
 
+export type WorkOrderPriority =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH";
+
+
 export interface CustomerWorkOrder {
   id: string;
-  service: string;
-  technician: string;
+
+  title: string;
+  description: string;
+
+  priority: WorkOrderPriority;
+
   status: WorkOrderStatus;
+
+  scheduledDate: string;
+
+  technician: string;
+
+  // Keep these because your existing UI uses them
+  service: string;
   date: string;
 }
 
-export interface DispatcherWorkOrder extends CustomerWorkOrder {
+
+export interface DispatcherWorkOrder
+  extends CustomerWorkOrder {
   customer: string;
-  priority: "High" | "Medium" | "Low";
 }
+
 
 export interface Technician {
   id: string;
