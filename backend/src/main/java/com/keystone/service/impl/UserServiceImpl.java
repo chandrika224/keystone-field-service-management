@@ -1,6 +1,5 @@
 package com.keystone.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,10 +20,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-	private final UserRepository userRepository;
-
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
     private final JwtService jwtService;
 
     @Override
@@ -39,8 +36,13 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        // Every new registration is a CUSTOMER
         user.setRole(Role.CUSTOMER);
+
         User savedUser = userRepository.save(user);
 
         UserResponse response = new UserResponse();
@@ -58,14 +60,26 @@ public class UserServiceImpl implements UserService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-        		.orElseThrow(() -> new InvalidCredentialsException("Invalid Email"));
+                .orElseThrow(() ->
+                        new InvalidCredentialsException("Invalid Email"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-        	throw new InvalidCredentialsException("Invalid Password");
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword())) {
+
+            throw new InvalidCredentialsException("Invalid Password");
         }
 
         String token = jwtService.generateToken(user.getEmail());
 
-        return new AuthResponse(token, "Login Successful");
+        return new AuthResponse(
+                token,
+                "Login Successful",
+                user.getRole(),
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail()
+        );
     }
 }

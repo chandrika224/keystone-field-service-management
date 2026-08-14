@@ -25,8 +25,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
 
   login: (
-    credentials: LoginRequest
-  ) => Promise<void>;
+  credentials: LoginRequest
+) => Promise<User>;
 
   logout: () => Promise<void>;
 
@@ -67,19 +67,29 @@ export function AuthProvider({
 
       setLoading(false);
     }
+async function login(credentials: LoginRequest): Promise<User> {
+  const response = await authService.login(credentials);
 
-  async function login(
-      credentials: LoginRequest
-    ) {
-      const response =
-        await authService.login(credentials);
+  console.log("Login Response:", response);
 
-      saveAccessToken(response.accessToken);
+  saveAccessToken(response.token);
 
-      // Temporary until profile API is ready
-      setUser({} as User);
-    }
+  console.log("Token Saved Successfully");
+  console.log("User Role:", response.role);
 
+  const loggedInUser: User = {
+    id: response.id,
+    firstName: response.firstName,
+    lastName: response.lastName,
+    email: response.email,
+    role: response.role,
+  };
+
+  setUser(loggedInUser);
+
+  return loggedInUser;
+
+}
   async function logout() {
     try {
       await authService.logout();

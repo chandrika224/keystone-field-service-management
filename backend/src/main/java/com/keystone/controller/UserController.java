@@ -37,8 +37,13 @@ public class UserController {
     @Operation(summary = "Login User")
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-    	log.info("user logged in: {}" +request);
-        return userService.login(request);
+
+        AuthResponse response = userService.login(request);
+
+        System.out.println("LOGIN ROLE = " + response.getRole());
+        System.out.println("LOGIN RESPONSE = " + response);
+
+        return response;
     }
 
 }

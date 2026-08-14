@@ -3,8 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveAccessToken } from "@/utils/token";
-import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   loginSchema,
@@ -22,6 +21,8 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
+
+  const { login } = useAuth();
 
   const {
     handleSubmit,
@@ -43,19 +44,32 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
 
-      // ==========================================
-      // LOGIN
-      // ==========================================
+      const user = await login(data);
 
-      const response = await authService.login(data);
+      console.log("Logged in user:", user);
 
-      console.log("Login Response:", response);
+      switch (user.role) {
 
-      saveAccessToken(response.token);
+        case "CUSTOMER":
+          navigate("/customer/dashboard");
+          break;
 
-      console.log("Token Saved Successfully");
+        case "DISPATCHER":
+          navigate("/dispatcher/dashboard");
+          break;
 
-      navigate("/customer/dashboard");
+        case "TECHNICIAN":
+          navigate("/technician/dashboard");
+          break;
+
+        case "MANAGER":
+          navigate("/manager/dashboard");
+          break;
+
+        default:
+          console.error("Unknown role:", user.role);
+          navigate("/login");
+      }
 
     } catch (error) {
 
@@ -130,7 +144,6 @@ export default function LoginForm() {
           >
             Register
           </Link>
-
         </p>
 
       </form>

@@ -11,6 +11,7 @@ import type {
 const AUTH_URL = "/auth";
 
 export const authService = {
+
   register: async (
     request: RegisterRequest
   ): Promise<string> => {
@@ -23,20 +24,23 @@ export const authService = {
   },
 
   login: async (
-      credentials: LoginRequest
-    ): Promise<LoginResponse> => {
+  credentials: LoginRequest
+): Promise<LoginResponse> => {
 
-      const response = await api.post<LoginResponse>(
-        "/auth/login",
-        credentials
-      );
+  const response = await api.post<LoginResponse>(
+    `${AUTH_URL}/login`,
+    credentials
+  );
 
-      return response.data;
-    },
+  console.log("AUTH SERVICE RESPONSE:", response.data);
+
+  return response.data;
+},
 
   refreshToken: async (
     request: RefreshTokenRequest
   ): Promise<RefreshTokenResponse> => {
+
     const response = await api.post<RefreshTokenResponse>(
       `${AUTH_URL}/refresh`,
       request
@@ -46,6 +50,7 @@ export const authService = {
   },
 
   getProfile: async (): Promise<User> => {
+
     const response = await api.get<User>(
       `${AUTH_URL}/profile`
     );

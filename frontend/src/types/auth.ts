@@ -28,6 +28,15 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   message: string;
+  role:
+    | "CUSTOMER"
+    | "DISPATCHER"
+    | "TECHNICIAN"
+    | "MANAGER";
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 export interface RefreshTokenRequest {
