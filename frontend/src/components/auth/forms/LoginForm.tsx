@@ -1,9 +1,9 @@
+// LoginForm.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { useAuth } from "@/contexts/AuthContext";
+ // Import useAuth
 
 import {
   loginSchema,
@@ -15,26 +15,20 @@ import PasswordField from "../PasswordField";
 import RememberMe from "../RememberMe";
 import AuthButton from "../AuthButton";
 import AuthHeader from "../AuthHeader";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginForm() {
-
   const [rememberMe, setRememberMe] = useState(false);
-
+  const { login } = useAuth(); // Destructure login from AuthContext
   const navigate = useNavigate();
-
-  const { login } = useAuth();
 
   const {
     handleSubmit,
     watch,
     setValue,
-    formState: {
-      errors,
-      isSubmitting,
-    },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-
     defaultValues: {
       email: "",
       password: "",
@@ -43,53 +37,45 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-
+      // Call AuthContext login (handles token save + profile fetch + state update)
       const user = await login(data);
 
-      console.log("Logged in user:", user);
+      const role = user.role;
 
-      switch (user.role) {
+      if (!role) {
+        console.error("Role not found on user object");
+        return;
+      }
 
-        case "CUSTOMER":
-          navigate("/customer/dashboard");
-          break;
-
-        case "DISPATCHER":
-          navigate("/dispatcher/dashboard");
-          break;
-
-        case "TECHNICIAN":
-          navigate("/technician/dashboard");
-          break;
-
+      // Redirect based on user role
+      switch (role.toUpperCase()) {
+        case "ADMIN":
         case "MANAGER":
           navigate("/manager/dashboard");
           break;
-
+        case "DISPATCHER":
+          navigate("/dispatcher/dashboard");
+          break;
+        case "TECHNICIAN":
+          navigate("/technician/dashboard");
+          break;
+        case "CUSTOMER":
+          navigate("/customer/dashboard");
+          break;
         default:
-          console.error("Unknown role:", user.role);
+          console.error("Unknown user role:", role);
           navigate("/login");
       }
-
     } catch (error) {
-
       console.error("Login failed:", error);
-
     }
   };
 
   return (
     <>
-      <AuthHeader
-        title="Welcome Back"
-        subtitle="Sign in to your account"
-      />
+      <AuthHeader title="Welcome Back" subtitle="Sign in to your account" />
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-6"
-      >
-
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <InputField
           label="Email"
           type="email"
@@ -97,9 +83,7 @@ export default function LoginForm() {
           value={watch("email")}
           error={errors.email?.message}
           onChange={(value) =>
-            setValue("email", value, {
-              shouldValidate: true,
-            })
+            setValue("email", value, { shouldValidate: true })
           }
         />
 
@@ -109,43 +93,25 @@ export default function LoginForm() {
           value={watch("password")}
           error={errors.password?.message}
           onChange={(value) =>
-            setValue("password", value, {
-              shouldValidate: true,
-            })
+            setValue("password", value, { shouldValidate: true })
           }
         />
 
         <div className="flex items-center justify-between">
-
-          <RememberMe
-            checked={rememberMe}
-            onCheckedChange={setRememberMe}
-          />
-
-          <Link
-            to="/forgot-password"
-            className="text-sm text-primary hover:underline"
-          >
+          <RememberMe checked={rememberMe} onCheckedChange={setRememberMe} />
+          <Link to="/forgot-password" className="text-sm text-primary hover:underline">
             Forgot Password?
           </Link>
-
         </div>
 
-        <AuthButton loading={isSubmitting}>
-          Sign In
-        </AuthButton>
+        <AuthButton loading={isSubmitting}>Sign In</AuthButton>
 
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-
-          <Link
-            to="/register"
-            className="font-semibold text-primary hover:underline"
-          >
+          <Link to="/register" className="font-semibold text-primary hover:underline">
             Register
           </Link>
         </p>
-
       </form>
     </>
   );

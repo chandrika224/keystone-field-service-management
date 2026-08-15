@@ -11,6 +11,7 @@ import {
   registerSchema,
   type RegisterFormValues,
 } from "@/schemas/registerSchema";
+import type { RegisterRequest } from "@/types/auth";
 
 export default function RegisterForm() {
 
@@ -38,29 +39,40 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const onSubmit = async (
-  data: RegisterFormValues
-) => {
+  const onSubmit = async (data: RegisterFormValues) => {
   try {
-    const message = await authService.register({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
+
+    const payload: RegisterRequest = {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      email: data.email.trim(),
+      phone: data.phone.trim(),
       password: data.password,
       confirmPassword: data.confirmPassword,
       termsAccepted: data.acceptTerms,
-    });
+    };
 
-    console.log(message);
+    console.log("REGISTER PAYLOAD:", payload);
+
+    const message =
+      await authService.register(payload);
+
+    console.log(
+      "Registration successful:",
+      message
+    );
 
     navigate("/login");
 
   } catch (error) {
-    console.error(error);
+
+    console.error(
+      "Registration failed:",
+      error
+    );
+
   }
 };
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -167,7 +179,6 @@ export default function RegisterForm() {
         Create Account
       </AuthButton>
 
-      
 
     </form>
   );

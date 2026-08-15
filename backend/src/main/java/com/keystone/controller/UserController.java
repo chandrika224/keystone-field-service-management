@@ -1,13 +1,13 @@
 package com.keystone.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 
 import com.keystone.dto.AuthResponse;
 import com.keystone.dto.LoginRequest;
@@ -34,11 +34,10 @@ public class UserController {
     @Operation(summary = "Register User")
     @PostMapping("/register")
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
-    	UserResponse response = userService.register(request);
-    	log.info("user registration successful: {}" +request);
+        UserResponse response = userService.register(request);
+        log.info("User registration successful: {}", request.getEmail());
         return response;
     }
-    
 
     @Operation(summary = "Login User")
     @PostMapping("/login")
@@ -46,11 +45,11 @@ public class UserController {
 
         AuthResponse response = userService.login(request);
 
-        System.out.println("LOGIN ROLE = " + response.getRole());
-        System.out.println("LOGIN RESPONSE = " + response);
+        log.info("User logged in successfully: {}", request.getEmail());
 
         return response;
     }
+
     @Operation(summary = "Update User Profile")
     @PutMapping("/profile")
     public UserResponse updateProfile(
@@ -61,6 +60,7 @@ public class UserController {
 
         return userService.updateProfile(email, request);
     }
+
     @Operation(summary = "Get Current User Profile")
     @GetMapping("/profile")
     public UserResponse getProfile(Authentication authentication) {
@@ -69,6 +69,7 @@ public class UserController {
 
         return userService.getProfile(email);
     }
+
     @Operation(summary = "Logout User")
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
@@ -77,5 +78,4 @@ public class UserController {
 
         return ResponseEntity.ok("Logout successful");
     }
-
 }
