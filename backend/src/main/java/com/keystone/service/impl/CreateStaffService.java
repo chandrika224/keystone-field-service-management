@@ -1,5 +1,6 @@
 package com.keystone.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,6 +79,8 @@ public class CreateStaffService {
 	        user.setRole(role);
 
 	        user.setActive(true);
+	        
+	        user.setJoinedDate(LocalDateTime.now());
 
 	        // 5. Generate temporary password
 	        String temporaryPassword =

@@ -55,6 +55,7 @@ public class UpdateStaff {
 	    user.setPhone(request.getPhone());
 	    user.setRole(request.getRole());
 	    user.setSpecialization(request.getSpecialization());
+	    
 
 	    User updatedUser = userRepository.save(user);
 
