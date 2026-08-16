@@ -16,17 +16,20 @@ import {
 } from "lucide-react";
 
 import StatusBadge from "@/components/common/StatusBadge";
-import type { CustomerWorkOrder } from "@/types/workOrder";
+import type {
+  WorkOrderResponse,
+  WorkOrderStatus,
+} from "@/types/workOrder";
 import WorkOrderTimeline from "./WorkOrderTimeline";
 import { Button } from "@/components/ui/button";
 
 interface WorkOrderDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  workOrder: CustomerWorkOrder | null;
+  workOrder: WorkOrderResponse | null;
 
-  onCancel: (id: string) => void;
-  onEdit: (order: CustomerWorkOrder) => void;
+  onCancel: (id: number) => void;
+  onEdit: (order: WorkOrderResponse) => void;
 }
 
 export default function WorkOrderDetailsDrawer({
@@ -54,7 +57,7 @@ export default function WorkOrderDetailsDrawer({
           <div className="space-y-3">
 
             <SheetTitle className="text-2xl font-bold">
-              {workOrder.service}
+              {workOrder.title}
             </SheetTitle>
 
             <SheetDescription className="text-base">
@@ -78,42 +81,60 @@ export default function WorkOrderDetailsDrawer({
               </h3>
 
               <div className="flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4 text-primary" />
                   <span>Service</span>
                 </div>
 
                 <span className="font-medium">
-                  {workOrder.service}
+                  {workOrder.title}
                 </span>
-
               </div>
 
               <div className="flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <UserRound className="h-4 w-4 text-primary" />
                   <span>Technician</span>
                 </div>
 
                 <span className="font-medium">
-                  {workOrder.technician}
+                  {workOrder.technicianName}
                 </span>
-
               </div>
 
               <div className="flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-primary" />
-                  <span>Created</span>
+                  <span>Scheduled</span>
                 </div>
 
                 <span className="font-medium">
-                  {workOrder.date}
+                  {workOrder.scheduledDate}
                 </span>
+              </div>
 
+              <div className="space-y-2">
+                <h4 className="font-medium">Description</h4>
+
+                <p className="text-sm text-muted-foreground">
+                  {workOrder.description}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span>Priority</span>
+
+                <span className="font-medium">
+                  {workOrder.priority}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span>SLA Due</span>
+
+                <span className="font-medium">
+                  {new Date(workOrder.slaDueDate).toLocaleString()}
+                </span>
               </div>
 
             </CardContent>

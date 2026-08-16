@@ -3,6 +3,7 @@ package com.keystone.dto;
 import java.time.LocalDate;
 
 import com.keystone.enums.Priority;
+import com.keystone.enums.ServiceType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,14 +16,24 @@ public class CustomerWorkOrderRequest {
     @NotBlank(message = "Description is required")
     private String description;
 
+    @NotNull(message = "Service type is required")
+    private ServiceType serviceType;
+
     @NotNull(message = "Priority is required")
     private Priority priority;
 
     @NotNull(message = "Scheduled date is required")
     private LocalDate scheduledDate;
 
+    @NotBlank(message = "Address is required")
+    private String address;
+
     public CustomerWorkOrderRequest() {
     }
+
+    // ============================================================
+    // GETTERS / SETTERS
+    // ============================================================
 
     public String getTitle() {
         return title;
@@ -40,6 +51,14 @@ public class CustomerWorkOrderRequest {
         this.description = description;
     }
 
+    public ServiceType getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(ServiceType serviceType) {
+        this.serviceType = serviceType;
+    }
+
     public Priority getPriority() {
         return priority;
     }
@@ -54,5 +73,13 @@ public class CustomerWorkOrderRequest {
 
     public void setScheduledDate(LocalDate scheduledDate) {
         this.scheduledDate = scheduledDate;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 }

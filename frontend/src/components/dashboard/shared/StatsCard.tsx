@@ -1,17 +1,12 @@
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  TrendingUp,
-  TrendingDown,
-  type LucideIcon,
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   description?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   trend?: string;
-  trendType?: "up" | "down";
+  trendType?: "positive" | "negative" | "neutral";
 }
 
 export default function StatsCard({
@@ -20,78 +15,54 @@ export default function StatsCard({
   description,
   icon: Icon,
   trend,
-  trendType = "up",
+  trendType = "neutral",
 }: StatsCardProps) {
   return (
-    <Card
-      className="
-        rounded-2xl
-        border
-        shadow-sm
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:shadow-lg
-      "
-    >
-      <CardContent className="space-y-5 p-6">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {title}
-            </p>
-
-            <h2 className="mt-2 text-4xl font-bold tracking-tight">
-              {value}
-            </h2>
-          </div>
-
-          <div
-            className="
-              flex
-              h-12
-              w-12
-              items-center
-              justify-center
-              rounded-xl
-              bg-primary/10
-            "
-          >
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-
+    <div className="w-full min-w-0 rounded-2xl border bg-card p-6 shadow-sm">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-muted-foreground">
+            {title}
+          </p>
         </div>
 
-        {/* Trend */}
-        {trend && (
-          <div
-            className={`flex items-center gap-1 text-sm font-medium ${
-              trendType === "up"
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-          >
-            {trendType === "up" ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
-            )}
-
-            <span>{trend}</span>
+        {/* Icon */}
+        {Icon && (
+          <div className="shrink-0 rounded-xl bg-muted p-3">
+            <Icon className="h-5 w-5 text-muted-foreground" />
           </div>
         )}
+      </div>
 
-        {/* Description */}
-        {description && (
-          <p className="text-sm text-muted-foreground">
-            {description}
-          </p>
-        )}
+      {/* Value */}
+      <div className="mt-5">
+        <p className="text-3xl font-bold tracking-tight">
+          {value}
+        </p>
+      </div>
 
-      </CardContent>
-    </Card>
+      {/* Description */}
+      {description && (
+        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
+
+      {/* Trend */}
+      {trend && (
+        <p
+          className={`mt-4 text-sm font-medium ${
+            trendType === "positive"
+              ? "text-green-600"
+              : trendType === "negative"
+                ? "text-red-600"
+                : "text-muted-foreground"
+          }`}
+        >
+          {trend}
+        </p>
+      )}
+    </div>
   );
 }

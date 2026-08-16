@@ -16,7 +16,6 @@ import com.keystone.dto.TimeLogResponse;
 import com.keystone.dto.WorkOrderRequest;
 import com.keystone.dto.WorkOrderResponse;
 import com.keystone.dto.WorkOrderStatusHistoryResponse;
-
 import com.keystone.entity.Customer;
 import com.keystone.entity.Inventory;
 import com.keystone.entity.PartUsage;
@@ -24,12 +23,9 @@ import com.keystone.entity.Technician;
 import com.keystone.entity.TimeLog;
 import com.keystone.entity.WorkOrder;
 import com.keystone.entity.WorkOrderStatusHistory;
-
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
-
 import com.keystone.exception.ResourceNotFoundException;
-
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.InventoryRepository;
 import com.keystone.repository.PartUsageRepository;
@@ -37,12 +33,14 @@ import com.keystone.repository.TechnicianRepository;
 import com.keystone.repository.TimeLogRepository;
 import com.keystone.repository.WorkOrderRepository;
 import com.keystone.repository.WorkOrderStatusHistoryRepository;
-
 import com.keystone.service.EmailService;
 import com.keystone.service.WorkOrderService;
 import com.keystone.util.WorkOrderStatusValidator;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class WorkOrderServiceImpl implements WorkOrderService {
 
     // =========================================================
@@ -190,6 +188,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     @Override
     public List<WorkOrderResponse> getMyWorkOrders(
             String email) {
+    	
+    	log.info("fetching the workorders from the repository {}",email);
 
         Customer customer =
                 customerRepository.findByEmail(email)
@@ -213,7 +213,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     public List<WorkOrderResponse> getAllWorkOrders() {
-
+    	
         return workOrderRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
@@ -286,6 +286,83 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         WorkOrder updated =
                 workOrderRepository.save(workOrder);
+
+        return mapToResponse(updated);
+    }
+    
+ // =========================================================
+    // CANCEL WORKORDER
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse cancelMyWorkOrder(
+            String email,
+            Long workOrderId) {
+
+        Customer customer =
+                customerRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Customer not found for email: " + email
+                        ));
+
+        WorkOrder workOrder =
+                workOrderRepository.findById(workOrderId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Work Order not found"
+                        ));
+
+        // Make sure this belongs to the logged-in customer
+        if (workOrder.getCustomer() == null ||
+            !workOrder.getCustomer()
+                    .getCustomerId()
+                    .equals(customer.getCustomerId())) {
+
+            throw new ResourceNotFoundException(
+                    "Work Order not found for this customer"
+            );
+        }
+
+        // Only allow cancellation before completion/closure
+        if (workOrder.getStatus() == WorkOrderStatus.COMPLETED ||
+            workOrder.getStatus() == WorkOrderStatus.CLOSED ||
+            workOrder.getStatus() == WorkOrderStatus.CANCELLED) {
+
+            throw new IllegalArgumentException(
+                    "This work order cannot be cancelled"
+            );
+        }
+
+        WorkOrderStatus oldStatus =
+                workOrder.getStatus();
+
+        workOrder.setStatus(
+                WorkOrderStatus.CANCELLED
+        );
+
+        WorkOrder updated =
+                workOrderRepository.save(workOrder);
+
+        // Save status history
+        WorkOrderStatusHistory history =
+                new WorkOrderStatusHistory();
+
+        history.setWorkOrder(updated);
+        history.setFromStatus(oldStatus);
+        history.setToStatus(
+                WorkOrderStatus.CANCELLED
+        );
+
+        history.setChangedBy(
+                "CUSTOMER"
+        );
+
+        history.setChangedAt(
+                LocalDateTime.now()
+        );
+
+        historyRepository.save(history);
 
         return mapToResponse(updated);
     }
@@ -841,6 +918,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
          Long workOrderId,
          CustomerWorkOrderRequest request) {
 
+	 log.info("Updating the request:{}", email);
      // Find logged-in customer
      Customer customer =
              customerRepository.findByEmail(email)

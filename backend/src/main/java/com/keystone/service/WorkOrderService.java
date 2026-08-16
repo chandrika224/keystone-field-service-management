@@ -73,6 +73,10 @@ public interface WorkOrderService {
             Long workOrderId,
             CustomerWorkOrderRequest request
     );
+    
+    WorkOrderResponse cancelMyWorkOrder(
+            String email,
+            Long workOrderId);
 
     void deleteWorkOrder(Long id);
 }

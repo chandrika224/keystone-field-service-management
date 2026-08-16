@@ -1,3 +1,8 @@
+export type WorkOrderPriority =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH";
+
 export type WorkOrderStatus =
   | "NEW"
   | "ASSIGNED"
@@ -7,16 +12,51 @@ export type WorkOrderStatus =
   | "CLOSED"
   | "CANCELLED";
 
-export type WorkOrderPriority =
-  | "LOW"
-  | "MEDIUM"
-  | "HIGH";
+export type ServiceType =
+  | "ELECTRICAL"
+  | "PLUMBING"
+  | "HVAC"
+  | "APPLIANCE_REPAIR"
+  | "GENERAL_MAINTENANCE";
 
+
+export interface CustomerWorkOrderRequest {
+  title: string;
+  description: string;
+  priority: WorkOrderPriority;
+  scheduledDate: string;
+  serviceType: ServiceType;
+  address: string;
+}
+
+
+export interface WorkOrderResponse {
+  id: number;
+  title: string;
+  description: string;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+  scheduledDate: string;
+  completedDate: string | null;
+  slaDueDate: string;
+  slaBreached: boolean;
+  customerName: string;
+  technicianName: string;
+
+  // If backend returns these:
+  serviceType: ServiceType;
+  address: string;
+}
 
 export interface CustomerWorkOrder {
   id: string;
 
   title: string;
+
+  serviceType: string;
+
+  address: string;
+
   description: string;
 
   priority: WorkOrderPriority;
@@ -25,26 +65,9 @@ export interface CustomerWorkOrder {
 
   scheduledDate: string;
 
+  service: string;
+
   technician: string;
 
-  // Keep these because your existing UI uses them
-  service: string;
   date: string;
-}
-
-
-export interface DispatcherWorkOrder
-  extends CustomerWorkOrder {
-  customer: string;
-}
-
-
-export interface Technician {
-  id: string;
-  name: string;
-  specialization: string;
-  email: string;
-  phone: string;
-  status: "Available" | "Busy";
-  currentJobs: number;
 }

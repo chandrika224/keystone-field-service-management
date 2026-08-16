@@ -18,4 +18,5 @@ public interface UserService {
     );
 
     UserResponse getProfile(String email);
+    
 }
