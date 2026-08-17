@@ -72,4 +72,9 @@ public class User {
             joinedDate = LocalDateTime.now();
         }
     }
+
+	public void setTechnician(User technician) {
+		// TODO Auto-generated method stub
+		
+	}
 }

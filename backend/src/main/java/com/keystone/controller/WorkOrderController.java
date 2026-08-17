@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.keystone.dto.AssignTechnicianRequest;
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
 import com.keystone.dto.PartUsageRequest;
@@ -281,7 +282,22 @@ public class WorkOrderController {
         );
     }
 
-
+	 // ============================================================
+	 // ASSIGN TECHNICIAN
+	 // ============================================================
+	
+	 @Operation(summary = "Assign Technician to Work Order")
+	 @PatchMapping("/{id}/assign")
+	 public ResponseEntity<WorkOrderResponse> assignTechnician(
+	         @PathVariable Long id,
+	         @Valid @RequestBody AssignTechnicianRequest request) {
+	
+	     return ResponseEntity.ok(
+	             workOrderService.assignTechnician(id, request)
+	     );
+	 }
+    
+    
     // ============================================================
     // CUSTOMER - CREATE MY WORK ORDER
     // ============================================================

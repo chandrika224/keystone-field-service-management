@@ -2,6 +2,7 @@ package com.keystone.service;
 
 import java.util.List;
 
+import com.keystone.dto.AssignTechnicianRequest;
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
 import com.keystone.dto.PartUsageRequest;
@@ -79,4 +80,6 @@ public interface WorkOrderService {
             Long workOrderId);
 
     void deleteWorkOrder(Long id);
+    
+    WorkOrderResponse assignTechnician(Long id, AssignTechnicianRequest request);
 }

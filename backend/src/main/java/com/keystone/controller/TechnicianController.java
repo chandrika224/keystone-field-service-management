@@ -2,56 +2,46 @@ package com.keystone.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.keystone.dto.TechnicianRequest;
 import com.keystone.dto.TechnicianResponse;
 import com.keystone.service.TechnicianService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/technicians")
-@Tag(name = "Technician", description = "Technician Management APIs")
+@RequiredArgsConstructor
 public class TechnicianController {
 
-    @Autowired
-    private TechnicianService technicianService;
+    private final TechnicianService technicianService;
 
-    @Operation(summary = "Create Technician")
-    @PostMapping
-    public TechnicianResponse addTechnician(@Valid @RequestBody TechnicianRequest request) {
-        return technicianService.addTechnician(request);
-    }
+    // ============================================================
+    // GET ALL ACTIVE TECHNICIANS
+    // ============================================================
 
-    @Operation(summary = "Get All Technicians")
     @GetMapping
-    public List<TechnicianResponse> getAllTechnicians() {
-        return technicianService.getAllTechnicians();
+    public ResponseEntity<List<TechnicianResponse>> getAllTechnicians() {
+
+        return ResponseEntity.ok(
+                technicianService.getAllTechnicians()
+        );
     }
 
-    @Operation(summary = "Get Technician By ID")
+    // ============================================================
+    // GET TECHNICIAN BY ID
+    // ============================================================
+
     @GetMapping("/{id}")
-    public TechnicianResponse getTechnicianById(@PathVariable Long id) {
-        return technicianService.getTechnicianById(id);
-    }
+    public ResponseEntity<TechnicianResponse> getTechnicianById(
+            @PathVariable Long id) {
 
-    @Operation(summary = "Update Technician")
-    @PutMapping("/{id}")
-    public TechnicianResponse updateTechnician(
-            @PathVariable Long id,
-            @Valid @RequestBody TechnicianRequest request) {
-
-        return technicianService.updateTechnician(id, request);
-    }
-
-    @Operation(summary = "Delete Technician")
-    @DeleteMapping("/{id}")
-    public String deleteTechnician(@PathVariable Long id) {
-        technicianService.deleteTechnician(id);
-        return "Technician deleted successfully";
+        return ResponseEntity.ok(
+                technicianService.getTechnicianById(id)
+        );
     }
 }

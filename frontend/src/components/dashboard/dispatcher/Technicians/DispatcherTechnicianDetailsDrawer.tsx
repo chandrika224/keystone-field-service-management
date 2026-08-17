@@ -17,6 +17,7 @@ import {
 
 import type { Technician } from "@/types/workOrder";
 
+
 interface DispatcherTechnicianDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,42 +25,86 @@ interface DispatcherTechnicianDetailsDrawerProps {
   onChangeStatus: (technician: Technician) => void;
 }
 
+
 export default function DispatcherTechnicianDetailsDrawer({
   open,
   onOpenChange,
   technician,
   onChangeStatus,
 }: DispatcherTechnicianDetailsDrawerProps) {
-  if (!technician) return null;
+
+  if (!technician) {
+    return null;
+  }
+
+
+  // ============================================================
+  // DERIVED VALUES
+  // ============================================================
+
+  const fullName =
+    `${technician.firstName} ${technician.lastName}`;
+
+  const technicianStatus =
+    technician.active
+      ? "Available"
+      : "Inactive";
+
 
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
     >
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+
+      <SheetContent
+        className="w-full sm:max-w-lg overflow-y-auto"
+      >
+
         <SheetHeader>
+
           <SheetTitle>
             Technician Details
           </SheetTitle>
+
         </SheetHeader>
 
+
         <div className="mt-6 space-y-6">
+
+
+          {/* ======================================================
+              BASIC INFORMATION
+          ====================================================== */}
+
           <div>
+
             <h2 className="text-2xl font-bold">
-              {technician.name}
+              {fullName}
             </h2>
 
-            <p className="text-muted-foreground">
-              {technician.id}
+            <p className="text-sm text-muted-foreground">
+              Technician ID: {technician.id}
             </p>
+
           </div>
 
+
+          {/* ======================================================
+              TECHNICIAN INFORMATION
+          ====================================================== */}
+
           <div className="space-y-4">
+
+
+            {/* SPECIALIZATION */}
+
             <div className="flex items-center gap-3">
+
               <User className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Specialization
                 </p>
@@ -67,13 +112,20 @@ export default function DispatcherTechnicianDetailsDrawer({
                 <p className="font-medium">
                   {technician.specialization}
                 </p>
+
               </div>
+
             </div>
 
+
+            {/* PHONE */}
+
             <div className="flex items-center gap-3">
+
               <Phone className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Phone
                 </p>
@@ -81,13 +133,20 @@ export default function DispatcherTechnicianDetailsDrawer({
                 <p className="font-medium">
                   {technician.phone}
                 </p>
+
               </div>
+
             </div>
 
+
+            {/* EMAIL */}
+
             <div className="flex items-center gap-3">
+
               <Mail className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Email
                 </p>
@@ -95,48 +154,92 @@ export default function DispatcherTechnicianDetailsDrawer({
                 <p className="font-medium">
                   {technician.email}
                 </p>
+
               </div>
+
             </div>
 
+
+            {/* ACTIVE JOBS */}
+
             <div className="flex items-center gap-3">
+
               <Briefcase className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Active Jobs
                 </p>
 
                 <p className="font-medium">
-                  {technician.currentJobs}
+                  {technician.currentJobs ?? 0}
                 </p>
+
               </div>
+
             </div>
+
           </div>
 
+
+          {/* ======================================================
+              ROLE
+          ====================================================== */}
+
           <div>
+
+            <p className="mb-2 text-sm text-muted-foreground">
+              Role
+            </p>
+
+            <Badge variant="outline">
+              {technician.role}
+            </Badge>
+
+          </div>
+
+
+          {/* ======================================================
+              STATUS
+          ====================================================== */}
+
+          <div>
+
             <p className="mb-2 text-sm text-muted-foreground">
               Current Status
             </p>
 
             <Badge
               variant={
-                technician.status === "Available"
+                technician.active
                   ? "default"
                   : "destructive"
               }
             >
-              {technician.status}
+              {technicianStatus}
             </Badge>
+
           </div>
+
+
+          {/* ======================================================
+              CHANGE AVAILABILITY
+          ====================================================== */}
 
           <Button
             className="w-full"
-            onClick={() => onChangeStatus(technician)}
+            onClick={() =>
+              onChangeStatus(technician)
+            }
           >
             Change Availability
           </Button>
+
         </div>
+
       </SheetContent>
+
     </Sheet>
   );
 }

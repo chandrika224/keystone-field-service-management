@@ -65,11 +65,11 @@ public class SecurityConfig {
         	    .hasRole("MANAGER")
 
         	    // CUSTOMER work-order APIs
-        	    .requestMatchers("/api/workorders/my")
-        	    .hasRole("CUSTOMER")
+        	    .requestMatchers("/api/workorders/my", "/api/workorders/my/**")
+        	    .hasAnyRole("CUSTOMER", "TECHNICIAN", "DISPATCHER", "MANAGER")
 
-        	    .requestMatchers("/api/workorders/my/**")
-        	    .hasRole("CUSTOMER")
+//        	    .requestMatchers("/api/workorders/my/**")
+//        	    .hasRole("CUSTOMER")
 
         	    // Manager / Dispatcher work-order APIs
         	    .requestMatchers("/api/workorders/**")

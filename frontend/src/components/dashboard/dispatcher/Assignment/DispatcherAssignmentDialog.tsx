@@ -33,6 +33,8 @@ interface DispatcherAssignmentDialogProps {
   technicians: Technician[];
 
   onAssign: (technician: Technician) => void;
+
+  assigning?: boolean;
 }
 
 export default function DispatcherAssignmentDialog({
@@ -41,10 +43,14 @@ export default function DispatcherAssignmentDialog({
   workOrder,
   technicians,
   onAssign,
+  assigning = false,
 }: DispatcherAssignmentDialogProps) {
-
   const [selectedTechnicianId, setSelectedTechnicianId] =
     useState("");
+
+  // ============================================================
+  // RESET SELECTION WHEN WORK ORDER CHANGES
+  // ============================================================
 
   useEffect(() => {
     setSelectedTechnicianId("");
@@ -54,44 +60,65 @@ export default function DispatcherAssignmentDialog({
     return null;
   }
 
-  /*
-   * Only technicians who have marked themselves
-   * Available can be selected.
-   *
-   * Dispatcher does NOT change availability.
-   */
-  const availableTechnicians = technicians.filter(
-    (technician) =>
-      technician.status === "Available"
-  );
+  // ============================================================
+  // ONLY ACTIVE TECHNICIANS CAN BE ASSIGNED
+  // ============================================================
+
+  const availableTechnicians =
+    technicians.filter(
+      (technician) => technician.active
+    );
+
+  // ============================================================
+  // FIND SELECTED TECHNICIAN
+  // ============================================================
 
   const selectedTechnician =
     technicians.find(
       (technician) =>
-        technician.id === selectedTechnicianId
+        String(technician.id) === selectedTechnicianId
     ) ?? null;
+
+  // ============================================================
+  // CHECK REASSIGNMENT
+  // ============================================================
 
   const isReassignment =
     workOrder.technician !== "Unassigned";
 
+  // ============================================================
+  // TECHNICIAN NAME
+  // ============================================================
+
+  const getTechnicianName = (
+    technician: Technician
+  ) => {
+    return `${technician.firstName} ${technician.lastName}`;
+  };
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
+
   const handleSubmit = () => {
-    if (!selectedTechnician) {
+    if (!selectedTechnician || assigning) {
       return;
     }
 
     onAssign(selectedTechnician);
   };
 
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
     >
-
       <DialogContent className="sm:max-w-lg">
-
         <DialogHeader>
-
           <DialogTitle>
             {isReassignment
               ? "Reassign Technician"
@@ -99,17 +126,17 @@ export default function DispatcherAssignmentDialog({
           </DialogTitle>
 
           <DialogDescription>
-            Select an available technician for this work order.
+            Select an active technician for this work order.
           </DialogDescription>
-
         </DialogHeader>
 
         <div className="space-y-5">
 
-          {/* Work Order */}
+          {/* ==================================================
+              WORK ORDER
+          ================================================== */}
 
           <div className="rounded-lg border bg-muted/40 p-4">
-
             <p className="text-sm text-muted-foreground">
               Work Order
             </p>
@@ -119,15 +146,19 @@ export default function DispatcherAssignmentDialog({
             </p>
 
             <p className="text-sm">
-              {workOrder.service}
+              {workOrder.title}
             </p>
 
+            <p className="mt-1 text-sm text-muted-foreground">
+              {workOrder.service}
+            </p>
           </div>
 
-          {/* Customer */}
+          {/* ==================================================
+              CUSTOMER
+          ================================================== */}
 
           <div>
-
             <p className="text-sm text-muted-foreground">
               Customer
             </p>
@@ -135,15 +166,14 @@ export default function DispatcherAssignmentDialog({
             <p className="font-medium">
               {workOrder.customer}
             </p>
-
           </div>
 
-          {/* Current Technician */}
+          {/* ==================================================
+              CURRENT TECHNICIAN
+          ================================================== */}
 
           {isReassignment && (
-
             <div>
-
               <p className="text-sm text-muted-foreground">
                 Current Technician
               </p>
@@ -151,21 +181,19 @@ export default function DispatcherAssignmentDialog({
               <p className="font-medium">
                 {workOrder.technician}
               </p>
-
             </div>
-
           )}
 
-          {/* Technician */}
+          {/* ==================================================
+              TECHNICIAN SELECT
+          ================================================== */}
 
           <div className="space-y-2">
-
             <p className="text-sm font-medium">
               {isReassignment
                 ? "New Technician"
                 : "Technician"}
             </p>
-
             <Select
               value={selectedTechnicianId}
               onValueChange={(value) => {
@@ -173,103 +201,110 @@ export default function DispatcherAssignmentDialog({
                   setSelectedTechnicianId(value);
                 }
               }}
+              disabled={assigning}
             >
-
               <SelectTrigger>
                 <SelectValue placeholder="Select technician" />
               </SelectTrigger>
 
               <SelectContent>
-
                 {availableTechnicians.length === 0 ? (
-
                   <SelectItem
                     value="NO_TECHNICIANS"
                     disabled
                   >
-                    No available technicians
+                    No active technicians available
                   </SelectItem>
-
                 ) : (
-
                   availableTechnicians.map(
                     (technician) => (
-
                       <SelectItem
                         key={technician.id}
-                        value={technician.id}
+                        value={String(technician.id)}
                       >
-                        {technician.name} —{" "}
+                        {getTechnicianName(technician)}
+                        {" — "}
                         {technician.specialization}
                       </SelectItem>
-
                     )
                   )
-
                 )}
-
               </SelectContent>
-
             </Select>
-
           </div>
 
-          {/* Selected Technician Information */}
+          {/* ==================================================
+              SELECTED TECHNICIAN DETAILS
+          ================================================== */}
 
           {selectedTechnician && (
-
             <div className="rounded-lg border p-4">
-
               <p className="font-semibold">
-                {selectedTechnician.name}
+                {getTechnicianName(
+                  selectedTechnician
+                )}
               </p>
 
               <p className="text-sm text-muted-foreground">
-                {selectedTechnician.specialization}
+                {selectedTechnician.email}
               </p>
 
               <p className="mt-2 text-sm">
+                Specialization:{" "}
+                <span className="font-medium">
+                  {selectedTechnician.specialization}
+                </span>
+              </p>
+
+              <p className="text-sm">
                 Active Jobs:{" "}
                 <span className="font-medium">
-                  {selectedTechnician.currentJobs}
+                  {selectedTechnician.currentJobs ?? 0}
                 </span>
               </p>
 
               <p className="text-sm">
                 Availability:{" "}
                 <span className="font-medium">
-                  {selectedTechnician.status}
+                  {selectedTechnician.active
+                    ? "Active"
+                    : "Inactive"}
                 </span>
               </p>
-
             </div>
-
           )}
-
         </div>
 
-        <DialogFooter>
+        {/* ====================================================
+            FOOTER
+        ==================================================== */}
 
+        <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() =>
+              onOpenChange(false)
+            }
+            disabled={assigning}
           >
             Cancel
           </Button>
 
           <Button
-            disabled={!selectedTechnician}
+            disabled={
+              !selectedTechnician ||
+              assigning
+            }
             onClick={handleSubmit}
           >
-            {isReassignment
-              ? "Reassign"
-              : "Assign"}
+            {assigning
+              ? "Assigning..."
+              : isReassignment
+                ? "Reassign"
+                : "Assign"}
           </Button>
-
         </DialogFooter>
-
       </DialogContent>
-
     </Dialog>
   );
 }

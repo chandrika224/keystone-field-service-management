@@ -4,44 +4,47 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { toast } from "sonner";
 
-import { technicians } from "@/data/dispatcher/technicians";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface DispatcherAssignTechnicianDialogProps {
+import type {
+  DispatcherWorkOrder,
+  Technician,
+} from "@/types/workOrder";
+
+interface DispatcherAssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAssign: (technician: string) => void;
+  workOrder: DispatcherWorkOrder | null;
+  technicians: Technician[];
+  onAssign: (technician: Technician) => void;
 }
 
-export default function DispatcherAssignTechnicianDialog({
+export default function DispatcherAssignmentDialog({
   open,
   onOpenChange,
+  workOrder,
+  technicians,
   onAssign,
-}: DispatcherAssignTechnicianDialogProps) {
+}: DispatcherAssignmentDialogProps) {
+  if (!workOrder) {
+    return null;
+  }
 
-  const [selectedTechnician, setSelectedTechnician] = useState("");
-
-  const handleAssign = () => {
-
-    if (!selectedTechnician) {
-      toast.error("Please select a technician.");
-      return;
-    }
-
-    onAssign(selectedTechnician);
-
-    toast.success("Technician assigned successfully.");
-
-    setSelectedTechnician("");
-
-    onOpenChange(false);
-  };
+  // Only active technicians can be assigned
+  const availableTechnicians = technicians.filter(
+    (technician) => technician.active
+  );
 
   return (
     <Dialog
@@ -57,53 +60,123 @@ export default function DispatcherAssignTechnicianDialog({
           </DialogTitle>
 
           <DialogDescription>
-            Select a technician for this work order.
+            Select an available technician for this work order.
           </DialogDescription>
 
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 py-4">
 
-          <Label>Technician</Label>
+          {/* Work Order */}
 
-          <select
-            value={selectedTechnician}
-            onChange={(e) => setSelectedTechnician(e.target.value)}
-            className="w-full rounded-md border px-3 py-2"
-          >
-            <option value="">
-              Select Technician
-            </option>
+          <div className="rounded-lg border p-4">
 
-            {technicians.map((tech) => (
+            <p className="text-sm text-muted-foreground">
+              Work Order
+            </p>
 
-              <option
-                key={tech.id}
-                value={tech.name}
+            <p className="font-medium">
+              {workOrder.id}
+            </p>
+
+            <p className="text-sm mt-1">
+              {workOrder.title}
+            </p>
+
+          </div>
+
+
+          {/* Customer */}
+
+          <div>
+
+            <p className="text-sm text-muted-foreground">
+              Customer
+            </p>
+
+            <p className="font-medium">
+              {workOrder.customer}
+            </p>
+
+          </div>
+
+
+          {/* Technician */}
+
+          <div>
+
+            <p className="mb-2 text-sm font-medium">
+              Technician
+            </p>
+
+            {availableTechnicians.length === 0 ? (
+
+              <p className="rounded-md border p-3 text-sm text-muted-foreground">
+                No active technicians available.
+              </p>
+
+            ) : (
+
+              <Select
+                onValueChange={(technicianId) => {
+
+                  const technician =
+                    availableTechnicians.find(
+                      (tech) =>
+                        String(tech.id) === technicianId
+                    );
+
+                  if (technician) {
+                    onAssign(technician);
+                  }
+                }}
               >
-                {tech.name} ({tech.specialization})
-              </option>
 
-            ))}
+                <SelectTrigger>
 
-          </select>
+                  <SelectValue placeholder="Select technician" />
 
-          <div className="flex justify-end gap-3">
+                </SelectTrigger>
 
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
+                <SelectContent>
 
-            <Button onClick={handleAssign}>
-              Assign
-            </Button>
+                  {availableTechnicians.map((technician) => (
+
+                    <SelectItem
+                      key={technician.id}
+                      value={String(technician.id)}
+                    >
+
+                      {technician.firstName}{" "}
+                      {technician.lastName}
+                      {" — "}
+                      {technician.specialization}
+
+                    </SelectItem>
+
+                  ))}
+
+                </SelectContent>
+
+              </Select>
+
+            )}
 
           </div>
 
         </div>
+
+
+        <DialogFooter>
+
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+
+        </DialogFooter>
 
       </DialogContent>
     </Dialog>

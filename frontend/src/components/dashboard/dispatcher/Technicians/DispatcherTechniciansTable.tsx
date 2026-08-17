@@ -20,16 +20,30 @@ export default function DispatcherTechniciansTable({
 
   const filteredTechnicians = technicians.filter((tech) => {
 
+    // Create full name from backend fields
+    const fullName =
+      `${tech.firstName} ${tech.lastName}`;
+
+    // Search by name or specialization
     const matchesSearch =
-      tech.name.toLowerCase().includes(search.toLowerCase()) ||
-      tech.specialization.toLowerCase().includes(search.toLowerCase());
+      fullName
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      tech.specialization
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    // Backend gives us active: boolean
+    const technicianStatus =
+      tech.active ? "Available" : "Inactive";
 
     const matchesStatus =
       status === "ALL" ||
-      tech.status === status;
+      technicianStatus === status;
 
     return matchesSearch && matchesStatus;
   });
+
 
   return (
     <div className="overflow-hidden rounded-xl border">
@@ -64,82 +78,146 @@ export default function DispatcherTechniciansTable({
 
         </thead>
 
+
         <tbody>
 
-          {filteredTechnicians.map((tech) => (
+          {filteredTechnicians.map((tech) => {
 
-            <tr
-              key={tech.id}
-              className="border-t"
-            >
+            const fullName =
+              `${tech.firstName} ${tech.lastName}`;
 
-              <td className="px-6 py-4">
+            const technicianStatus =
+              tech.active ? "Available" : "Inactive";
 
-                <div className="flex items-center gap-3">
+            const initials =
+              `${tech.firstName?.[0] ?? ""}
+               ${tech.lastName?.[0] ?? ""}`.trim();
 
-                  <Avatar>
 
-                    <AvatarFallback>
-                      {tech.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")}
-                    </AvatarFallback>
+            return (
+              <tr
+                key={tech.id}
+                className="border-t"
+              >
 
-                  </Avatar>
+                {/* =================================================
+                    TECHNICIAN
+                ================================================= */}
 
-                  <div>
+                <td className="px-6 py-4">
 
-                    <p className="font-medium">
-                      {tech.name}
-                    </p>
+                  <div className="flex items-center gap-3">
 
-                    <p className="text-sm text-muted-foreground">
-                      {tech.email}
-                    </p>
+                    <Avatar>
+
+                      <AvatarFallback>
+                        {initials}
+                      </AvatarFallback>
+
+                    </Avatar>
+
+
+                    <div>
+
+                      <p className="font-medium">
+                        {fullName}
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+                        {tech.email}
+                      </p>
+
+                    </div>
 
                   </div>
 
-                </div>
+                </td>
 
-              </td>
 
-              <td className="px-6 py-4">
-                {tech.specialization}
-              </td>
+                {/* =================================================
+                    SPECIALIZATION
+                ================================================= */}
 
-              <td className="px-6 py-4">
-                <StatusBadge
-                  status={
-                    tech.status === "Available"
-                      ? "COMPLETED"
-                      : "ASSIGNED"
-                  }
-                />
-              </td>
+                <td className="px-6 py-4">
+                  {tech.specialization}
+                </td>
 
-              <td className="px-6 py-4">
-                {tech.currentJobs}
-              </td>
 
-              <td className="px-6 py-4 text-right">
+                {/* =================================================
+                    STATUS
+                ================================================= */}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    console.log("View clicked:", tech);
-                    onView(tech);
-                  }}
-                >
-                  View
-                </Button>
+                <td className="px-6 py-4">
 
+                  <StatusBadge
+                    status={
+                      technicianStatus === "Available"
+                        ? "COMPLETED"
+                        : "ASSIGNED"
+                    }
+                  />
+
+                </td>
+
+
+                {/* =================================================
+                    ACTIVE JOBS
+                ================================================= */}
+
+                <td className="px-6 py-4">
+
+                  {tech.currentJobs ?? 0}
+
+                </td>
+
+
+                {/* =================================================
+                    VIEW
+                ================================================= */}
+
+                <td className="px-6 py-4 text-right">
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      console.log(
+                        "View clicked:",
+                        tech
+                      );
+
+                      onView(tech);
+                    }}
+                  >
+                    View
+                  </Button>
+
+                </td>
+
+              </tr>
+            );
+
+          })}
+
+
+          {/* =====================================================
+              NO TECHNICIANS
+          ===================================================== */}
+
+          {filteredTechnicians.length === 0 && (
+
+            <tr>
+
+              <td
+                colSpan={5}
+                className="px-6 py-8 text-center text-muted-foreground"
+              >
+                No technicians found.
               </td>
 
             </tr>
 
-          ))}
+          )}
 
         </tbody>
 

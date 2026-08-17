@@ -7,10 +7,36 @@ import com.keystone.enums.Priority;
 import com.keystone.enums.ServiceType;
 import com.keystone.enums.WorkOrderStatus;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "work_orders")
+@Table(
+    name = "work_orders",
+    indexes = {
+        @Index(name = "idx_work_order_status", columnList = "status"),
+        @Index(name = "idx_work_order_customer", columnList = "customer_id"),
+        @Index(name = "idx_work_order_technician", columnList = "technician_id"),
+        @Index(name = "idx_work_order_scheduled_date", columnList = "scheduled_date")
+    }
+)
+@Getter
+@Setter
+@NoArgsConstructor
 public class WorkOrder {
 
     @Id
@@ -18,7 +44,7 @@ public class WorkOrder {
     private Long id;
 
     // ============================================================
-    // BASIC WORK ORDER INFORMATION
+    // BASIC INFORMATION
     // ============================================================
 
     @Column(nullable = false)
@@ -28,12 +54,15 @@ public class WorkOrder {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ServiceType serviceType;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Priority priority;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private WorkOrderStatus status;
 
     // ============================================================
@@ -55,18 +84,31 @@ public class WorkOrder {
     // RELATIONSHIPS
     // ============================================================
 
+    /*
+     * Every work order must belong to a customer.
+     */
     @ManyToOne
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(
+        name = "customer_id",
+        nullable = false
+    )
     private Customer customer;
 
+    /*
+     * Technician can be null initially because
+     * Dispatcher may assign a technician later.
+     */
     @ManyToOne
-    @JoinColumn(name = "technician_id")
-    private Technician technician;
+    @JoinColumn(
+        name = "technician_id"
+    )
+    private User technician;
 
     // ============================================================
     // TIMESTAMPS
     // ============================================================
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime assignedAt;
@@ -79,169 +121,56 @@ public class WorkOrder {
     // SLA
     // ============================================================
 
+    @Column(nullable = false)
     private LocalDateTime slaDueDate;
 
-    private Boolean slaBreached = false;
+    @Column(nullable = false)
+    private boolean slaBreached = false;
 
     // ============================================================
     // PRE PERSIST
     // ============================================================
 
     @PrePersist
-    public void prePersist() {
+    protected void onCreate() {
 
-        this.createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
 
-        this.slaDueDate =
-                this.createdAt.plusHours(24);
+        if (slaDueDate == null) {
+            slaDueDate = createdAt.plusHours(24);
+        }
 
-        this.slaBreached = false;
+        slaBreached = false;
     }
 
     // ============================================================
-    // CONSTRUCTOR
+    // PRE UPDATE
     // ============================================================
 
-    public WorkOrder() {
+    @PreUpdate
+    protected void onUpdate() {
+
+        if (slaDueDate != null
+                && !isCompleted()
+                && LocalDateTime.now().isAfter(slaDueDate)) {
+
+            slaBreached = true;
+        }
     }
 
     // ============================================================
-    // GETTERS / SETTERS
+    // HELPER METHOD
     // ============================================================
 
-    public Long getId() {
-        return id;
+    private boolean isCompleted() {
+
+        return status == WorkOrderStatus.COMPLETED;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public ServiceType getServiceType() {
-        return serviceType;
-    }
-
-    public void setServiceType(ServiceType serviceType) {
-        this.serviceType = serviceType;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-
-    public WorkOrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(WorkOrderStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getScheduledDate() {
-        return scheduledDate;
-    }
-
-    public void setScheduledDate(LocalDate scheduledDate) {
-        this.scheduledDate = scheduledDate;
-    }
-
-    public LocalDate getCompletedDate() {
-        return completedDate;
-    }
-
-    public void setCompletedDate(LocalDate completedDate) {
-        this.completedDate = completedDate;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
-
-    public Technician getTechnician() {
-        return technician;
-    }
-
-    public void setTechnician(Technician technician) {
-        this.technician = technician;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getAssignedAt() {
-        return assignedAt;
-    }
-
-    public void setAssignedAt(LocalDateTime assignedAt) {
-        this.assignedAt = assignedAt;
-    }
-
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
-
-    public void setStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public LocalDateTime getCompletedAt() {
-        return completedAt;
-    }
-
-    public void setCompletedAt(LocalDateTime completedAt) {
-        this.completedAt = completedAt;
-    }
-
-    public LocalDateTime getSlaDueDate() {
-        return slaDueDate;
-    }
-
-    public void setSlaDueDate(LocalDateTime slaDueDate) {
-        this.slaDueDate = slaDueDate;
-    }
-
-    public Boolean getSlaBreached() {
-        return slaBreached;
-    }
-
-    public void setSlaBreached(Boolean slaBreached) {
-        this.slaBreached = slaBreached;
-    }
+	public boolean getSlaBreached() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

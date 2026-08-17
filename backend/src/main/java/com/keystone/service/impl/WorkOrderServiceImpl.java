@@ -1,5 +1,6 @@
 package com.keystone.service.impl;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.keystone.dto.AssignTechnicianRequest;
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
 import com.keystone.dto.PartUsageRequest;
@@ -21,6 +23,7 @@ import com.keystone.entity.Inventory;
 import com.keystone.entity.PartUsage;
 import com.keystone.entity.Technician;
 import com.keystone.entity.TimeLog;
+import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
 import com.keystone.entity.WorkOrderStatusHistory;
 import com.keystone.enums.Priority;
@@ -31,12 +34,15 @@ import com.keystone.repository.InventoryRepository;
 import com.keystone.repository.PartUsageRepository;
 import com.keystone.repository.TechnicianRepository;
 import com.keystone.repository.TimeLogRepository;
+import com.keystone.repository.UserRepository;
+import com.keystone.repository.UserRepository;
 import com.keystone.repository.WorkOrderRepository;
 import com.keystone.repository.WorkOrderStatusHistoryRepository;
 import com.keystone.service.EmailService;
 import com.keystone.service.WorkOrderService;
 import com.keystone.util.WorkOrderStatusValidator;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -70,6 +76,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private AssignTechnicianService assignTechnicianService;
 
 
     // =========================================================
@@ -986,5 +998,13 @@ public class WorkOrderServiceImpl implements WorkOrderService {
              workOrderRepository.save(workOrder);
 
      return mapToResponse(updated);
+ }
+
+
+ @Override
+ @Transactional
+ public WorkOrderResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+	return assignTechnicianService.assignTechnician(id, request);
+     
  }
 }

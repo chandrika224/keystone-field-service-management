@@ -1,24 +1,29 @@
 import { Button } from "@/components/ui/button";
-
 import StatusBadge from "@/components/common/StatusBadge";
 
-import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type {
+  DispatcherWorkOrder,
+} from "@/types/workOrder";
 
 interface DispatcherAssignmentTableProps {
   workOrders: DispatcherWorkOrder[];
-  onAssign: (order: DispatcherWorkOrder) => void;
+
+  onAssign: (
+    order: DispatcherWorkOrder
+  ) => void;
 }
 
 export default function DispatcherAssignmentTable({
   workOrders,
   onAssign,
 }: DispatcherAssignmentTableProps) {
+
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-hidden rounded-2xl border bg-card">
 
       <table className="w-full">
 
-        <thead className="bg-muted">
+        <thead className="border-b bg-muted/40">
 
           <tr>
 
@@ -46,6 +51,10 @@ export default function DispatcherAssignmentTable({
               Technician
             </th>
 
+            <th className="px-6 py-4 text-left">
+              Scheduled Date
+            </th>
+
             <th className="px-6 py-4 text-right">
               Action
             </th>
@@ -61,7 +70,7 @@ export default function DispatcherAssignmentTable({
             <tr>
 
               <td
-                colSpan={7}
+                colSpan={8}
                 className="px-6 py-10 text-center text-muted-foreground"
               >
                 No work orders found.
@@ -71,97 +80,103 @@ export default function DispatcherAssignmentTable({
 
           ) : (
 
-            workOrders.map((order) => (
+            workOrders.map(
+              (order) => (
 
-              <tr
-                key={order.id}
-                className="border-t"
-              >
+                <tr
+                  key={order.id}
+                  className="border-b hover:bg-muted/30"
+                >
 
-                <td className="px-6 py-4">
-                  <p className="font-medium">
-                    {order.id}
-                  </p>
+                  {/* WORK ORDER */}
 
-                  <p className="text-sm text-muted-foreground">
-                    {order.date}
-                  </p>
-                </td>
+                  <td className="px-6 py-4">
 
-                <td className="px-6 py-4">
-                  {order.customer}
-                </td>
+                    <div>
 
-                <td className="px-6 py-4">
-                  {order.service}
-                </td>
+                      <p className="font-medium">
+                        {order.id}
+                      </p>
 
-                <td className="px-6 py-4">
+                      <p className="text-sm text-muted-foreground">
+                        {order.title}
+                      </p>
 
-                  <span
-                    className={
-                      order.priority === "High"
-                        ? "font-semibold text-red-600"
-                        : order.priority === "Medium"
-                        ? "font-semibold text-yellow-600"
-                        : "font-semibold text-green-600"
-                    }
-                  >
+                    </div>
+
+                  </td>
+
+                  {/* CUSTOMER */}
+
+                  <td className="px-6 py-4">
+                    {order.customer}
+                  </td>
+
+                  {/* SERVICE */}
+
+                  <td className="px-6 py-4">
+                    {order.service}
+                  </td>
+
+                  {/* PRIORITY */}
+
+                  <td className="px-6 py-4">
+
                     {order.priority}
-                  </span>
 
-                </td>
+                  </td>
 
-                <td className="px-6 py-4">
+                  {/* STATUS */}
 
-                  <StatusBadge
-                    status={order.status}
-                  />
+                  <td className="px-6 py-4">
 
-                </td>
+                    <StatusBadge
+                      status={
+                        order.status
+                      }
+                    />
 
-                <td className="px-6 py-4">
+                  </td>
 
-                  {order.technician === "Unassigned" ? (
+                  {/* TECHNICIAN */}
 
-                    <span className="text-sm text-muted-foreground">
-                      Unassigned
-                    </span>
+                  <td className="px-6 py-4">
 
-                  ) : (
+                    {order.technician}
 
-                    <span className="font-medium">
-                      {order.technician}
-                    </span>
+                  </td>
 
-                  )}
+                  {/* SCHEDULED DATE */}
 
-                </td>
+                  <td className="px-6 py-4">
 
-                <td className="px-6 py-4 text-right">
+                    {order.scheduledDate}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      console.log(
-                        "Assignment clicked:",
-                        order
-                      );
+                  </td>
 
-                      onAssign(order);
-                    }}
-                  >
-                    {order.technician === "Unassigned"
-                      ? "Assign"
-                      : "Reassign"}
-                  </Button>
+                  {/* ACTION */}
 
-                </td>
+                  <td className="px-6 py-4 text-right">
 
-              </tr>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        onAssign(order)
+                      }
+                    >
+                      {order.technician ===
+                      "Unassigned"
+                        ? "Assign"
+                        : "Reassign"}
+                    </Button>
 
-            ))
+                  </td>
+
+                </tr>
+
+              )
+            )
 
           )}
 

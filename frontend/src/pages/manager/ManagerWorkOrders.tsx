@@ -13,8 +13,6 @@ import DispatcherWorkOrderDetailsDrawer
 
 import type { DispatcherWorkOrder } from "@/types/workOrder";
 
-import { dispatcherWorkOrders } from "@/data/dispatcher/workOrders";
-
 export default function ManagerWorkOrders() {
 
   const [search, setSearch] = useState("");

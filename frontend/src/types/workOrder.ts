@@ -19,6 +19,31 @@ export type ServiceType =
   | "APPLIANCE_REPAIR"
   | "GENERAL_MAINTENANCE";
 
+// ============================================================
+// TECHNICIAN
+// ============================================================
+
+export interface Technician {
+  id: number;
+
+  firstName: string;
+  lastName: string;
+
+  email: string;
+  phone: string;
+
+  specialization: string;
+
+  role: "TECHNICIAN";
+
+  active: boolean;
+
+  currentJobs?: number;
+}
+
+// ============================================================
+// CUSTOMER WORK ORDER REQUEST
+// ============================================================
 
 export interface CustomerWorkOrderRequest {
   title: string;
@@ -29,24 +54,49 @@ export interface CustomerWorkOrderRequest {
   address: string;
 }
 
+// ============================================================
+// WORK ORDER RESPONSE
+// ============================================================
 
 export interface WorkOrderResponse {
   id: number;
+
   title: string;
   description: string;
+
+  serviceType: ServiceType;
   priority: WorkOrderPriority;
   status: WorkOrderStatus;
+
   scheduledDate: string;
   completedDate: string | null;
+
+  address: string | null;
+
+  // Customer
+  customerId: number;
+  customerName: string;
+
+  // Technician
+  technicianId: number | null;
+  technicianName: string | null;
+
+  // Timestamps
+  createdAt: string;
+  assignedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+
+  // SLA
   slaDueDate: string;
   slaBreached: boolean;
-  customerName: string;
-  technicianName: string;
 
-  // If backend returns these:
-  serviceType: ServiceType;
-  address: string;
+  message: string | null;
 }
+
+// ============================================================
+// CUSTOMER WORK ORDER
+// ============================================================
 
 export interface CustomerWorkOrder {
   id: string;
@@ -54,20 +104,38 @@ export interface CustomerWorkOrder {
   title: string;
 
   serviceType: string;
-
   address: string;
 
   description: string;
 
   priority: WorkOrderPriority;
-
   status: WorkOrderStatus;
 
   scheduledDate: string;
 
   service: string;
+  technician: string;
+  date: string;
+}
+
+// ============================================================
+// DISPATCHER WORK ORDER
+// ============================================================
+
+export interface DispatcherWorkOrder {
+  id: string;
+
+  title: string;
+
+  customer: string;
+
+  service: ServiceType;
+
+  priority: WorkOrderPriority;
+
+  status: WorkOrderStatus;
 
   technician: string;
 
-  date: string;
+  scheduledDate: string;
 }
