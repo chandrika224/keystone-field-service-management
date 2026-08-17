@@ -1,13 +1,18 @@
 package com.keystone.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import com.keystone.dto.AuthResponse;
 import com.keystone.dto.LoginRequest;
 import com.keystone.dto.RegisterRequest;
+import com.keystone.dto.UpdateProfileRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.service.UserService;
 
@@ -33,6 +38,7 @@ public class UserController {
     	log.info("user registration successful: {}" +request);
         return response;
     }
+    
 
     @Operation(summary = "Login User")
     @PostMapping("/login")

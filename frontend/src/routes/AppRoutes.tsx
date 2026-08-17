@@ -41,6 +41,7 @@ import ResetPassword from "@/pages/auth/ResetPassword";
 import CustomerDashboard from "@/pages/customer/Dashboard";
 import WorkOrders from "@/pages/customer/WorkOrders";
 import Profile from "@/pages/customer/Profile";
+import CustomerSupport from "@/pages/customer/Support";
 
 // ============================================================
 // DISPATCHER PAGES
@@ -180,6 +181,10 @@ export default function AppRoutes() {
           <Route
             path="/customer/profile"
             element={<Profile />}
+          />
+          <Route
+             path="/customer/support"
+             element={<CustomerSupport />}
           />
 
 

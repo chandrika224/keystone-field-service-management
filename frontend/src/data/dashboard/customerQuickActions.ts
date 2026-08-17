@@ -4,23 +4,39 @@ import {
   Headset,
 } from "lucide-react";
 
-export const customerQuickActions = [
+import type { NavigateFunction } from "react-router-dom";
+
+export const customerQuickActions = (
+  navigate: NavigateFunction
+) => [
   {
     title: "New Request",
     description: "Create a new service request",
     icon: PlusCircle,
-    onClick: () => console.log("New Request"),
+
+    onClick: () =>
+      navigate("/customer/work-orders", {
+        state: {
+          openNewRequest: true,
+        },
+      }),
   },
+
   {
     title: "My Requests",
     description: "View all your service requests",
     icon: ClipboardList,
-    onClick: () => console.log("My Requests"),
+
+    onClick: () =>
+      navigate("/customer/work-orders"),
   },
+
   {
     title: "Support",
     description: "Contact customer support",
     icon: Headset,
-    onClick: () => console.log("Support"),
+
+    onClick: () =>
+      navigate("/customer/support"),
   },
 ];

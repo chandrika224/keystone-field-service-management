@@ -3,6 +3,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
+  address: string;
   role:
     | "CUSTOMER"
     | "DISPATCHER"
@@ -28,6 +30,18 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   message: string;
+  role:
+    | "CUSTOMER"
+    | "DISPATCHER"
+    | "TECHNICIAN"
+    | "MANAGER";
+
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
 }
 
 export interface RefreshTokenRequest {

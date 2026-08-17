@@ -5,7 +5,19 @@ import {
   HelpCircle,
 } from "lucide-react";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function ProfileDropdown() {
+  const { user, logout } = useAuth();
+
+  const fullName = user
+    ? `${user.firstName} ${user.lastName}`
+    : "User";
+
+  const initials = user
+    ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`
+    : "U";
+
   return (
     <div
       className="
@@ -17,19 +29,18 @@ export default function ProfileDropdown() {
         shadow-xl
       "
     >
-      {/* User Info */}
       <div className="border-b p-4">
 
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white">
-          JD
+          {initials}
         </div>
 
         <h3 className="font-semibold text-slate-800">
-          John Doe
+          {fullName}
         </h3>
 
         <p className="text-sm text-muted-foreground">
-          john.doe@keystone.com
+          {user?.email}
         </p>
 
         <span
@@ -45,12 +56,10 @@ export default function ProfileDropdown() {
             text-blue-700
           "
         >
-          Manager
+          {user?.role}
         </span>
 
       </div>
-
-      {/* Menu */}
 
       <button
         className="
@@ -106,6 +115,7 @@ export default function ProfileDropdown() {
       <div className="border-t" />
 
       <button
+        onClick={logout}
         className="
           flex
           w-full

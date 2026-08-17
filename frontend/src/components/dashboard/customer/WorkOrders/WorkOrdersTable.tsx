@@ -1,4 +1,4 @@
-import { customerWorkOrders } from "@/data/customer/workOrders";
+
 import StatusBadge from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 import type { CustomerWorkOrder } from "@/types/workOrder";

@@ -3,6 +3,7 @@ package com.keystone.service;
 import java.util.List;
 
 import com.keystone.dto.ChangeStatusRequest;
+import com.keystone.dto.CustomerWorkOrderRequest;
 import com.keystone.dto.PartUsageRequest;
 import com.keystone.dto.PartUsageResponse;
 import com.keystone.dto.TimeLogRequest;
@@ -15,34 +16,63 @@ import com.keystone.enums.WorkOrderStatus;
 
 public interface WorkOrderService {
 
-	WorkOrderResponse createWorkOrder(WorkOrderRequest request);
+    WorkOrderResponse createWorkOrder(
+            WorkOrderRequest request);
 
-	List<WorkOrderResponse> getAllWorkOrders();
+    WorkOrderResponse createCustomerWorkOrder(
+            String email,
+            CustomerWorkOrderRequest request);
 
-	WorkOrderResponse getWorkOrderById(Long id);
+    List<WorkOrderResponse> getMyWorkOrders(
+            String email);
 
-	WorkOrderResponse updateWorkOrder(Long id, WorkOrderRequest request);
+    List<WorkOrderResponse> getAllWorkOrders();
 
-	List<WorkOrderResponse> getWorkOrdersByStatus(WorkOrderStatus status);
+    WorkOrderResponse getWorkOrderById(
+            Long id);
 
-	List<WorkOrderResponse> getWorkOrdersByPriority(Priority priority);
+    WorkOrderResponse updateWorkOrder(
+            Long id,
+            WorkOrderRequest request);
 
-	List<WorkOrderResponse> getByCustomer(Long customerId);
+    List<WorkOrderResponse> getWorkOrdersByStatus(
+            WorkOrderStatus status);
 
-	List<WorkOrderResponse> getByTechnician(Long technicianId);
+    List<WorkOrderResponse> getWorkOrdersByPriority(
+            Priority priority);
 
-	WorkOrderResponse changeStatus(Long id, ChangeStatusRequest request);
+    List<WorkOrderResponse> getByCustomer(
+            Long customerId);
 
-	List<WorkOrderStatusHistoryResponse> getStatusHistory(Long workOrderId);
+    List<WorkOrderResponse> getByTechnician(
+            Long technicianId);
 
-	TimeLogResponse addTimeLog(Long workOrderId, TimeLogRequest request);
+    WorkOrderResponse changeStatus(
+            Long id,
+            ChangeStatusRequest request);
 
-	List<TimeLogResponse> getTimeLogs(Long workOrderId);
-	
-	PartUsageResponse addPartUsage(Long workOrderId, PartUsageRequest request);
+    List<WorkOrderStatusHistoryResponse> getStatusHistory(
+            Long workOrderId);
 
-	List<PartUsageResponse> getPartUsage(Long workOrderId);
+    TimeLogResponse addTimeLog(
+            Long workOrderId,
+            TimeLogRequest request);
+
+    List<TimeLogResponse> getTimeLogs(
+            Long workOrderId);
+
+    PartUsageResponse addPartUsage(
+            Long workOrderId,
+            PartUsageRequest request);
+
+    List<PartUsageResponse> getPartUsage(
+            Long workOrderId);
+    
+    WorkOrderResponse updateMyWorkOrder(
+            String email,
+            Long workOrderId,
+            CustomerWorkOrderRequest request
+    );
 
     void deleteWorkOrder(Long id);
-
 }

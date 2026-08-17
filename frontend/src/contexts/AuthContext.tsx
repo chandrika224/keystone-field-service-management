@@ -26,7 +26,7 @@ interface AuthContextType {
 
   login: (
     credentials: LoginRequest
-  ) => Promise<void>;
+  ) => Promise<User>;
 
   logout: () => Promise<void>;
 
@@ -34,9 +34,7 @@ interface AuthContextType {
 }
 
 const AuthContext =
-  createContext<AuthContextType | null>(
-    null
-  );
+  createContext<AuthContextType | null>(null);
 
 export function AuthProvider({
   children,
@@ -49,37 +47,75 @@ export function AuthProvider({
   const [loading, setLoading] =
     useState(true);
 
-  const isAuthenticated =
-    !!user;
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     initializeAuth();
   }, []);
 
+  // Restore logged-in user after page refresh
   async function initializeAuth() {
-
+    try {
       const token = getAccessToken();
 
-      if (token) {
-        // Temporary
-        setUser({} as User);
+      if (!token) {
+        setUser(null);
+        return;
       }
 
+      const profile =
+        await authService.getProfile();
+
+      setUser(profile);
+
+    } catch (error) {
+      console.error(
+        "Failed to initialize authentication:",
+        error
+      );
+
+      clearTokens();
+      setUser(null);
+
+    } finally {
       setLoading(false);
     }
+  }
 
+  // Login
   async function login(
-      credentials: LoginRequest
-    ) {
-      const response =
-        await authService.login(credentials);
+    credentials: LoginRequest
+  ): Promise<User> {
 
-      saveAccessToken(response.accessToken);
+    const response =
+      await authService.login(credentials);
 
-      // Temporary until profile API is ready
-      setUser({} as User);
-    }
+    console.log(
+      "Login Response:",
+      response
+    );
 
+    saveAccessToken(response.token);
+
+    console.log(
+      "Token Saved Successfully"
+    );
+
+    console.log(
+      "User Role:",
+      response.role
+    );
+
+    // Get complete user data from database
+    const profile =
+      await authService.getProfile();
+
+    setUser(profile);
+
+    return profile;
+  }
+
+  // Logout
   async function logout() {
     try {
       await authService.logout();
@@ -88,17 +124,24 @@ export function AuthProvider({
     }
 
     clearTokens();
-
     setUser(null);
   }
 
+  // Refresh current user
   async function refreshUser() {
     try {
       const profile =
         await authService.getProfile();
 
       setUser(profile);
-    } catch {
+
+    } catch (error) {
+      console.error(
+        "Failed to refresh user:",
+        error
+      );
+
+      clearTokens();
       setUser(null);
     }
   }

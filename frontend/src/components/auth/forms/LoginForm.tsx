@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { saveAccessToken } from "@/utils/token";
 import { getUserRole } from "@/utils/jwt";
 import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   loginSchema,
@@ -22,6 +23,8 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
+
+  const { login } = useAuth();
 
   const {
     handleSubmit,
@@ -45,15 +48,36 @@ export default function LoginForm() {
       // Login
       const response = await authService.login(data);
 
-      console.log("Login Response:", response);
+      const user = await login(data);
+
+      console.log("Logged in user:", user);
+
+      switch (user.role) {
+
+        case "CUSTOMER":
+          navigate("/customer/dashboard");
+          break;
 
       // Save JWT
       saveAccessToken(response.token);
+        case "DISPATCHER":
+          navigate("/dispatcher/dashboard");
+          break;
 
-      console.log("Token Saved Successfully");
+        case "TECHNICIAN":
+          navigate("/technician/dashboard");
+          break;
 
       // Read role from JWT
       const role = getUserRole(response.token);
+        case "MANAGER":
+          navigate("/manager/dashboard");
+          break;
+
+        default:
+          console.error("Unknown role:", user.role);
+          navigate("/login");
+      }
 
       console.log("Logged-in Role:", role);
 
