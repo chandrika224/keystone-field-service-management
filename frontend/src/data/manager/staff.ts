@@ -1,13 +1,38 @@
-export type StaffRole = "Dispatcher" | "Technician";
+/* =================================================
+   FRONTEND STAFF TYPES
+================================================= */
 
-export type StaffStatus = "Active" | "Inactive";
+export type StaffRole =
+  | "Dispatcher"
+  | "Technician";
+
+export type StaffStatus =
+  | "Active"
+  | "Inactive";
+
+
+/* =================================================
+   BACKEND STAFF ROLE
+================================================= */
+
+export type BackendStaffRole =
+  | "DISPATCHER"
+  | "TECHNICIAN";
+
+
+/* =================================================
+   FRONTEND STAFF MODEL
+================================================= */
 
 export interface ManagerStaff {
   id: string;
+
   employeeId: string;
 
   name: string;
+
   email: string;
+
   phone: string;
 
   role: StaffRole;
@@ -19,89 +44,83 @@ export interface ManagerStaff {
   joinedDate: string;
 }
 
-export const managerStaff: ManagerStaff[] = [
-  {
-    id: "USR-001",
-    employeeId: "DISP-001",
 
-    name: "Priya Sharma",
-    email: "priya.sharma@keystone.com",
-    phone: "+91 9988776655",
+/* =================================================
+   CREATE STAFF REQUEST
+================================================= */
 
-    role: "Dispatcher",
+export interface CreateStaffRequest {
+  firstName: string;
 
-    specialization: "Work Order Coordination",
+  lastName: string;
 
-    status: "Active",
+  email: string;
 
-    joinedDate: "2025-08-12",
-  },
+  phone: string;
 
-  {
-    id: "USR-002",
-    employeeId: "TECH-001",
+  role: BackendStaffRole;
 
-    name: "Rahul Kumar",
-    email: "rahul.kumar@keystone.com",
-    phone: "+91 9876543210",
+  specialization: string;
+}
 
-    role: "Technician",
 
-    specialization: "HVAC",
+/* =================================================
+   STAFF RESPONSE
+   GET /api/staff
+   GET /api/staff/{id}
+   PUT /api/staff/{id}
+================================================= */
 
-    status: "Active",
+export interface StaffResponse {
+  id: number;
 
-    joinedDate: "2025-09-05",
-  },
+  employeeId: string;
 
-  {
-    id: "USR-003",
-    employeeId: "TECH-002",
+  firstName: string;
 
-    name: "Arun Joseph",
-    email: "arun.joseph@keystone.com",
-    phone: "+91 9123456789",
+  lastName: string;
 
-    role: "Technician",
+  email: string;
 
-    specialization: "Electrical",
+  phone: string;
 
-    status: "Active",
+  role: BackendStaffRole;
 
-    joinedDate: "2025-10-18",
-  },
+  specialization: string;
 
-  {
-    id: "USR-004",
-    employeeId: "DISP-002",
+  active: boolean;
 
-    name: "Sneha Patil",
-    email: "sneha.patil@keystone.com",
-    phone: "+91 9876512345",
+  joinedDate: string;
 
-    role: "Dispatcher",
+  /*
+   * Only returned when creating staff.
+   * Therefore it should NOT be mandatory.
+   */
+  temporaryPassword?: string;
+}
 
-    specialization: "Scheduling & Dispatch",
 
-    status: "Active",
+/* =================================================
+   UPDATE STAFF REQUEST
+================================================= */
 
-    joinedDate: "2026-01-10",
-  },
+export interface UpdateStaffRequest {
+  firstName: string;
 
-  {
-    id: "USR-005",
-    employeeId: "TECH-003",
+  lastName: string;
 
-    name: "Vikram Singh",
-    email: "vikram.singh@keystone.com",
-    phone: "+91 9988771122",
+  email: string;
 
-    role: "Technician",
+  phone: string;
 
-    specialization: "Plumbing",
+  specialization: string;
+}
 
-    status: "Inactive",
 
-    joinedDate: "2025-06-22",
-  },
-];
+/* =================================================
+   STAFF STATUS UPDATE REQUEST
+================================================= */
+
+export interface StaffStatusUpdateRequest {
+  active: boolean;
+}

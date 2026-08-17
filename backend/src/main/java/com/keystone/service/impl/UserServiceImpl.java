@@ -80,6 +80,8 @@ public class UserServiceImpl implements UserService {
 
         // Every public registration is CUSTOMER
         user.setRole(Role.CUSTOMER);
+        user.setPhone(request.getPhone());
+        User savedUser = userRepository.save(user);
 
         User savedUser =
                 userRepository.save(user);
@@ -145,6 +147,7 @@ public class UserServiceImpl implements UserService {
         response.setAddress(
                 savedUser.getAddress());
 
+        
         return response;
     }
 
@@ -173,6 +176,10 @@ public class UserServiceImpl implements UserService {
                     "Invalid Password");
         }
 
+        String token = jwtService.generateToken(
+        	    user.getEmail(),
+        	    user.getRole().name()
+        	);
 
         String token =
                 jwtService.generateToken(

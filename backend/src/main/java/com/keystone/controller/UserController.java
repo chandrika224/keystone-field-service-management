@@ -43,39 +43,8 @@ public class UserController {
     @Operation(summary = "Login User")
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-
-        AuthResponse response = userService.login(request);
-
-        System.out.println("LOGIN ROLE = " + response.getRole());
-        System.out.println("LOGIN RESPONSE = " + response);
-
-        return response;
-    }
-    @Operation(summary = "Update User Profile")
-    @PutMapping("/profile")
-    public UserResponse updateProfile(
-            @RequestBody UpdateProfileRequest request,
-            Authentication authentication) {
-
-        String email = authentication.getName();
-
-        return userService.updateProfile(email, request);
-    }
-    @Operation(summary = "Get Current User Profile")
-    @GetMapping("/profile")
-    public UserResponse getProfile(Authentication authentication) {
-
-        String email = authentication.getName();
-
-        return userService.getProfile(email);
-    }
-    @Operation(summary = "Logout User")
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-
-        log.info("User logout successful");
-
-        return ResponseEntity.ok("Logout successful");
+    	log.info("user logged in:" +request);
+        return userService.login(request);
     }
 
 }
