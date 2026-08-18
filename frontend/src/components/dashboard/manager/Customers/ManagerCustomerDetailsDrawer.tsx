@@ -11,15 +11,15 @@ import {
   Mail,
   Phone,
   MapPin,
-  ClipboardList,
+  Hash,
 } from "lucide-react";
 
-import type { DispatcherCustomer } from "@/data/dispatcher/customers";
+import type { Customer } from "@/services/customerService";
 
 interface ManagerCustomerDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customer: DispatcherCustomer | null;
+  customer: Customer | null;
 }
 
 export default function ManagerCustomerDetailsDrawer({
@@ -37,6 +37,7 @@ export default function ManagerCustomerDetailsDrawer({
       open={open}
       onOpenChange={onOpenChange}
     >
+
       <SheetContent className="w-full sm:max-w-md">
 
         <SheetHeader>
@@ -47,111 +48,168 @@ export default function ManagerCustomerDetailsDrawer({
 
         <div className="mt-6 space-y-6">
 
-          {/* Customer identity */}
+          {/* ================================================== */}
+          {/* Customer Identity */}
+          {/* ================================================== */}
 
           <div>
+
             <h2 className="text-2xl font-bold">
-              {customer.companyName}
+              {customer.customerName}
             </h2>
 
             <p className="text-muted-foreground">
-              {customer.id}
+              Customer #{customer.customerId}
             </p>
+
           </div>
 
-          {/* Contact information */}
+
+          {/* ================================================== */}
+          {/* Contact Information */}
+          {/* ================================================== */}
 
           <div className="space-y-4">
+
+            {/* Name */}
 
             <div className="flex items-center gap-3">
 
               <User className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
-                  Contact Person
+                  Customer Name
                 </p>
 
                 <p className="font-medium">
-                  {customer.contactPerson}
+                  {customer.customerName || "N/A"}
                 </p>
+
               </div>
 
             </div>
+
+
+            {/* Email */}
 
             <div className="flex items-center gap-3">
 
               <Mail className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Email
                 </p>
 
                 <p className="font-medium">
-                  {customer.email}
+                  {customer.email || "N/A"}
                 </p>
+
               </div>
 
             </div>
+
+
+            {/* Phone */}
 
             <div className="flex items-center gap-3">
 
               <Phone className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Phone
                 </p>
 
                 <p className="font-medium">
-                  {customer.phone}
+                  {customer.phone || "N/A"}
                 </p>
+
+              </div>
+
+            </div>
+
+
+            {/* Address */}
+
+            <div className="flex items-start gap-3">
+
+              <MapPin className="mt-0.5 h-5 w-5 text-primary" />
+
+              <div>
+
+                <p className="text-sm text-muted-foreground">
+                  Address
+                </p>
+
+                <p className="font-medium">
+                  {customer.address || "Not provided"}
+                </p>
+
               </div>
 
             </div>
 
           </div>
 
-          {/* Customer overview */}
+
+          {/* ================================================== */}
+          {/* Customer Information */}
+          {/* ================================================== */}
 
           <div className="grid grid-cols-2 gap-4">
 
+            {/* Customer ID */}
+
             <div className="rounded-lg border p-4">
 
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
+
+                <Hash className="h-5 w-5 text-primary" />
 
                 <p className="text-sm text-muted-foreground">
-                  Sites
+                  Customer ID
                 </p>
+
               </div>
 
-              <p className="mt-2 text-2xl font-bold">
-                {customer.sites}
+              <p className="mt-2 text-lg font-bold">
+                #{customer.customerId}
               </p>
 
             </div>
 
+
+            {/* Customer Code */}
+
             <div className="rounded-lg border p-4">
 
               <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-primary" />
+
+                <Building2 className="h-5 w-5 text-primary" />
 
                 <p className="text-sm text-muted-foreground">
-                  Active Work Orders
+                  Customer Code
                 </p>
+
               </div>
 
-              <p className="mt-2 text-2xl font-bold">
-                {customer.activeWorkOrders}
+              <p className="mt-2 text-lg font-bold">
+                {customer.customerCode || "N/A"}
               </p>
 
             </div>
 
           </div>
 
-          {/* Manager information */}
+
+          {/* ================================================== */}
+          {/* Manager Information */}
+          {/* ================================================== */}
 
           <div className="rounded-lg border bg-muted/40 p-4">
 
@@ -166,8 +224,8 @@ export default function ManagerCustomerDetailsDrawer({
             </div>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              This view provides an overview of the customer,
-              their registered sites, and active service work.
+              This view provides an overview of the customer's
+              contact information and registered address.
             </p>
 
           </div>
@@ -175,6 +233,7 @@ export default function ManagerCustomerDetailsDrawer({
         </div>
 
       </SheetContent>
+
     </Sheet>
   );
 }

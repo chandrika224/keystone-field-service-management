@@ -2,6 +2,7 @@ package com.keystone.dto;
 
 import com.keystone.enums.Role;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class TechnicianResponse {
 
     private Long id;
@@ -26,4 +28,7 @@ public class TechnicianResponse {
     private boolean active;
 
     private Role role;
+
+    // Computed field for dispatcher dashboard
+    private long activeJobs;
 }

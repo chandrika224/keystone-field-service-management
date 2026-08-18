@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface DispatcherWorkOrdersToolbarProps {
   search: string;
@@ -20,7 +19,6 @@ export default function DispatcherWorkOrdersToolbar({
 }: DispatcherWorkOrdersToolbarProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 md:flex-row md:items-center md:justify-between">
-
       <Input
         placeholder="Search work orders..."
         value={search}
@@ -29,32 +27,33 @@ export default function DispatcherWorkOrdersToolbar({
       />
 
       <div className="flex gap-3">
-
+        {/* STATUS SELECT */}
         <select
           value={status}
           onChange={(e) => onStatusChange(e.target.value)}
-          className="rounded-md border px-3 py-2"
+          className="rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="ALL">All Status</option>
           <option value="NEW">New</option>
           <option value="ASSIGNED">Assigned</option>
           <option value="IN_PROGRESS">In Progress</option>
           <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
         </select>
 
+        {/* PRIORITY SELECT (FIXED VALUES TO MATCH BACKEND ENUMS) */}
         <select
           value={priority}
           onChange={(e) => onPriorityChange(e.target.value)}
-          className="rounded-md border px-3 py-2"
+          className="rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="ALL">All Priority</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+          <option value="URGENT">Urgent</option>
         </select>
-
       </div>
-
     </div>
   );
 }

@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 import type { Technician } from "@/types/workOrder";
 
@@ -11,107 +10,115 @@ interface ManagerTechnicianOverviewProps {
 export default function ManagerTechnicianOverview({
   technicians,
 }: ManagerTechnicianOverviewProps) {
-
-  const availableCount = technicians.filter(
-    (technician) => technician.status === "Available"
-  ).length;
-
-  const busyCount = technicians.filter(
-    (technician) => technician.status === "Busy"
-  ).length;
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Technician Overview</CardTitle>
+    <div className="rounded-lg border bg-card">
 
-          <div className="flex gap-2">
-            <Badge variant="outline">
-              Available: {availableCount}
-            </Badge>
+      <div className="border-b px-6 py-4">
+        <h2 className="text-lg font-semibold">
+          Technician Overview
+        </h2>
 
-            <Badge variant="outline">
-              Busy: {busyCount}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
+        <p className="text-sm text-muted-foreground">
+          Current technician workload and availability.
+        </p>
+      </div>
 
-      <CardContent>
+      <div className="divide-y">
 
         {technicians.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            No technicians available.
+
+          <div className="px-6 py-10 text-center text-muted-foreground">
+            No technicians found.
           </div>
+
         ) : (
-          <div className="space-y-4">
 
-            {technicians.map((technician) => {
+          technicians.map((technician) => {
 
-              const initials = technician.name
-                .split(" ")
-                .map((word) => word[0])
-                .join("");
+            const firstName =
+              technician.firstName ?? "";
 
-              return (
-                <div
-                  key={technician.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
+            const lastName =
+              technician.lastName ?? "";
 
-                  <div className="flex items-center gap-3">
+            const fullName =
+              `${firstName} ${lastName}`.trim() ||
+              "Unknown Technician";
 
-                    <Avatar>
-                      <AvatarFallback>
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+            const initials =
+              `${firstName.charAt(0)}${lastName.charAt(0)}`
+                .toUpperCase() || "T";
 
-                    <div>
-                      <p className="font-medium">
-                        {technician.name}
-                      </p>
+            return (
+              <div
+                key={technician.id}
+                className="flex items-center justify-between px-6 py-4"
+              >
 
-                      <p className="text-sm text-muted-foreground">
-                        {technician.specialization}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
 
-                  </div>
+                  <Avatar>
 
-                  <div className="flex items-center gap-4">
+                    <AvatarFallback>
+                      {initials}
+                    </AvatarFallback>
 
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        Active Jobs
-                      </p>
+                  </Avatar>
 
-                      <p className="font-semibold">
-                        {technician.currentJobs}
-                      </p>
-                    </div>
+                  <div>
 
-                    <Badge
-                      variant={
-                        technician.status === "Available"
-                          ? "default"
-                          : "destructive"
-                      }
-                    >
-                      {technician.status}
-                    </Badge>
+                    <p className="font-medium">
+                      {fullName}
+                    </p>
+
+                    <p className="text-sm text-muted-foreground">
+                      {technician.specialization || "No specialization"}
+                    </p>
 
                   </div>
 
                 </div>
-              );
-            })}
 
-          </div>
+
+                <div className="flex items-center gap-4">
+
+                  <div className="text-right">
+
+                    <p className="text-sm font-medium">
+                      {technician.activeJobs} active jobs
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      {technician.activeJobs === 0
+                        ? "Available"
+                        : "Working"}
+                    </p>
+
+                  </div>
+
+
+                  <Badge
+                    variant={
+                      technician.active
+                        ? "default"
+                        : "destructive"
+                    }
+                  >
+                    {technician.active
+                      ? "Active"
+                      : "Inactive"}
+                  </Badge>
+
+                </div>
+
+              </div>
+            );
+          })
+
         )}
 
-      </CardContent>
-    </Card>
+      </div>
+
+    </div>
   );
 }

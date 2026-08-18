@@ -8,11 +8,14 @@ import org.springframework.stereotype.Service;
 
 import com.keystone.dto.staff.CreateStaffRequest;
 import com.keystone.dto.staff.StaffResponse;
+import com.keystone.entity.Technician;
 import com.keystone.entity.User;
 import com.keystone.enums.Role;
 import com.keystone.exception.ResourceAlreadyExistsException;
+import com.keystone.repository.TechnicianRepository;
 import com.keystone.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,177 +23,285 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class CreateStaffService {
-	
-	private final UserRepository userRepository;
+
+    private final UserRepository userRepository;
+
+    private final TechnicianRepository technicianRepository;
+
     private final PasswordEncoder passwordEncoder;
-	
-	 public StaffResponse createStaff(CreateStaffRequest request) {
-		 
-	        // 1. Check duplicate email
-	        if (userRepository.existsByEmail(request.getEmail())) {
-	            throw new ResourceAlreadyExistsException(
-	                    "User with this email already exists"
-	            );
-	        }
 
-	        // 2. Validate role
-	        if (request.getRole() == null) {
-	            throw new IllegalArgumentException(
-	                    "Staff role is required"
-	            );
-	        }
 
-	        Role role = Role.valueOf(
-	                request.getRole().name()
-	        );
+    @Transactional
+    public StaffResponse createStaff(
+            CreateStaffRequest request) {
 
-	        // 3. Only allow staff roles
-	        if (role != Role.DISPATCHER &&
-	            role != Role.TECHNICIAN) {
+        // ============================================================
+        // 1. CHECK DUPLICATE EMAIL
+        // ============================================================
 
-	            throw new IllegalArgumentException(
-	                    "Only DISPATCHER and TECHNICIAN roles can be created"
-	            );
-	        }
+        if (userRepository.existsByEmail(request.getEmail())) {
 
-	        // 4. Create User
-	        User user = new User();
+            throw new ResourceAlreadyExistsException(
+                    "User with this email already exists"
+            );
+        }
 
-	        user.setFirstName(
-	                request.getFirstName()
-	        );
 
-	        user.setLastName(
-	                request.getLastName()
-	        );
+        // ============================================================
+        // 2. VALIDATE ROLE
+        // ============================================================
 
-	        user.setEmail(
-	                request.getEmail()
-	        );
+        if (request.getRole() == null) {
 
-	        user.setPhone(
-	                request.getPhone()
-	        );
+            throw new IllegalArgumentException(
+                    "Staff role is required"
+            );
+        }
 
-	        user.setSpecialization(
-	                request.getSpecialization()
-	        );
 
-	        user.setRole(role);
+        Role role = Role.valueOf(
+                request.getRole().name()
+        );
 
-	        user.setActive(true);
-	        
-	        user.setJoinedDate(LocalDateTime.now());
 
-	        // 5. Generate temporary password
-	        String temporaryPassword =
-	                generateTemporaryPassword();
+        // ============================================================
+        // 3. ONLY STAFF ROLES
+        // ============================================================
 
-	        user.setPassword(
-	                passwordEncoder.encode(
-	                        temporaryPassword
-	                )
-	        );
+        if (role != Role.DISPATCHER &&
+            role != Role.TECHNICIAN) {
 
-	        // 6. Save user
-	        User savedUser =
-	                userRepository.save(user);
+            throw new IllegalArgumentException(
+                    "Only DISPATCHER and TECHNICIAN roles can be created"
+            );
+        }
 
-	        // 7. Generate employee ID
-	        String employeeId =
-	                generateEmployeeId(
-	                        savedUser.getRole(),
-	                        savedUser.getId()
-	                );
 
-	        savedUser.setEmployeeId(employeeId);
+        // ============================================================
+        // 4. CREATE USER
+        // ============================================================
 
-	        // Save employee ID
-	        savedUser =
-	                userRepository.save(savedUser);
+        User user = new User();
 
-	        // 8. Build response
-	        StaffResponse response =
-	                new StaffResponse();
+        user.setFirstName(
+                request.getFirstName()
+        );
 
-	        response.setId(
-	                savedUser.getId()
-	        );
+        user.setLastName(
+                request.getLastName()
+        );
 
-	        response.setEmployeeId(
-	                savedUser.getEmployeeId()
-	        );
+        user.setEmail(
+                request.getEmail()
+        );
 
-	        response.setFirstName(
-	                savedUser.getFirstName()
-	        );
+        user.setPhone(
+                request.getPhone()
+        );
 
-	        response.setLastName(
-	                savedUser.getLastName()
-	        );
+        user.setSpecialization(
+                request.getSpecialization()
+        );
 
-	        response.setEmail(
-	                savedUser.getEmail()
-	        );
+        user.setRole(role);
 
-	        response.setPhone(
-	                savedUser.getPhone()
-	        );
+        user.setActive(true);
 
-	        response.setRole(
-	                savedUser.getRole()
-	        );
+        user.setJoinedDate(
+                LocalDateTime.now()
+        );
 
-	        response.setSpecialization(
-	                savedUser.getSpecialization()
-	        );
 
-	        response.setActive(
-	                savedUser.isActive()
-	        );
+        // ============================================================
+        // 5. GENERATE TEMPORARY PASSWORD
+        // ============================================================
 
-	        response.setJoinedDate(
-	                savedUser.getJoinedDate()
-	        );
+        String temporaryPassword =
+                generateTemporaryPassword();
 
-	        // Temporary testing only
-	        response.setTemporaryPassword(
-	                temporaryPassword
-	        );
+        user.setPassword(
+                passwordEncoder.encode(
+                        temporaryPassword
+                )
+        );
 
-	        return response;
-	    }
 
-	    private String generateEmployeeId(
-	            Role role,
-	            Long id
-	    ) {
+        // ============================================================
+        // 6. SAVE USER FIRST
+        // ============================================================
 
-	        String prefix;
+        User savedUser =
+                userRepository.save(user);
 
-	        if (role == Role.DISPATCHER) {
-	            prefix = "DISP";
-	        } else if (role == Role.TECHNICIAN) {
-	            prefix = "TECH";
-	        } else {
-	            prefix = "EMP";
-	        }
 
-	        return String.format(
-	                "%s-%03d",
-	                prefix,
-	                id
-	        );
-	    }
+        // ============================================================
+        // 7. GENERATE EMPLOYEE ID
+        // ============================================================
 
-	    private String generateTemporaryPassword() {
+        String employeeId =
+                generateEmployeeId(
+                        savedUser.getRole(),
+                        savedUser.getId()
+                );
 
-	        return "KS-" +
-	                UUID.randomUUID()
-	                        .toString()
-	                        .substring(0, 8);
-	    }
-		 
-	 
+        savedUser.setEmployeeId(
+                employeeId
+        );
 
+        savedUser =
+                userRepository.save(savedUser);
+
+
+     // ============================================================
+     // 8. CREATE TECHNICIAN PROFILE
+     // ============================================================
+
+     if (role == Role.TECHNICIAN) {
+
+         Technician technician = new Technician();
+
+         // Link Technician to User
+         technician.setUser(savedUser);
+
+         // Copy common staff information from User
+         technician.setFirstName(
+                 savedUser.getFirstName()
+         );
+
+         technician.setLastName(
+                 savedUser.getLastName()
+         );
+
+         technician.setEmail(
+                 savedUser.getEmail()
+         );
+
+         technician.setPhone(
+                 savedUser.getPhone()
+         );
+
+         technician.setRole(
+                 savedUser.getRole().name()
+         );
+
+         // Technician-specific information
+         technician.setSpecialization(
+                 savedUser.getSpecialization()
+         );
+
+         // Initial technician status
+         technician.setStatus("Available");
+
+         technician.setActive(
+                 savedUser.isActive()
+         );
+
+         technicianRepository.save(technician);
+
+         log.info(
+                 "Technician profile created for user id {}",
+                 savedUser.getId()
+         );
+     }
+
+        // ============================================================
+        // 9. BUILD RESPONSE
+        // ============================================================
+
+        StaffResponse response =
+                new StaffResponse();
+
+        response.setId(
+                savedUser.getId()
+        );
+
+        response.setEmployeeId(
+                savedUser.getEmployeeId()
+        );
+
+        response.setFirstName(
+                savedUser.getFirstName()
+        );
+
+        response.setLastName(
+                savedUser.getLastName()
+        );
+
+        response.setEmail(
+                savedUser.getEmail()
+        );
+
+        response.setPhone(
+                savedUser.getPhone()
+        );
+
+        response.setRole(
+                savedUser.getRole()
+        );
+
+        response.setSpecialization(
+                savedUser.getSpecialization()
+        );
+
+        response.setActive(
+                savedUser.isActive()
+        );
+
+        response.setJoinedDate(
+                savedUser.getJoinedDate()
+        );
+
+        // Temporary testing only
+        response.setTemporaryPassword(
+                temporaryPassword
+        );
+
+
+        return response;
+    }
+
+
+    // ============================================================
+    // EMPLOYEE ID
+    // ============================================================
+
+    private String generateEmployeeId(
+            Role role,
+            Long id) {
+
+        String prefix;
+
+        if (role == Role.DISPATCHER) {
+
+            prefix = "DISP";
+
+        } else if (role == Role.TECHNICIAN) {
+
+            prefix = "TECH";
+
+        } else {
+
+            prefix = "EMP";
+        }
+
+        return String.format(
+                "%s-%03d",
+                prefix,
+                id
+        );
+    }
+
+
+    // ============================================================
+    // TEMPORARY PASSWORD
+    // ============================================================
+
+    private String generateTemporaryPassword() {
+
+        return "KS-" +
+                UUID.randomUUID()
+                        .toString()
+                        .substring(0, 8);
+    }
+    
 }

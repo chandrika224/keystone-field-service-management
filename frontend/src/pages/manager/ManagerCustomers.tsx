@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import SectionHeader
   from "@/components/dashboard/shared/SectionHeader";
@@ -9,25 +11,58 @@ import ManagerCustomersToolbar
 import ManagerCustomersTable
   from "@/components/dashboard/manager/Customers/ManagerCustomersTable";
 
-import {
-  dispatcherCustomers,
-} from "@/data/dispatcher/customers";
-
-import type {
-  DispatcherCustomer,
-} from "@/data/dispatcher/customers";
-
 import ManagerCustomerDetailsDrawer
   from "@/components/dashboard/manager/Customers/ManagerCustomerDetailsDrawer";
 
-export default function ManagerCustomers() {
+import {
+  customerService,
+  type Customer,
+} from "@/services/customerService";
 
+export default function ManagerCustomers() {
   const [search, setSearch] = useState("");
 
+  const [customers, setCustomers] =
+    useState<Customer[]>([]);
+
   const [selectedCustomer, setSelectedCustomer] =
-    useState<DispatcherCustomer | null>(null);
-  
-  const [drawerOpen, setDrawerOpen] = useState(false);
+    useState<Customer | null>(null);
+
+  const [drawerOpen, setDrawerOpen] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+
+        const response =
+          await customerService.getAllCustomers();
+
+        setCustomers(response.content);
+
+      } catch (error) {
+        console.error(
+          "Failed to fetch customers:",
+          error
+        );
+
+        toast.error(
+          "Failed to load customers."
+        );
+
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -42,25 +77,44 @@ export default function ManagerCustomers() {
         onSearchChange={setSearch}
       />
 
-      <ManagerCustomersTable
-        customers={dispatcherCustomers}
-        search={search}
-        onView={(customer) => {
-          console.log(
-            "Manager viewed customer:",
-            customer
-          );
+      {loading ? (
 
-          setSelectedCustomer(customer);
-          setDrawerOpen(true);
-        }}
+        <div className="flex h-64 items-center justify-center rounded-lg border bg-card text-muted-foreground">
+
+          <Loader2
+            className="mr-2 h-6 w-6 animate-spin text-primary"
+          />
+
+          <span>
+            Loading customers...
+          </span>
+
+        </div>
+
+      ) : (
+
+        <ManagerCustomersTable
+          customers={customers}
+          search={search}
+          onView={(customer) => {
+            console.log(
+              "Manager viewed customer:",
+              customer
+            );
+
+            setSelectedCustomer(customer);
+            setDrawerOpen(true);
+          }}
+        />
+
+      )}
+
+      <ManagerCustomerDetailsDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        customer={selectedCustomer}
       />
 
-        <ManagerCustomerDetailsDrawer
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          customer={selectedCustomer}
-        />
     </div>
   );
 }

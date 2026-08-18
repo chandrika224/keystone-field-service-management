@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+} from "@/components/ui/avatar";
 
-import type { DispatcherCustomer } from "@/data/dispatcher/customers";
+import type { Customer } from "@/services/customerService";
 
 interface ManagerCustomersTableProps {
-  customers: DispatcherCustomer[];
+  customers: Customer[];
   search: string;
-  onView: (customer: DispatcherCustomer) => void;
+  onView: (customer: Customer) => void;
 }
 
 export default function ManagerCustomersTable({
@@ -15,20 +18,24 @@ export default function ManagerCustomersTable({
   onView,
 }: ManagerCustomersTableProps) {
 
-  const searchValue = search.toLowerCase();
+  const searchValue = search.trim().toLowerCase();
 
   const filteredCustomers = customers.filter((customer) => {
     return (
-      customer.companyName
-        .toLowerCase()
-        .includes(searchValue) ||
-
-      customer.contactPerson
-        .toLowerCase()
+      customer.customerName
+        ?.toLowerCase()
         .includes(searchValue) ||
 
       customer.email
-        .toLowerCase()
+        ?.toLowerCase()
+        .includes(searchValue) ||
+
+      customer.phone
+        ?.toLowerCase()
+        .includes(searchValue) ||
+
+      customer.address
+        ?.toLowerCase()
         .includes(searchValue)
     );
   });
@@ -46,7 +53,7 @@ export default function ManagerCustomersTable({
             </th>
 
             <th className="px-6 py-4 text-left">
-              Contact Person
+              Email
             </th>
 
             <th className="px-6 py-4 text-left">
@@ -54,11 +61,7 @@ export default function ManagerCustomersTable({
             </th>
 
             <th className="px-6 py-4 text-left">
-              Sites
-            </th>
-
-            <th className="px-6 py-4 text-left">
-              Active Work Orders
+              Address
             </th>
 
             <th className="px-6 py-4 text-right">
@@ -74,7 +77,7 @@ export default function ManagerCustomersTable({
 
             <tr>
               <td
-                colSpan={6}
+                colSpan={5}
                 className="px-6 py-10 text-center text-muted-foreground"
               >
                 No customers found.
@@ -85,16 +88,16 @@ export default function ManagerCustomersTable({
 
             filteredCustomers.map((customer) => {
 
-              const initials = customer.companyName
-                .split(" ")
+              const initials = customer.customerName
+                ?.split(" ")
                 .map((word) => word[0])
                 .join("")
                 .slice(0, 2)
-                .toUpperCase();
+                .toUpperCase() || "CU";
 
               return (
                 <tr
-                  key={customer.id}
+                  key={customer.customerId}
                   className="border-t"
                 >
 
@@ -113,11 +116,11 @@ export default function ManagerCustomersTable({
                       <div>
 
                         <p className="font-medium">
-                          {customer.companyName}
+                          {customer.customerName}
                         </p>
 
                         <p className="text-sm text-muted-foreground">
-                          {customer.id}
+                          Customer #{customer.customerId}
                         </p>
 
                       </div>
@@ -126,41 +129,35 @@ export default function ManagerCustomersTable({
 
                   </td>
 
-                  {/* Contact */}
+
+                  {/* Email */}
 
                   <td className="px-6 py-4">
 
-                    <div>
-
-                      <p className="font-medium">
-                        {customer.contactPerson}
-                      </p>
-
-                      <p className="text-sm text-muted-foreground">
-                        {customer.email}
-                      </p>
-
-                    </div>
+                    <span className="text-sm">
+                      {customer.email || "N/A"}
+                    </span>
 
                   </td>
+
 
                   {/* Phone */}
 
                   <td className="px-6 py-4">
-                    {customer.phone}
+                    {customer.phone || "N/A"}
                   </td>
 
-                  {/* Sites */}
+
+                  {/* Address */}
 
                   <td className="px-6 py-4">
-                    {customer.sites}
+
+                    <span className="text-sm text-muted-foreground">
+                      {customer.address || "Not provided"}
+                    </span>
+
                   </td>
 
-                  {/* Active Work Orders */}
-
-                  <td className="px-6 py-4">
-                    {customer.activeWorkOrders}
-                  </td>
 
                   {/* Action */}
 

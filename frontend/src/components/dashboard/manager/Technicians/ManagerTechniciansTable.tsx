@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
 import {
   Avatar,
   AvatarFallback,
@@ -21,25 +22,31 @@ export default function ManagerTechniciansTable({
   onView,
 }: ManagerTechniciansTableProps) {
 
+  const searchValue = search.trim().toLowerCase();
+
   const filteredTechnicians = technicians.filter((technician) => {
 
-    const searchValue = search.toLowerCase();
+    const technicianName =
+      `${technician.firstName} ${technician.lastName}`.toLowerCase();
 
     const matchesSearch =
-      technician.name
-        .toLowerCase()
-        .includes(searchValue) ||
-
+      !searchValue ||
+      technicianName.includes(searchValue) ||
+      technician.email.toLowerCase().includes(searchValue) ||
       technician.specialization
         .toLowerCase()
         .includes(searchValue);
 
+    const technicianStatus =
+      technician.active ? "ACTIVE" : "INACTIVE";
+
     const matchesStatus =
       status === "ALL" ||
-      technician.status === status;
+      technicianStatus === status.toUpperCase();
 
     return matchesSearch && matchesStatus;
   });
+
 
   return (
     <div className="overflow-hidden rounded-lg border">
@@ -74,48 +81,59 @@ export default function ManagerTechniciansTable({
 
         </thead>
 
+
         <tbody>
 
           {filteredTechnicians.length === 0 ? (
 
             <tr>
+
               <td
                 colSpan={5}
                 className="px-6 py-10 text-center text-muted-foreground"
               >
                 No technicians found.
               </td>
+
             </tr>
 
           ) : (
 
             filteredTechnicians.map((technician) => {
 
-              const initials = technician.name
-                .split(" ")
-                .map((word) => word[0])
-                .join("");
+              const technicianName =
+                `${technician.firstName} ${technician.lastName}`.trim();
+
+              const initials =
+                `${technician.firstName?.[0] ?? ""}${technician.lastName?.[0] ?? ""}`
+                  .toUpperCase();
 
               return (
+
                 <tr
                   key={technician.id}
                   className="border-t"
                 >
+
+                  {/* Technician */}
 
                   <td className="px-6 py-4">
 
                     <div className="flex items-center gap-3">
 
                       <Avatar>
+
                         <AvatarFallback>
                           {initials}
                         </AvatarFallback>
+
                       </Avatar>
+
 
                       <div>
 
                         <p className="font-medium">
-                          {technician.name}
+                          {technicianName || "Unknown Technician"}
                         </p>
 
                         <p className="text-sm text-muted-foreground">
@@ -128,27 +146,47 @@ export default function ManagerTechniciansTable({
 
                   </td>
 
-                  <td className="px-6 py-4">
-                    {technician.specialization}
-                  </td>
+
+                  {/* Specialization */}
 
                   <td className="px-6 py-4">
-                    {technician.currentJobs}
+
+                    {technician.specialization || "N/A"}
+
                   </td>
+
+
+                  {/* Active Jobs */}
+
+                  <td className="px-6 py-4">
+
+                    <span className="font-medium">
+                      {technician.activeJobs}
+                    </span>
+
+                  </td>
+
+
+                  {/* Status */}
 
                   <td className="px-6 py-4">
 
                     <Badge
                       variant={
-                        technician.status === "Available"
+                        technician.active
                           ? "default"
                           : "destructive"
                       }
                     >
-                      {technician.status}
+                      {technician.active
+                        ? "Active"
+                        : "Inactive"}
                     </Badge>
 
                   </td>
+
+
+                  {/* Action */}
 
                   <td className="px-6 py-4 text-right">
 
@@ -163,6 +201,7 @@ export default function ManagerTechniciansTable({
                   </td>
 
                 </tr>
+
               );
             })
 

@@ -100,8 +100,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                         new ResourceNotFoundException(
                                 "Customer not found"));
 
-        Technician technician =
-                technicianRepository.findById(
+        User technician =
+                userRepository.findById(
                         request.getTechnicianId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -273,8 +273,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                         new ResourceNotFoundException(
                                 "Customer not found"));
 
-        Technician technician =
-                technicianRepository.findById(
+        User technician =
+                userRepository.findById(
                         request.getTechnicianId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -694,9 +694,9 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 saved.getLoggedAt());
 
         response.setTechnicianName(
-                technician.getFirstName()
+                technician.getUser().getFirstName()
                 + " "
-                + technician.getLastName());
+                + technician.getUser().getLastName());
 
         return response;
     }
@@ -707,15 +707,13 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public List<TimeLogResponse>
-            getTimeLogs(Long workOrderId) {
+    public List<TimeLogResponse> getTimeLogs(Long workOrderId) {
 
         WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+                workOrderRepository.findById(workOrderId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Work Order not found"));
 
         return timeLogRepository
                 .findByWorkOrder(workOrder)
@@ -736,23 +734,23 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                     response.setLoggedAt(
                             log.getLoggedAt());
 
-                    if (log.getTechnician() != null) {
+                    if (log.getTechnician() != null &&
+                        log.getTechnician().getUser() != null) {
+
+                        User technicianUser =
+                                log.getTechnician().getUser();
 
                         response.setTechnicianName(
-                                log.getTechnician()
-                                        .getFirstName()
-                                + " "
-                                + log.getTechnician()
-                                        .getLastName());
+                                technicianUser.getFirstName()
+                                        + " "
+                                        + technicianUser.getLastName()
+                        );
                     }
 
                     return response;
-
                 })
                 .toList();
     }
-
-
     // =========================================================
     // PART USAGE
     // =========================================================
@@ -859,63 +857,53 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // MAP ENTITY TO RESPONSE
     // =========================================================
 
-    private WorkOrderResponse mapToResponse(
-            WorkOrder workOrder) {
+    private WorkOrderResponse mapToResponse(WorkOrder workOrder) {
+        WorkOrderResponse response = new WorkOrderResponse();
 
-        WorkOrderResponse response =
-                new WorkOrderResponse();
+        // Core Work Order Details
+        response.setId(workOrder.getId());
+        response.setTitle(workOrder.getTitle());
+        response.setDescription(workOrder.getDescription());
+        response.setServiceType(workOrder.getServiceType()); // Fixed: missing
+        response.setPriority(workOrder.getPriority());
+        response.setStatus(workOrder.getStatus());
+        response.setAddress(workOrder.getAddress()); // Fixed: missing
 
-        response.setId(
-                workOrder.getId());
+        // Dates & Timestamps
+        response.setScheduledDate(workOrder.getScheduledDate());
+        response.setCompletedDate(workOrder.getCompletedDate());
+        response.setCreatedAt(workOrder.getCreatedAt()); // Fixed: missing
+        response.setAssignedAt(workOrder.getAssignedAt()); // Fixed: missing
+        response.setStartedAt(workOrder.getStartedAt()); // Fixed: missing
+        response.setCompletedAt(workOrder.getCompletedAt()); // Fixed: missing
 
-        response.setTitle(
-                workOrder.getTitle());
-
-        response.setDescription(
-                workOrder.getDescription());
-
-        response.setPriority(
-                workOrder.getPriority());
-
-        response.setStatus(
-                workOrder.getStatus());
-
-        response.setScheduledDate(
-                workOrder.getScheduledDate());
-
-        response.setCompletedDate(
-                workOrder.getCompletedDate());
-
-        // Customer
+        // Customer Mapping
         if (workOrder.getCustomer() != null) {
-
-            response.setCustomerName(
-                    workOrder.getCustomer()
-                            .getCustomerName());
+            response.setCustomerId(workOrder.getCustomer().getCustomerId()); // Fixed: missing
+            response.setCustomerName(workOrder.getCustomer().getCustomerName());
+            
+            // Fallback to customer's registered address if the work order address is empty
+            if (response.getAddress() == null) {
+                response.setAddress(workOrder.getCustomer().getAddress());
+            }
         }
 
-        // Technician can be NULL for new customer requests
+        // Technician Mapping
         if (workOrder.getTechnician() != null) {
-
-            response.setTechnicianName(
-                    workOrder.getTechnician()
-                            .getFirstName()
-                    + " "
-                    + workOrder.getTechnician()
-                            .getLastName());
-
+            response.setTechnicianId(workOrder.getTechnician().getId()); // Fixed: missing
+            
+            String fullName = (workOrder.getTechnician().getFirstName() + " " + 
+                              workOrder.getTechnician().getLastName()).trim();
+            response.setTechnicianName(fullName);
         } else {
-
-            response.setTechnicianName(
-                    "Unassigned");
+            response.setTechnicianId(null);
+            response.setTechnicianName("Unassigned");
         }
 
-        // SLA
-        response.setSlaDueDate(
-                workOrder.getSlaDueDate());
-
-        response.setSlaBreached(
-                workOrder.getSlaBreached());
+        // SLA Details
+        response.setSlaDueDate(workOrder.getSlaDueDate());
+        response.setSlaBreached(workOrder.getSlaBreached());
+        // Fixed: missing
 
         return response;
     }

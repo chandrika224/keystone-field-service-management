@@ -5,7 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,10 +23,16 @@ public class Technician {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ============================================================
-    // PERSONAL INFORMATION
-    // ============================================================
+    // Link to central User entity
+    @OneToOne
+    @JoinColumn(
+        name = "user_id",
+        nullable = false,
+        unique = true
+    )
+    private User user;
 
+    // Technician profile information
     @Column(nullable = false)
     private String firstName;
 
@@ -38,26 +45,15 @@ public class Technician {
     @Column(nullable = false, unique = true)
     private String phone;
 
-    // ============================================================
-    // TECHNICIAN INFORMATION
-    // ============================================================
+    @Column(nullable = false)
+    private String role;
 
     @Column(nullable = false)
     private String specialization;
 
     @Column(nullable = false)
+    private String status;
+
+    @Column(nullable = false)
     private boolean active = true;
-
-    // ============================================================
-    // ROLE
-    // ============================================================
-
-    /*
-     * A record in this table is always a technician.
-     *
-     * Authentication/authorization is handled through
-     * the User entity.
-     */
-    
-    // No Role field needed here.
 }

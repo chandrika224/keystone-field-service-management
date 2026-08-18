@@ -21,9 +21,10 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     List<WorkOrder> findByTechnicianId(Long technicianId);
     
+    // ADD THIS METHOD: Counts active work orders for a specific technician
+    long countByTechnicianIdAndStatusIn(Long technicianId, List<WorkOrderStatus> statuses);
+
     long countBySlaBreachedTrue();
 
-	List<WorkOrder> findBySlaBreachedFalse();
-
-
+    List<WorkOrder> findBySlaBreachedFalse();
 }

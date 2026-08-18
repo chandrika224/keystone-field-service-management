@@ -32,10 +32,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @Column(nullable = false, unique = true)
@@ -50,7 +50,7 @@ public class User {
 
     // NULL for CUSTOMER and ADMIN
     // Generated for DISPATCHER and TECHNICIAN
-    @Column(unique = true)
+    @Column(name = "employee_id", unique = true)
     private String employeeId;
 
     private String phone;
@@ -63,7 +63,7 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "joined_date", nullable = false, updatable = false)
     private LocalDateTime joinedDate;
 
     @PrePersist
@@ -72,9 +72,4 @@ public class User {
             joinedDate = LocalDateTime.now();
         }
     }
-
-	public void setTechnician(User technician) {
-		// TODO Auto-generated method stub
-		
-	}
 }

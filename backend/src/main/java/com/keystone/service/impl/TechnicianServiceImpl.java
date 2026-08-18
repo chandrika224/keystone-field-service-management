@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import com.keystone.dto.TechnicianResponse;
 import com.keystone.entity.User;
 import com.keystone.enums.Role;
+import com.keystone.enums.WorkOrderStatus;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.UserRepository;
+import com.keystone.repository.WorkOrderRepository;
 import com.keystone.service.TechnicianService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,13 @@ import lombok.RequiredArgsConstructor;
 public class TechnicianServiceImpl implements TechnicianService {
 
     private final UserRepository userRepository;
+    private final WorkOrderRepository workOrderRepository;
+
+    // Define active statuses
+    private static final List<WorkOrderStatus> ACTIVE_STATUSES = List.of(
+            WorkOrderStatus.ASSIGNED,
+            WorkOrderStatus.IN_PROGRESS
+    );
 
     @Override
     public List<TechnicianResponse> getAllTechnicians() {
@@ -57,6 +66,11 @@ public class TechnicianServiceImpl implements TechnicianService {
         response.setSpecialization(technician.getSpecialization());
         response.setRole(technician.getRole());
         response.setActive(technician.isActive());
+
+        // Calculate active jobs count dynamically from work_orders
+        long activeJobsCount = workOrderRepository
+                .countByTechnicianIdAndStatusIn(technician.getId(), ACTIVE_STATUSES);
+        response.setActiveJobs(activeJobsCount);
 
         return response;
     }

@@ -25,20 +25,14 @@ export type ServiceType =
 
 export interface Technician {
   id: number;
-
   firstName: string;
   lastName: string;
-
   email: string;
   phone: string;
-
   specialization: string;
-
-  role: "TECHNICIAN";
-
   active: boolean;
-
-  currentJobs?: number;
+  role: string;
+  activeJobs: number;
 }
 
 // ============================================================
