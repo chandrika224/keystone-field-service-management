@@ -80,6 +80,15 @@ public class SecurityConfig {
 
 
                 // ==========================================
+                // TECHNICIAN WORK ORDER APIs
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/workorders/technician/**"
+                ).hasRole("TECHNICIAN")
+
+
+                // ==========================================
                 // MANAGER / DISPATCHER WORK ORDER APIs
                 // ==========================================
 

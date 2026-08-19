@@ -5,7 +5,16 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
@@ -16,16 +25,14 @@ import com.keystone.dto.TimeLogResponse;
 import com.keystone.dto.WorkOrderRequest;
 import com.keystone.dto.WorkOrderResponse;
 import com.keystone.dto.WorkOrderStatusHistoryResponse;
-
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
-
 import com.keystone.service.WorkOrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/workorders")
@@ -33,6 +40,7 @@ import jakarta.validation.Valid;
     name = "Work Order",
     description = "Work Order Management APIs"
 )
+@Slf4j
 public class WorkOrderController {
 
     @Autowired
@@ -55,14 +63,18 @@ public class WorkOrderController {
     // ============================================================
     // GET ALL WORK ORDERS
     // ============================================================
-
-    @Operation(summary = "Get All Work Orders")
     @GetMapping
     public List<WorkOrderResponse> getAllWorkOrders() {
 
-        return workOrderService.getAllWorkOrders();
-    }
+        log.info("========== GET ALL WORK ORDERS CALLED ==========");
 
+        List<WorkOrderResponse> workOrders =
+                workOrderService.getAllWorkOrders();
+
+        log.info("Work orders returned: " + workOrders.size());
+
+        return workOrders;
+    }
 
     // ============================================================
     // GET WORK ORDER BY ID

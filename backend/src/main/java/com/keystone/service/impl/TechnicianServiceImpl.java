@@ -20,26 +20,59 @@ public class TechnicianServiceImpl implements TechnicianService {
     @Autowired
     private TechnicianRepository technicianRepository;
 
-    @Override
-    public TechnicianResponse addTechnician(TechnicianRequest request) {
 
-        if (technicianRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Technician email already exists");
+    // ============================================================
+    // CREATE TECHNICIAN
+    // ============================================================
+
+    @Override
+    public TechnicianResponse addTechnician(
+            TechnicianRequest request) {
+
+        if (technicianRepository.existsByEmail(
+                request.getEmail())) {
+
+            throw new DuplicateResourceException(
+                    "Technician email already exists"
+            );
         }
 
         Technician technician = new Technician();
 
-        technician.setFirstName(request.getFirstName());
-        technician.setLastName(request.getLastName());
-        technician.setEmail(request.getEmail());
-        technician.setPhone(request.getPhone());
-        technician.setSpecialization(request.getSpecialization());
-        technician.setStatus(request.getStatus());
+        technician.setFirstName(
+                request.getFirstName()
+        );
 
-        Technician saved = technicianRepository.save(technician);
+        technician.setLastName(
+                request.getLastName()
+        );
+
+        technician.setEmail(
+                request.getEmail()
+        );
+
+        technician.setPhone(
+                request.getPhone()
+        );
+
+        technician.setSpecialization(
+                request.getSpecialization()
+        );
+
+        technician.setStatus(
+                request.getStatus()
+        );
+
+        Technician saved =
+                technicianRepository.save(technician);
 
         return mapToResponse(saved);
     }
+
+
+    // ============================================================
+    // GET ALL TECHNICIANS
+    // ============================================================
 
     @Override
     public List<TechnicianResponse> getAllTechnicians() {
@@ -50,63 +83,173 @@ public class TechnicianServiceImpl implements TechnicianService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public TechnicianResponse getTechnicianById(Long id) {
 
-        Technician technician = technicianRepository.findById(id)
+    // ============================================================
+    // GET TECHNICIAN BY ID
+    // ============================================================
+
+    @Override
+    public TechnicianResponse getTechnicianById(
+            Long id) {
+
+        Technician technician =
+                technicianRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Technician not found with ID : " + id));
+                        new ResourceNotFoundException(
+                                "Technician not found with ID : "
+                                        + id
+                        )
+                );
 
         return mapToResponse(technician);
     }
 
+
+    // ============================================================
+    // GET CURRENT LOGGED-IN TECHNICIAN
+    // ============================================================
+
     @Override
-    public TechnicianResponse updateTechnician(Long id, TechnicianRequest request) {
+    public TechnicianResponse getMyProfile(
+            String email) {
 
-        Technician technician = technicianRepository.findById(id)
+        Technician technician =
+                technicianRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Technician not found with ID : " + id));
+                        new ResourceNotFoundException(
+                                "Technician not found with email : "
+                                        + email
+                        )
+                );
 
-        if (!technician.getEmail().equals(request.getEmail())
-                && technicianRepository.existsByEmail(request.getEmail())) {
+        return mapToResponse(technician);
+    }
 
-            throw new DuplicateResourceException("Technician email already exists");
+
+    // ============================================================
+    // UPDATE TECHNICIAN
+    // ============================================================
+
+    @Override
+    public TechnicianResponse updateTechnician(
+            Long id,
+            TechnicianRequest request) {
+
+        Technician technician =
+                technicianRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Technician not found with ID : "
+                                        + id
+                        )
+                );
+
+        /*
+         * Check whether the new email already belongs
+         * to another technician.
+         */
+        if (!technician.getEmail().equals(
+                request.getEmail())
+                && technicianRepository.existsByEmail(
+                        request.getEmail())) {
+
+            throw new DuplicateResourceException(
+                    "Technician email already exists"
+            );
         }
 
-        technician.setFirstName(request.getFirstName());
-        technician.setLastName(request.getLastName());
-        technician.setEmail(request.getEmail());
-        technician.setPhone(request.getPhone());
-        technician.setSpecialization(request.getSpecialization());
-        technician.setStatus(request.getStatus());
+        technician.setFirstName(
+                request.getFirstName()
+        );
 
-        Technician updated = technicianRepository.save(technician);
+        technician.setLastName(
+                request.getLastName()
+        );
+
+        technician.setEmail(
+                request.getEmail()
+        );
+
+        technician.setPhone(
+                request.getPhone()
+        );
+
+        technician.setSpecialization(
+                request.getSpecialization()
+        );
+
+        technician.setStatus(
+                request.getStatus()
+        );
+
+        Technician updated =
+                technicianRepository.save(technician);
 
         return mapToResponse(updated);
     }
 
+
+    // ============================================================
+    // DELETE TECHNICIAN
+    // ============================================================
+
     @Override
     public void deleteTechnician(Long id) {
 
-        Technician technician = technicianRepository.findById(id)
+        Technician technician =
+                technicianRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Technician not found with ID : " + id));
+                        new ResourceNotFoundException(
+                                "Technician not found with ID : "
+                                        + id
+                        )
+                );
 
         technicianRepository.delete(technician);
     }
 
-    private TechnicianResponse mapToResponse(Technician technician) {
 
-        TechnicianResponse response = new TechnicianResponse();
+    // ============================================================
+    // ENTITY → RESPONSE
+    // ============================================================
 
-        response.setId(technician.getId());
-        response.setFirstName(technician.getFirstName());
-        response.setLastName(technician.getLastName());
-        response.setEmail(technician.getEmail());
-        response.setPhone(technician.getPhone());
-        response.setSpecialization(technician.getSpecialization());
-        response.setStatus(technician.getStatus());
-        response.setRole(technician.getRole());
+    private TechnicianResponse mapToResponse(
+            Technician technician) {
+
+        TechnicianResponse response =
+                new TechnicianResponse();
+
+        response.setId(
+                technician.getId()
+        );
+
+        response.setFirstName(
+                technician.getFirstName()
+        );
+
+        response.setLastName(
+                technician.getLastName()
+        );
+
+        response.setEmail(
+                technician.getEmail()
+        );
+
+        response.setPhone(
+                technician.getPhone()
+        );
+
+        response.setSpecialization(
+                technician.getSpecialization()
+        );
+
+        response.setStatus(
+                technician.getStatus()
+        );
+
+        response.setRole(
+                technician.getRole()
+        );
 
         return response;
     }
