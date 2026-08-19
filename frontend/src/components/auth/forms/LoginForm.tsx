@@ -3,9 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveAccessToken } from "@/utils/token";
-import { getUserRole } from "@/utils/jwt";
-import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -23,7 +20,6 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const navigate = useNavigate();
-
   const { login } = useAuth();
 
   const {
@@ -45,21 +41,18 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Login
-      const response = await authService.login(data);
-
+      // Login is handled by AuthContext.
+      // Do NOT call authService.login() here again.
       const user = await login(data);
 
       console.log("Logged in user:", user);
+      console.log("Logged-in Role:", user.role);
 
-      switch (user.role) {
-
+      switch (user.role?.toUpperCase()) {
         case "CUSTOMER":
           navigate("/customer/dashboard");
           break;
 
-      // Save JWT
-      saveAccessToken(response.token);
         case "DISPATCHER":
           navigate("/dispatcher/dashboard");
           break;
@@ -68,46 +61,16 @@ export default function LoginForm() {
           navigate("/technician/dashboard");
           break;
 
-      // Read role from JWT
-      const role = getUserRole(response.token);
         case "MANAGER":
+        case "ADMIN":
           navigate("/manager/dashboard");
           break;
 
         default:
           console.error("Unknown role:", user.role);
           navigate("/login");
+          break;
       }
-
-      console.log("Logged-in Role:", role);
-
-      if (!role) {
-        console.error("Role not found in JWT");
-        return;
-      }
-
-      // Redirect based on backend-provided role
-      switch (role.toUpperCase()) {
-        case "ADMIN":
-          navigate("/manager/dashboard");
-          break;
-
-        case "DISPATCHER":
-          navigate("/dispatcher/dashboard");
-          break;
-
-        case "TECHNICIAN":
-          navigate("/technician/dashboard");
-          break;
-
-        case "CUSTOMER":
-          navigate("/customer/dashboard");
-          break;
-
-        default:
-          console.error("Unknown user role:", role);
-      }
-
     } catch (error) {
       console.error("Login failed:", error);
     }

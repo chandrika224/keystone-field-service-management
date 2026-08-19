@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 import { workOrderService } from "@/services/workOrderService";
+import { siteService, type Site } from "@/services/siteService";
 
 import { toast } from "sonner";
 
@@ -21,7 +22,6 @@ import type {
 } from "@/types/workOrder";
 
 import { useEffect, useState } from "react";
-
 
 // ============================================================
 // PROPS
@@ -36,7 +36,6 @@ interface NewWorkOrderDialogProps {
   editingWorkOrder?: CustomerWorkOrder | null;
 }
 
-
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -48,6 +47,10 @@ export default function NewWorkOrderDialog({
   editingWorkOrder,
 }: NewWorkOrderDialogProps) {
 
+  // ==========================================================
+  // FORM STATE
+  // ==========================================================
+
   const [service, setService] = useState("");
 
   const [priority, setPriority] =
@@ -57,13 +60,172 @@ export default function NewWorkOrderDialog({
 
   const [time, setTime] = useState("");
 
-  const [address, setAddress] = useState("");
-
   const [description, setDescription] =
     useState("");
 
+  // ==========================================================
+  // SITE STATE
+  // ==========================================================
+
+  const [sites, setSites] =
+    useState<Site[]>([]);
+
+  const [siteId, setSiteId] =
+    useState<number | null>(null);
+
+  const [address, setAddress] =
+    useState("");
+
+  const [loadingSites, setLoadingSites] =
+    useState(false);
+
   const [submitting, setSubmitting] =
     useState(false);
+
+
+  // ==========================================================
+  // LOAD CUSTOMER SITES
+  // ==========================================================
+
+  useEffect(() => {
+
+    const loadSites = async () => {
+
+      try {
+
+        setLoadingSites(true);
+
+        /*
+         * Get logged-in customer ID.
+         *
+         * Make sure your application stores the customer ID
+         * in localStorage using the key "customerId".
+         */
+        const storedCustomerId =
+          localStorage.getItem("customerId");
+
+        if (!storedCustomerId) {
+
+          console.error(
+            "Customer ID not found in localStorage."
+          );
+
+          toast.error(
+            "Unable to identify the customer."
+          );
+
+          return;
+        }
+
+        const customerId =
+          Number(storedCustomerId);
+
+        if (Number.isNaN(customerId)) {
+
+          console.error(
+            "Invalid customer ID:",
+            storedCustomerId
+          );
+
+          toast.error(
+            "Invalid customer information."
+          );
+
+          return;
+        }
+
+        const customerSites =
+          await siteService.getSitesByCustomerId(
+            customerId
+          );
+
+        console.log(
+          "Customer Sites:",
+          customerSites
+        );
+
+        setSites(customerSites);
+
+        /*
+         * If editing an existing work order and
+         * the work order has a siteId, select it.
+         *
+         * Otherwise automatically select the
+         * first available site.
+         */
+        if (
+          editingWorkOrder &&
+          (editingWorkOrder as any).siteId
+        ) {
+
+          const existingSiteId =
+            Number(
+              (editingWorkOrder as any).siteId
+            );
+
+          const existingSite =
+            customerSites.find(
+              (site) =>
+                site.id === existingSiteId
+            );
+
+          if (existingSite) {
+
+            setSiteId(existingSite.id);
+
+            setAddress(
+              existingSite.address
+            );
+
+            return;
+          }
+        }
+
+        if (customerSites.length > 0) {
+
+          const firstSite =
+            customerSites[0];
+
+          setSiteId(firstSite.id);
+
+          setAddress(firstSite.address);
+
+        } else {
+
+          setSiteId(null);
+
+          setAddress("");
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Failed to load customer sites:",
+          error
+        );
+
+        toast.error(
+          "Failed to load service locations."
+        );
+
+        setSites([]);
+
+      } finally {
+
+        setLoadingSites(false);
+
+      }
+    };
+
+
+    if (open) {
+
+      loadSites();
+
+    }
+
+  }, [open, editingWorkOrder]);
 
 
   // ==========================================================
@@ -88,8 +250,6 @@ export default function NewWorkOrderDialog({
 
       setTime("");
 
-      setAddress("");
-
       setDescription(
         editingWorkOrder.description ?? ""
       );
@@ -104,12 +264,49 @@ export default function NewWorkOrderDialog({
 
       setTime("");
 
-      setAddress("");
-
       setDescription("");
+
     }
 
   }, [editingWorkOrder, open]);
+
+
+  // ==========================================================
+  // SITE SELECTION
+  // ==========================================================
+
+  const handleSiteChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+
+    const selectedId =
+      Number(event.target.value);
+
+    if (!selectedId) {
+
+      setSiteId(null);
+
+      setAddress("");
+
+      return;
+    }
+
+    setSiteId(selectedId);
+
+    const selectedSite =
+      sites.find(
+        (site) =>
+          site.id === selectedId
+      );
+
+    if (selectedSite) {
+
+      setAddress(
+        selectedSite.address
+      );
+    }
+
+  };
 
 
   // ==========================================================
@@ -153,10 +350,10 @@ export default function NewWorkOrderDialog({
     }
 
 
-    if (!address.trim()) {
+    if (!siteId) {
 
       toast.error(
-        "Please enter your address."
+        "Please select a service location."
       );
 
       return;
@@ -182,7 +379,34 @@ export default function NewWorkOrderDialog({
       setSubmitting(true);
 
 
-      const request = {
+      /*
+       * CREATE REQUEST
+       *
+       * siteId is now sent to the backend.
+       */
+      const createRequest = {
+
+        title: service,
+
+        description:
+          description.trim(),
+
+        priority,
+
+        scheduledDate: date,
+
+        siteId: siteId,
+      };
+
+
+      /*
+       * UPDATE REQUEST
+       *
+       * Keep the existing update request unchanged
+       * so we don't accidentally break the existing
+       * update-work-order functionality.
+       */
+      const updateRequest = {
 
         title: service,
 
@@ -211,7 +435,7 @@ export default function NewWorkOrderDialog({
               editingWorkOrder.id
             ),
 
-            request
+            updateRequest
           );
 
         console.log(
@@ -228,9 +452,14 @@ export default function NewWorkOrderDialog({
 
       else {
 
+        console.log(
+          "CREATE WORK ORDER PAYLOAD:",
+          createRequest
+        );
+
         backendOrder =
           await workOrderService.createMyWorkOrder(
-            request
+            createRequest
           );
 
         console.log(
@@ -276,6 +505,7 @@ export default function NewWorkOrderDialog({
 
         date:
           backendOrder.scheduledDate,
+
       };
 
 
@@ -330,6 +560,7 @@ export default function NewWorkOrderDialog({
     } finally {
 
       setSubmitting(false);
+
     }
   };
 
@@ -503,24 +734,68 @@ export default function NewWorkOrderDialog({
 
 
           {/* ==================================================
-              ADDRESS
+              SERVICE LOCATION
               ================================================== */}
 
           <div className="space-y-2">
 
             <Label>
-              Address
+              Service Location
             </Label>
 
 
-            <Textarea
-              rows={3}
-              value={address}
-              onChange={(e) =>
-                setAddress(e.target.value)
+            <select
+              value={siteId ?? ""}
+              onChange={handleSiteChange}
+              disabled={
+                loadingSites ||
+                sites.length === 0
               }
-              placeholder="Enter service address"
-            />
+              className="w-full rounded-md border px-3 py-2"
+            >
+
+              <option value="">
+
+                {loadingSites
+                  ? "Loading locations..."
+                  : sites.length === 0
+                    ? "No service locations available"
+                    : "Select Service Location"}
+
+              </option>
+
+
+              {sites.map((site) => (
+
+                <option
+                  key={site.id}
+                  value={site.id}
+                >
+                  {site.name}
+                </option>
+
+              ))}
+
+            </select>
+
+
+            {/* Selected site's address */}
+
+            {address && (
+
+              <div className="rounded-md bg-muted p-3">
+
+                <p className="text-sm font-medium">
+                  Address
+                </p>
+
+                <p className="text-sm text-muted-foreground">
+                  {address}
+                </p>
+
+              </div>
+
+            )}
 
           </div>
 
@@ -568,7 +843,10 @@ export default function NewWorkOrderDialog({
 
 
           <Button
-            disabled={submitting}
+            disabled={
+              submitting ||
+              loadingSites
+            }
             onClick={handleSubmit}
           >
 

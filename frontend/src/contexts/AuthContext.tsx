@@ -53,7 +53,7 @@ export function AuthProvider({
     initializeAuth();
   }, []);
 
-  // Restore logged-in user after page refresh
+  // Restore authentication after page refresh
   async function initializeAuth() {
     try {
       const token = getAccessToken();
@@ -63,10 +63,17 @@ export function AuthProvider({
         return;
       }
 
-      const profile =
-        await authService.getProfile();
-
-      setUser(profile);
+      /*
+       * We currently don't have a /profile endpoint
+       * in the backend.
+       *
+       * Therefore, we cannot restore the complete user
+       * from the backend here.
+       *
+       * Authentication will be restored after login
+       * using the user information returned by /login.
+       */
+      setUser(null);
 
     } catch (error) {
       console.error(
@@ -83,38 +90,34 @@ export function AuthProvider({
   }
 
   // Login
-  async function login(
-    credentials: LoginRequest
-  ): Promise<User> {
+    async function login(
+      credentials: LoginRequest
+    ): Promise<User> {
+      const response = await authService.login(credentials);
 
-    const response =
-      await authService.login(credentials);
+      console.log("Login Response:", response);
 
-    console.log(
-      "Login Response:",
-      response
-    );
+      // Save JWT
+      saveAccessToken(response.token);
 
-    saveAccessToken(response.token);
+      console.log("Token Saved Successfully");
+      console.log("User Role:", response.role);
 
-    console.log(
-      "Token Saved Successfully"
-    );
+      // Convert LoginResponse into User
+      const loggedInUser: User = {
+        id: response.id,
+        firstName: response.firstName,
+        lastName: response.lastName,
+        email: response.email,
+        phone: response.phone,
+        address: response.address,
+        role: response.role,
+      };
 
-    console.log(
-      "User Role:",
-      response.role
-    );
+      setUser(loggedInUser);
 
-    // Get complete user data from database
-    const profile =
-      await authService.getProfile();
-
-    setUser(profile);
-
-    return profile;
-  }
-
+      return loggedInUser;
+    }
   // Logout
   async function logout() {
     try {
@@ -129,21 +132,14 @@ export function AuthProvider({
 
   // Refresh current user
   async function refreshUser() {
-    try {
-      const profile =
-        await authService.getProfile();
-
-      setUser(profile);
-
-    } catch (error) {
-      console.error(
-        "Failed to refresh user:",
-        error
-      );
-
-      clearTokens();
-      setUser(null);
-    }
+    /*
+     * /auth/profile does not currently exist
+     * in the backend.
+     *
+     * Since the current user is already stored
+     * in AuthContext, there is nothing to fetch here.
+     */
+    setUser((currentUser) => currentUser);
   }
 
   return (
