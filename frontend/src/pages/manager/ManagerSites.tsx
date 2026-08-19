@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import SectionHeader from "@/components/dashboard/shared/SectionHeader";
 
@@ -15,105 +15,230 @@ import ManagerSiteDetailsDrawer
   from "@/components/dashboard/manager/Sites/ManagerSiteDetailsDrawer";
 
 import {
-  managerSites,
-  type ManagerSite,
-} from "@/data/manager/sites";
+  siteService,
+  type Site,
+} from "@/services/siteService";
 
 export default function ManagerSites() {
   const [search, setSearch] = useState("");
 
+  const [sites, setSites] = useState<Site[]>([]);
+
   const [selectedSite, setSelectedSite] =
-    useState<ManagerSite | null>(null);
+    useState<Site | null>(null);
 
   const [drawerOpen, setDrawerOpen] =
     useState(false);
 
-  const handleSelectSite = (site: ManagerSite) => {
-    console.log("Manager selected site:", site);
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  /*
+   * =========================
+   * LOAD ALL SITES
+   * =========================
+   */
+  useEffect(() => {
+    const loadSites = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data =
+          await siteService.getAllSites();
+
+        console.log(
+          "Manager sites loaded:",
+          data
+        );
+
+        setSites(data);
+
+      } catch (error) {
+        console.error(
+          "Failed to load sites:",
+          error
+        );
+
+        setError(
+          "Failed to load sites. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSites();
+  }, []);
+
+  /*
+   * =========================
+   * SELECT SITE
+   * =========================
+   */
+  const handleSelectSite = (site: Site) => {
+    console.log(
+      "Manager selected site:",
+      site
+    );
 
     setSelectedSite(site);
     setDrawerOpen(true);
   };
 
-  const searchValue = search.toLowerCase().trim();
+  /*
+   * =========================
+   * SEARCH
+   * =========================
+   */
+  const searchValue =
+    search.toLowerCase().trim();
 
-  const filteredSites = managerSites.filter((site) => {
+  const filteredSites = sites.filter((site) => {
+
+    const siteName =
+      site.name?.toLowerCase() ?? "";
+
+    const customerName =
+      site.customerName?.toLowerCase() ?? "";
+
+    const address =
+      site.address?.toLowerCase() ?? "";
+
     return (
-      site.name.toLowerCase().includes(searchValue) ||
-      site.customer.toLowerCase().includes(searchValue) ||
-      site.city.toLowerCase().includes(searchValue) ||
-      site.state.toLowerCase().includes(searchValue)
+      siteName.includes(searchValue) ||
+      customerName.includes(searchValue) ||
+      address.includes(searchValue)
     );
   });
+
+  console.log(
+    "Filtered sites:",
+    filteredSites
+  );
 
   return (
     <div className="space-y-6">
 
-      {/* Page Header */}
+      {/* =========================
+          PAGE HEADER
+      ========================== */}
 
       <SectionHeader
         title="Sites"
         subtitle="Monitor customer locations and field-service activity."
       />
 
-      {/* Search Toolbar */}
+      {/* =========================
+          SEARCH
+      ========================== */}
 
       <ManagerSitesToolbar
         search={search}
         onSearchChange={setSearch}
       />
 
-      {/* Sites List */}
+      {/* =========================
+          CUSTOMER SITES
+      ========================== */}
 
       <div className="rounded-xl border bg-card shadow-sm">
 
         <div className="border-b p-5">
+
           <h2 className="text-lg font-semibold">
             Customer Sites
           </h2>
 
           <p className="text-sm text-muted-foreground">
-            {filteredSites.length}{" "}
-            {filteredSites.length === 1
-              ? "location"
-              : "locations"}
+            {loading
+              ? "Loading sites..."
+              : `${filteredSites.length} ${
+                  filteredSites.length === 1
+                    ? "location"
+                    : "locations"
+                }`}
           </p>
+
         </div>
 
-        <ManagerSitesList
-          sites={filteredSites}
-          onView={handleSelectSite}
-        />
+        {/* Loading */}
+
+        {loading && (
+          <div className="p-8 text-center text-muted-foreground">
+            Loading customer sites...
+          </div>
+        )}
+
+        {/* Error */}
+
+        {!loading && error && (
+          <div className="p-8 text-center text-destructive">
+            {error}
+          </div>
+        )}
+
+        {/* Empty */}
+
+        {!loading &&
+          !error &&
+          filteredSites.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground">
+              No sites found.
+            </div>
+          )}
+
+        {/* Sites */}
+
+        {!loading &&
+          !error &&
+          filteredSites.length > 0 && (
+            <ManagerSitesList
+              sites={filteredSites}
+              onView={handleSelectSite}
+            />
+          )}
 
       </div>
 
-      {/* Map */}
+      {/* =========================
+          MAP
+      ========================== */}
 
-      <div className="rounded-xl border bg-card shadow-sm">
+      {!loading && !error && (
+        <div className="rounded-xl border bg-card shadow-sm">
 
-        <div className="border-b p-5">
-          <h2 className="text-lg font-semibold">
-            Site Locations
-          </h2>
+          <div className="border-b p-5">
 
-          <p className="text-sm text-muted-foreground">
-            Geographic overview of customer locations
-          </p>
+            <h2 className="text-lg font-semibold">
+              Site Locations
+            </h2>
+
+            <p className="text-sm text-muted-foreground">
+              Geographic overview of customer locations
+            </p>
+
+          </div>
+
+          <div className="p-4">
+
+            <ManagerSitesMap
+              sites={filteredSites}
+              selectedSite={selectedSite}
+              onView={handleSelectSite}
+            />
+
+          </div>
+
         </div>
+      )}
 
-        <div className="p-4">
-
-          <ManagerSitesMap
-            sites={filteredSites}
-            selectedSite={selectedSite}
-            onView={handleSelectSite}
-          />
-
-        </div>
-
-      </div>
-
-      {/* Site Details Drawer */}
+      {/* =========================
+          SITE DETAILS
+      ========================== */}
 
       <ManagerSiteDetailsDrawer
         open={drawerOpen}

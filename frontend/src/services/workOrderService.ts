@@ -1,6 +1,5 @@
 import api from "@/lib/api";
 
-
 // ============================================================
 // TYPES
 // ============================================================
@@ -10,7 +9,6 @@ export type WorkOrderPriority =
   | "MEDIUM"
   | "HIGH";
 
-
 export type WorkOrderStatus =
   | "NEW"
   | "ASSIGNED"
@@ -19,7 +17,6 @@ export type WorkOrderStatus =
   | "COMPLETED"
   | "CLOSED"
   | "CANCELLED";
-
 
 export interface CustomerWorkOrderResponse {
   id: number;
@@ -45,7 +42,6 @@ export interface CustomerWorkOrderResponse {
   technicianName?: string;
 }
 
-
 export interface CreateCustomerWorkOrderRequest {
   title: string;
 
@@ -56,13 +52,52 @@ export interface CreateCustomerWorkOrderRequest {
   scheduledDate: string;
 }
 
-
 // ============================================================
 // WORK ORDER SERVICE
 // ============================================================
 
 export const workOrderService = {
 
+  // ==========================================================
+  // GET ALL WORK ORDERS
+  // GET /api/workorders
+  // ==========================================================
+
+  getAllWorkOrders: async (): Promise<
+    CustomerWorkOrderResponse[]
+  > => {
+
+    const response =
+      await api.get<CustomerWorkOrderResponse[]>(
+        "/workorders"
+      );
+
+    return response.data;
+  },
+
+
+  // ==========================================================
+  // GET WORK ORDER BY ID
+  // GET /api/workorders/{id}
+  // ==========================================================
+    getWorkOrderById: async (
+      id: number
+    ): Promise<CustomerWorkOrderResponse> => {
+
+      console.log(
+        "getWorkOrderById called with:",
+        id,
+        "type:",
+        typeof id
+      );
+
+      const response =
+        await api.get<CustomerWorkOrderResponse>(
+          `/workorders/${id}`
+        );
+
+      return response.data;
+    },
   // ==========================================================
   // GET MY WORK ORDERS
   // GET /api/workorders/my

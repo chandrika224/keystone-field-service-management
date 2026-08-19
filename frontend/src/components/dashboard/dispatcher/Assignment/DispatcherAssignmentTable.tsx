@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 
 import StatusBadge from "@/components/common/StatusBadge";
 
-import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type {
+  DispatcherWorkOrder,
+} from "@/types/workOrder";
 
 interface DispatcherAssignmentTableProps {
   workOrders: DispatcherWorkOrder[];
@@ -13,10 +15,15 @@ export default function DispatcherAssignmentTable({
   workOrders,
   onAssign,
 }: DispatcherAssignmentTableProps) {
+
   return (
     <div className="overflow-x-auto rounded-lg border">
 
       <table className="w-full">
+
+        {/* =====================================================
+            TABLE HEADER
+        ===================================================== */}
 
         <thead className="bg-muted">
 
@@ -54,6 +61,11 @@ export default function DispatcherAssignmentTable({
 
         </thead>
 
+
+        {/* =====================================================
+            TABLE BODY
+        ===================================================== */}
+
         <tbody>
 
           {workOrders.length === 0 ? (
@@ -71,97 +83,150 @@ export default function DispatcherAssignmentTable({
 
           ) : (
 
-            workOrders.map((order) => (
+            workOrders.map((order) => {
 
-              <tr
-                key={order.id}
-                className="border-t"
-              >
+              const isUnassigned =
+                !order.technicianName ||
+                order.technicianName === "Unassigned";
 
-                <td className="px-6 py-4">
-                  <p className="font-medium">
-                    {order.id}
-                  </p>
 
-                  <p className="text-sm text-muted-foreground">
-                    {order.date}
-                  </p>
-                </td>
+              return (
 
-                <td className="px-6 py-4">
-                  {order.customer}
-                </td>
+                <tr
+                  key={order.id}
+                  className="border-t"
+                >
 
-                <td className="px-6 py-4">
-                  {order.service}
-                </td>
+                  {/* =================================================
+                      WORK ORDER
+                  ================================================= */}
 
-                <td className="px-6 py-4">
+                  <td className="px-6 py-4">
 
-                  <span
-                    className={
-                      order.priority === "High"
-                        ? "font-semibold text-red-600"
-                        : order.priority === "Medium"
-                        ? "font-semibold text-yellow-600"
-                        : "font-semibold text-green-600"
-                    }
-                  >
-                    {order.priority}
-                  </span>
+                    <p className="font-medium">
+                      #{order.id}
+                    </p>
 
-                </td>
+                    <p className="text-sm text-muted-foreground">
+                      {order.scheduledDate || "No date"}
+                    </p>
 
-                <td className="px-6 py-4">
+                  </td>
 
-                  <StatusBadge
-                    status={order.status}
-                  />
 
-                </td>
+                  {/* =================================================
+                      CUSTOMER
+                  ================================================= */}
 
-                <td className="px-6 py-4">
+                  <td className="px-6 py-4">
 
-                  {order.technician === "Unassigned" ? (
+                    {order.customerName || "Unknown"}
 
-                    <span className="text-sm text-muted-foreground">
-                      Unassigned
+                  </td>
+
+
+                  {/* =================================================
+                      SERVICE
+                  ================================================= */}
+
+                  <td className="px-6 py-4">
+
+                    {order.title}
+
+                  </td>
+
+
+                  {/* =================================================
+                      PRIORITY
+                  ================================================= */}
+
+                  <td className="px-6 py-4">
+
+                    <span
+                      className={
+                        order.priority === "HIGH"
+                          ? "font-semibold text-red-600"
+                          : order.priority === "MEDIUM"
+                          ? "font-semibold text-yellow-600"
+                          : "font-semibold text-green-600"
+                      }
+                    >
+                      {order.priority}
                     </span>
 
-                  ) : (
+                  </td>
 
-                    <span className="font-medium">
-                      {order.technician}
-                    </span>
 
-                  )}
+                  {/* =================================================
+                      STATUS
+                  ================================================= */}
 
-                </td>
+                  <td className="px-6 py-4">
 
-                <td className="px-6 py-4 text-right">
+                    <StatusBadge
+                      status={order.status}
+                    />
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      console.log(
-                        "Assignment clicked:",
-                        order
-                      );
+                  </td>
 
-                      onAssign(order);
-                    }}
-                  >
-                    {order.technician === "Unassigned"
-                      ? "Assign"
-                      : "Reassign"}
-                  </Button>
 
-                </td>
+                  {/* =================================================
+                      TECHNICIAN
+                  ================================================= */}
 
-              </tr>
+                  <td className="px-6 py-4">
 
-            ))
+                    {isUnassigned ? (
+
+                      <span className="text-sm text-muted-foreground">
+                        Unassigned
+                      </span>
+
+                    ) : (
+
+                      <span className="font-medium">
+                        {order.technicianName}
+                      </span>
+
+                    )}
+
+                  </td>
+
+
+                  {/* =================================================
+                      ACTION
+                  ================================================= */}
+
+                  <td className="px-6 py-4 text-right">
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+
+                        console.log(
+                          "Assignment clicked:",
+                          order
+                        );
+
+                        onAssign(order);
+
+                      }}
+                    >
+
+                      {isUnassigned
+                        ? "Assign"
+                        : "Reassign"}
+
+                    </Button>
+
+                  </td>
+
+                </tr>
+
+              );
+
+            })
 
           )}
 

@@ -9,15 +9,14 @@ import {
   Building2,
   MapPin,
   ClipboardList,
-  Navigation,
 } from "lucide-react";
 
-import type { ManagerSite } from "@/data/manager/sites";
+import type { Site } from "@/services/siteService";
 
 interface ManagerSiteDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  site: ManagerSite | null;
+  site: Site | null;
 }
 
 export default function ManagerSiteDetailsDrawer({
@@ -35,12 +34,15 @@ export default function ManagerSiteDetailsDrawer({
       open={open}
       onOpenChange={onOpenChange}
     >
+
       <SheetContent className="w-full sm:max-w-md">
 
         <SheetHeader>
+
           <SheetTitle>
             Site Details
           </SheetTitle>
+
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
@@ -48,13 +50,15 @@ export default function ManagerSiteDetailsDrawer({
           {/* Site identity */}
 
           <div>
+
             <h2 className="text-2xl font-bold">
               {site.name}
             </h2>
 
-            <p className="text-muted-foreground">
-              {site.id}
+            <p className="text-sm text-muted-foreground">
+              Site ID: {site.id}
             </p>
+
           </div>
 
           {/* Customer */}
@@ -64,13 +68,19 @@ export default function ManagerSiteDetailsDrawer({
             <Building2 className="mt-1 h-5 w-5 text-primary" />
 
             <div>
+
               <p className="text-sm text-muted-foreground">
                 Customer
               </p>
 
               <p className="font-medium">
-                {site.customer}
+                {site.customerName}
               </p>
+
+              <p className="text-sm text-muted-foreground">
+                Customer ID: {site.customerId}
+              </p>
+
             </div>
 
           </div>
@@ -89,35 +99,6 @@ export default function ManagerSiteDetailsDrawer({
 
               <p className="font-medium">
                 {site.address}
-              </p>
-
-              <p className="text-sm text-muted-foreground">
-                {site.city}, {site.state}
-              </p>
-
-              <p className="text-sm text-muted-foreground">
-                {site.postalCode}
-              </p>
-
-            </div>
-
-          </div>
-
-          {/* Coordinates */}
-
-          <div className="flex items-start gap-3">
-
-            <Navigation className="mt-1 h-5 w-5 text-primary" />
-
-            <div>
-
-              <p className="text-sm text-muted-foreground">
-                Coordinates
-              </p>
-
-              <p className="font-medium">
-                {site.latitude.toFixed(4)},{" "}
-                {site.longitude.toFixed(4)}
               </p>
 
             </div>
@@ -153,10 +134,20 @@ export default function ManagerSiteDetailsDrawer({
             </p>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              This site belongs to {site.customer} and
-              currently has {site.activeWorkOrders} active
-              work order
-              {site.activeWorkOrders === 1 ? "" : "s"}.
+
+              This site belongs to{" "}
+              <span className="font-medium">
+                {site.customerName}
+              </span>{" "}
+              and currently has{" "}
+              <span className="font-medium">
+                {site.activeWorkOrders}
+              </span>{" "}
+              active work order
+              {site.activeWorkOrders === 1
+                ? ""
+                : "s"}.
+
             </p>
 
           </div>
@@ -164,6 +155,7 @@ export default function ManagerSiteDetailsDrawer({
         </div>
 
       </SheetContent>
+
     </Sheet>
   );
 }

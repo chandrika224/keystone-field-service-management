@@ -1,5 +1,6 @@
 export interface User {
   id: number;
+  customerId: number | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -35,8 +36,8 @@ export interface LoginResponse {
     | "DISPATCHER"
     | "TECHNICIAN"
     | "MANAGER";
-
   id: number;
+  customerId: number | null;
   firstName: string;
   lastName: string;
   email: string;

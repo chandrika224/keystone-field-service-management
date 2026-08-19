@@ -1,30 +1,37 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import SectionHeader from "@/components/dashboard/shared/SectionHeader";
 
-import DispatcherAssignmentToolbar from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentToolbar";
-import DispatcherAssignmentTable from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentTable";
-import DispatcherAssignmentDialog from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentDialog";
+import DispatcherAssignmentToolbar
+  from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentToolbar";
+
+import DispatcherAssignmentTable
+  from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentTable";
+
+import DispatcherAssignmentDialog
+  from "@/components/dashboard/dispatcher/Assignment/DispatcherAssignmentDialog";
 
 import type {
   DispatcherWorkOrder,
   Technician,
 } from "@/types/workOrder";
 
-import { dispatcherWorkOrders } from "@/data/dispatcher/workOrders";
-import { technicians } from "@/data/dispatcher/technicians";
+import { workOrderService } from "@/services/workOrderService";
 
 export default function DispatcherAssignment() {
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [priority, setPriority] = useState("ALL");
 
   const [workOrders, setWorkOrders] =
-    useState<DispatcherWorkOrder[]>(dispatcherWorkOrders);
+    useState<DispatcherWorkOrder[]>([]);
 
   const [techniciansData, setTechniciansData] =
-    useState<Technician[]>(technicians);
+    useState<Technician[]>([]);
+
+  const [loading, setLoading] = useState(true);
 
   const [selectedWorkOrder, setSelectedWorkOrder] =
     useState<DispatcherWorkOrder | null>(null);
@@ -32,15 +39,83 @@ export default function DispatcherAssignment() {
   const [assignDialogOpen, setAssignDialogOpen] =
     useState(false);
 
+
+  // ============================================================
+  // FETCH WORK ORDERS
+  // ============================================================
+
+  useEffect(() => {
+
+    const fetchWorkOrders = async () => {
+
+      try {
+
+        setLoading(true);
+
+        console.log(
+          "Fetching work orders for assignment page..."
+        );
+
+        const data =
+          await workOrderService.getAllWorkOrders();
+
+        console.log(
+          "Assignment work orders:",
+          data
+        );
+
+        setWorkOrders(data);
+
+      } catch (error) {
+
+        console.error(
+          "Failed to fetch assignment work orders:",
+          error
+        );
+
+        toast.error(
+          "Failed to load work orders."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+    fetchWorkOrders();
+
+  }, []);
+
+
+  // ============================================================
+  // FILTER WORK ORDERS
+  // ============================================================
+
   const filteredWorkOrders = useMemo(() => {
+
     return workOrders.filter((order) => {
-      const searchValue = search.toLowerCase();
+
+      const searchValue =
+        search.toLowerCase().trim();
 
       const matchesSearch =
-        order.id.toLowerCase().includes(searchValue) ||
-        order.customer.toLowerCase().includes(searchValue) ||
-        order.service.toLowerCase().includes(searchValue) ||
-        order.technician.toLowerCase().includes(searchValue);
+        String(order.id)
+          .toLowerCase()
+          .includes(searchValue) ||
+
+        (order.customerName ?? "")
+          .toLowerCase()
+          .includes(searchValue) ||
+
+        order.title
+          .toLowerCase()
+          .includes(searchValue) ||
+
+        (order.technicianName ?? "")
+          .toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
         status === "ALL" ||
@@ -55,96 +130,178 @@ export default function DispatcherAssignment() {
         matchesStatus &&
         matchesPriority
       );
+
     });
-  }, [workOrders, search, status, priority]);
 
-  const totalOrders = workOrders.length;
+  }, [
+    workOrders,
+    search,
+    status,
+    priority,
+  ]);
 
-  const unassignedOrders = workOrders.filter(
-    (order) => order.technician === "Unassigned"
-  ).length;
 
-  const assignedOrders = workOrders.filter(
-    (order) => order.technician !== "Unassigned"
-  ).length;
+  // ============================================================
+  // STATISTICS
+  // ============================================================
+
+  const totalOrders =
+    workOrders.length;
+
+  const unassignedOrders =
+    workOrders.filter(
+      (order) =>
+        !order.technicianName ||
+        order.technicianName === "Unassigned"
+    ).length;
+
+  const assignedOrders =
+    totalOrders - unassignedOrders;
+
+
+  // ============================================================
+  // OPEN ASSIGNMENT DIALOG
+  // ============================================================
 
   const handleOpenAssignment = (
     order: DispatcherWorkOrder
   ) => {
+
+    console.log(
+      "Opening assignment for:",
+      order
+    );
+
     setSelectedWorkOrder(order);
+
     setAssignDialogOpen(true);
+
   };
 
-  const handleAssign = (technician: Technician) => {
-    if (!selectedWorkOrder) return;
 
-    const previousTechnicianName =
-      selectedWorkOrder.technician;
+  // ============================================================
+  // ASSIGN TECHNICIAN
+  // ============================================================
 
-    const updatedOrder: DispatcherWorkOrder = {
-      ...selectedWorkOrder,
-      technician: technician.name,
-      status: "ASSIGNED",
-    };
+  const handleAssign = async (
+    technician: Technician
+  ) => {
 
-    setWorkOrders((prev) =>
-      prev.map((order) =>
-        order.id === updatedOrder.id
-          ? updatedOrder
-          : order
-      )
-    );
+    if (!selectedWorkOrder) {
+      return;
+    }
 
-    /*
-     * Update mock technician active-job counts.
-     *
-     * We are NOT changing technician availability here.
-     * Availability belongs to the technician.
-     */
-    setTechniciansData((prev) =>
-      prev.map((tech) => {
-        // New technician gets one additional job
-        if (tech.id === technician.id) {
-          return {
-            ...tech,
-            currentJobs: tech.currentJobs + 1,
-          };
-        }
+    try {
 
-        // If this was a reassignment,
-        // remove the job from the old technician.
-        if (
-          previousTechnicianName !== "Unassigned" &&
-          tech.name === previousTechnicianName
-        ) {
-          return {
-            ...tech,
-            currentJobs: Math.max(
-              0,
-              tech.currentJobs - 1
-            ),
-          };
-        }
+      console.log(
+        "Assigning technician:",
+        technician
+      );
 
-        return tech;
-      })
-    );
+      console.log(
+        "Work order ID:",
+        selectedWorkOrder.id
+      );
 
-    setAssignDialogOpen(false);
-    setSelectedWorkOrder(null);
 
-    if (previousTechnicianName === "Unassigned") {
+      /*
+       * IMPORTANT:
+       *
+       * Call your existing backend assignment API here.
+       *
+       * Example:
+       *
+       * await workOrderService.assignTechnician(
+       *   selectedWorkOrder.id,
+       *   Number(technician.id)
+       * );
+       */
+
+
+      // --------------------------------------------------------
+      // TEMPORARY UI UPDATE
+      // --------------------------------------------------------
+
+      const updatedOrder: DispatcherWorkOrder = {
+
+        ...selectedWorkOrder,
+
+        technicianName:
+          technician.name,
+
+        status: "ASSIGNED",
+
+      };
+
+
+      setWorkOrders((prev) =>
+        prev.map((order) =>
+          order.id === updatedOrder.id
+            ? updatedOrder
+            : order
+        )
+      );
+
+
+      setAssignDialogOpen(false);
+
+      setSelectedWorkOrder(null);
+
+
       toast.success(
         `Work order assigned to ${technician.name}.`
       );
-    } else {
-      toast.success(
-        `Work order reassigned to ${technician.name}.`
+
+    } catch (error) {
+
+      console.error(
+        "Failed to assign technician:",
+        error
       );
+
+      toast.error(
+        "Failed to assign technician."
+      );
+
     }
+
   };
 
+
+  // ============================================================
+  // LOADING
+  // ============================================================
+
+  if (loading) {
+
+    return (
+      <div className="space-y-6">
+
+        <SectionHeader
+          title="Assignment"
+          subtitle="Assign and manage technicians for work orders."
+        />
+
+        <div className="flex justify-center py-12">
+
+          <p className="text-muted-foreground">
+            Loading work orders...
+          </p>
+
+        </div>
+
+      </div>
+    );
+
+  }
+
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
+
     <div className="space-y-6">
 
       <SectionHeader
@@ -152,11 +309,15 @@ export default function DispatcherAssignment() {
         subtitle="Assign and manage technicians for work orders."
       />
 
-      {/* Statistics */}
+
+      {/* ========================================================
+          STATISTICS
+      ======================================================== */}
 
       <div className="grid gap-4 md:grid-cols-3">
 
         <div className="rounded-lg border bg-card p-5">
+
           <p className="text-sm text-muted-foreground">
             Total Work Orders
           </p>
@@ -164,9 +325,12 @@ export default function DispatcherAssignment() {
           <p className="mt-2 text-3xl font-bold">
             {totalOrders}
           </p>
+
         </div>
 
+
         <div className="rounded-lg border bg-card p-5">
+
           <p className="text-sm text-muted-foreground">
             Unassigned
           </p>
@@ -174,9 +338,12 @@ export default function DispatcherAssignment() {
           <p className="mt-2 text-3xl font-bold">
             {unassignedOrders}
           </p>
+
         </div>
 
+
         <div className="rounded-lg border bg-card p-5">
+
           <p className="text-sm text-muted-foreground">
             Assigned
           </p>
@@ -184,38 +351,66 @@ export default function DispatcherAssignment() {
           <p className="mt-2 text-3xl font-bold">
             {assignedOrders}
           </p>
+
         </div>
 
       </div>
 
-      {/* Toolbar */}
+
+      {/* ========================================================
+          TOOLBAR
+      ======================================================== */}
 
       <DispatcherAssignmentToolbar
+
         search={search}
+
         onSearchChange={setSearch}
+
         status={status}
+
         onStatusChange={setStatus}
+
         priority={priority}
+
         onPriorityChange={setPriority}
+
       />
 
-      {/* Table */}
+
+      {/* ========================================================
+          TABLE
+      ======================================================== */}
 
       <DispatcherAssignmentTable
+
         workOrders={filteredWorkOrders}
+
         onAssign={handleOpenAssignment}
+
       />
 
-      {/* Assignment Dialog */}
+
+      {/* ========================================================
+          ASSIGNMENT DIALOG
+      ======================================================== */}
 
       <DispatcherAssignmentDialog
+
         open={assignDialogOpen}
+
         onOpenChange={setAssignDialogOpen}
+
         workOrder={selectedWorkOrder}
+
         technicians={techniciansData}
+
         onAssign={handleAssign}
+
       />
 
     </div>
+
   );
+
 }

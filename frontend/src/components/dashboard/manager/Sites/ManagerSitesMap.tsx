@@ -5,14 +5,18 @@ import {
   TileLayer,
 } from "react-leaflet";
 
-import type { ManagerSite } from "@/data/manager/sites";
+import type { Site } from "@/services/siteService";
+
+import {
+  temporarySiteCoordinates,
+} from "@/data/manager/siteCoordinates";
 
 import "leaflet/dist/leaflet.css";
 
 interface ManagerSitesMapProps {
-  sites: ManagerSite[];
-  selectedSite: ManagerSite | null;
-  onView: (site: ManagerSite) => void;
+  sites: Site[];
+  selectedSite: Site | null;
+  onView: (site: Site) => void;
 }
 
 export default function ManagerSitesMap({
@@ -20,6 +24,7 @@ export default function ManagerSitesMap({
   selectedSite,
   onView,
 }: ManagerSitesMapProps) {
+
   return (
     <div className="h-[600px] overflow-hidden rounded-lg border">
 
@@ -37,36 +42,60 @@ export default function ManagerSitesMap({
 
         {sites.map((site) => {
 
+          /*
+           * Temporary coordinates.
+           *
+           * The backend currently does not provide
+           * latitude/longitude, so we get them from
+           * the temporary coordinate mapping.
+           */
+          const coordinates =
+            temporarySiteCoordinates[site.id];
+
+          /*
+           * If this site doesn't have temporary
+           * coordinates, don't render a marker.
+           *
+           * The site will still appear in the
+           * Sites List.
+           */
+          if (!coordinates) {
+            return null;
+          }
+
           const isSelected =
             selectedSite?.id === site.id;
 
           return (
             <Marker
               key={site.id}
-              position={[
-                site.latitude,
-                site.longitude,
-              ]}
+              position={coordinates}
             >
 
               <Popup>
 
                 <div className="min-w-[220px] space-y-3">
 
+                  {/* Site information */}
+
                   <div>
+
                     <h3 className="font-semibold">
                       {site.name}
                     </h3>
 
                     <p className="text-sm text-muted-foreground">
-                      {site.customer}
+                      {site.customerName}
                     </p>
+
                   </div>
+
+                  {/* Address and work orders */}
 
                   <div className="space-y-1 text-sm">
 
                     <p>
-                      📍 {site.city}, {site.state}
+                      📍 {site.address}
                     </p>
 
                     <p>
@@ -77,6 +106,8 @@ export default function ManagerSitesMap({
                     </p>
 
                   </div>
+
+                  {/* Select site */}
 
                   <button
                     type="button"

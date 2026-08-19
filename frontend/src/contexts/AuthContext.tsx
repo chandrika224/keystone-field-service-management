@@ -49,11 +49,14 @@ export function AuthProvider({
 
   const isAuthenticated = !!user;
 
+  // ==========================================================
+  // INITIALIZE AUTHENTICATION
+  // ==========================================================
+
   useEffect(() => {
     initializeAuth();
   }, []);
 
-  // Restore authentication after page refresh
   async function initializeAuth() {
     try {
       const token = getAccessToken();
@@ -64,15 +67,14 @@ export function AuthProvider({
       }
 
       /*
-       * We currently don't have a /profile endpoint
-       * in the backend.
+       * We currently don't have a /profile endpoint.
        *
-       * Therefore, we cannot restore the complete user
-       * from the backend here.
+       * Therefore, after a browser refresh we cannot
+       * reconstruct the complete User object from the backend.
        *
-       * Authentication will be restored after login
-       * using the user information returned by /login.
+       * Login will populate the user state.
        */
+
       setUser(null);
 
     } catch (error) {
@@ -89,58 +91,100 @@ export function AuthProvider({
     }
   }
 
-  // Login
-    async function login(
-      credentials: LoginRequest
-    ): Promise<User> {
-      const response = await authService.login(credentials);
+  // ==========================================================
+  // LOGIN
+  // ==========================================================
 
-      console.log("Login Response:", response);
+  async function login(
+    credentials: LoginRequest
+  ): Promise<User> {
 
-      // Save JWT
-      saveAccessToken(response.token);
+    const response =
+      await authService.login(credentials);
 
-      console.log("Token Saved Successfully");
-      console.log("User Role:", response.role);
+    console.log(
+      "Login Response:",
+      response
+    );
 
-      // Convert LoginResponse into User
-      const loggedInUser: User = {
-        id: response.id,
-        firstName: response.firstName,
-        lastName: response.lastName,
-        email: response.email,
-        phone: response.phone,
-        address: response.address,
-        role: response.role,
-      };
+    // Save JWT
+    saveAccessToken(
+      response.token
+    );
 
-      setUser(loggedInUser);
+    console.log(
+      "Token Saved Successfully"
+    );
 
-      return loggedInUser;
-    }
-  // Logout
+    console.log(
+      "User Role:",
+      response.role
+    );
+
+    /*
+     * Convert backend LoginResponse
+     * into frontend User object.
+     *
+     * IMPORTANT:
+     * customerId is included here.
+     */
+
+    const loggedInUser: User = {
+      id: response.id,
+      customerId: response.customerId,
+      firstName: response.firstName,
+      lastName: response.lastName,
+      email: response.email,
+      phone: response.phone,
+      address: response.address,
+      role: response.role,
+    };
+
+    // Store logged-in user in AuthContext
+    setUser(loggedInUser);
+
+    // Return user to caller
+    return loggedInUser;
+  }
+
+  // ==========================================================
+  // LOGOUT
+  // ==========================================================
+
   async function logout() {
     try {
       await authService.logout();
     } catch {
-      // Ignore backend logout errors
+      /*
+       * Ignore backend logout errors.
+       * We still clear the local authentication state.
+       */
     }
 
     clearTokens();
+
     setUser(null);
   }
 
-  // Refresh current user
+  // ==========================================================
+  // REFRESH USER
+  // ==========================================================
+
   async function refreshUser() {
     /*
-     * /auth/profile does not currently exist
-     * in the backend.
+     * /auth/profile does not currently exist.
      *
-     * Since the current user is already stored
-     * in AuthContext, there is nothing to fetch here.
+     * The current user is already stored in AuthContext.
      */
-    setUser((currentUser) => currentUser);
+
+    setUser(
+      (currentUser) => currentUser
+    );
   }
+
+  // ==========================================================
+  // PROVIDER
+  // ==========================================================
 
   return (
     <AuthContext.Provider
@@ -157,6 +201,10 @@ export function AuthProvider({
     </AuthContext.Provider>
   );
 }
+
+// ============================================================
+// useAuth HOOK
+// ============================================================
 
 export function useAuth() {
   const context =
