@@ -83,9 +83,6 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         User savedUser = userRepository.save(user);
 
-        User savedUser =
-                userRepository.save(user);
-
 
         // =====================================================
         // CREATE CUSTOMER RECORD
@@ -157,17 +154,16 @@ public class UserServiceImpl implements UserService {
     // =========================================================
 
     @Override
-    public AuthResponse login(
-            LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
 
+        // Find user
         User user =
-                userRepository.findByEmail(
-                        request.getEmail())
-                .orElseThrow(() ->
-                        new InvalidCredentialsException(
-                                "Invalid Email"));
+                userRepository.findByEmail(request.getEmail())
+                        .orElseThrow(() ->
+                                new InvalidCredentialsException(
+                                        "Invalid Email"));
 
-
+        // Check password
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
@@ -176,27 +172,47 @@ public class UserServiceImpl implements UserService {
                     "Invalid Password");
         }
 
+        // Generate JWT
         String token = jwtService.generateToken(
-        	    user.getEmail(),
-        	    user.getRole().name()
-        	);
+                user.getEmail(),
+                user.getRole().name()
+        );
 
-        String token =
-                jwtService.generateToken(
-                        user.getEmail());
+        // Find customer ID
+        Long customerId = null;
 
+        if (user.getRole() == Role.CUSTOMER) {
 
+            customerId = customerRepository
+                    .findByEmail(user.getEmail())
+                    .map(Customer::getCustomerId)
+                    .orElse(null);
+        }
+
+        // Return login response
         return new AuthResponse(
-                token,
-                "Login Successful",
-                user.getRole(),
+
                 user.getId(),
+
+                customerId,
+
                 user.getFirstName(),
+
                 user.getLastName(),
-                user.getEmail()
+
+                user.getEmail(),
+
+                user.getPhone(),
+
+                user.getAddress(),
+
+                user.getRole(),
+
+                token,
+
+                "Login Successful"
         );
     }
-
 
     // =========================================================
     // UPDATE PROFILE
@@ -279,32 +295,45 @@ public class UserServiceImpl implements UserService {
     // USER RESPONSE
     // =========================================================
 
-    private UserResponse buildUserResponse(
-            User user) {
+    private UserResponse buildUserResponse(User user) {
 
-        UserResponse response =
-                new UserResponse();
+        UserResponse response = new UserResponse();
 
-        response.setId(
-                user.getId());
+        response.setId(user.getId());
 
         response.setFirstName(
-                user.getFirstName());
+                user.getFirstName()
+        );
 
         response.setLastName(
-                user.getLastName());
+                user.getLastName()
+        );
 
         response.setEmail(
-                user.getEmail());
+                user.getEmail()
+        );
 
         response.setPhone(
-                user.getPhone());
+                user.getPhone()
+        );
 
         response.setAddress(
-                user.getAddress());
+                user.getAddress()
+        );
 
         response.setRole(
-                user.getRole());
+                user.getRole()
+        );
+
+        // Get Customer ID using user's email
+        customerRepository.findByEmail(user.getEmail())
+                .ifPresent(customer -> {
+
+                    response.setCustomerId(
+                            customer.getCustomerId()
+                    );
+
+                });
 
         return response;
     }

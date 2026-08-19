@@ -1,5 +1,7 @@
 package com.keystone.dto;
 
+import com.keystone.enums.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,28 +10,24 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
-	private Long id;
-	private String firstName;
-	private String lastName;
-	private String email;
-	private String phone;
-	private String address;
-	private Role role;
-	private String token;
-	private String message;
 
-    public String getPhone() {
-		return phone;
-	}
+    private Long id;
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    private Long customerId;
 
-	public String getAddress() {
-		return address;
-	}
+    private String firstName;
+
+    private String lastName;
+
+    private String email;
+
+    private String phone;
+
+    private String address;
+
+    private Role role;
 
     private String token;
+
     private String message;
 }

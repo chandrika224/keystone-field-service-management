@@ -26,42 +26,130 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
 
-    	http
-        .cors(cors -> {})
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-        		.requestMatchers(
-                        "/api/auth/register",
-                        "/api/auth/login"
-                    ).permitAll()
-        		.requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+        http
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
+
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
+            )
+
+            .authorizeHttpRequests(auth -> auth
+
+                // ==========================================
+                // PUBLIC AUTH APIs
+                // ==========================================
+
                 .requestMatchers(
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html")
-                .permitAll()
-                .requestMatchers("/api/customers/**").hasRole("MANAGER")
-                .requestMatchers("/api/inventory/**").hasRole("MANAGER")
-                .requestMatchers("/api/dashboard/**").hasRole("MANAGER")
-                .requestMatchers("/api/reports/**").hasRole("MANAGER")
-                .requestMatchers("/api/workorders/**")
-                .hasAnyRole("MANAGER", "DISPATCHER")
-                .requestMatchers("/api/technicians/**")
-                .hasAnyRole("MANAGER", "DISPATCHER")
+                    "/api/auth/register",
+                    "/api/auth/login"
+                ).permitAll()
+
+
+                // ==========================================
+                // SWAGGER
+                // ==========================================
+
+                .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
+
+
+                // ==========================================
+                // CUSTOMER WORK ORDER APIs
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/workorders/my",
+                    "/api/workorders/my/**"
+                ).hasRole("CUSTOMER")
+
+
+                // ==========================================
+                // MANAGER / DISPATCHER WORK ORDER APIs
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/workorders/**"
+                ).hasAnyRole(
+                    "MANAGER",
+                    "DISPATCHER"
+                )
+
+
+                // ==========================================
+                // CUSTOMER APIs
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/customers/**"
+                ).hasRole("MANAGER")
+
+
+                // ==========================================
+                // INVENTORY
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/inventory/**"
+                ).hasRole("MANAGER")
+
+
+                // ==========================================
+                // DASHBOARD
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/dashboard/**"
+                ).hasRole("MANAGER")
+
+
+                // ==========================================
+                // REPORTS
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/reports/**"
+                ).hasRole("MANAGER")
+
+
+                // ==========================================
+                // TECHNICIANS
+                // ==========================================
+
+                .requestMatchers(
+                    "/api/technicians/**"
+                ).hasAnyRole(
+                    "MANAGER",
+                    "DISPATCHER"
+                )
+
+
+                // ==========================================
+                // EVERYTHING ELSE
+                // ==========================================
+
                 .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class);
+            )
+
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
