@@ -11,12 +11,10 @@ import java.util.Optional;
 
 public interface SiteRepository extends JpaRepository<Site, Long> {
 
-    List<Site> findByCustomerId(Long customerId);
+	List<Site> findByCustomerCustomerId(Long customerId);
 
-    Optional<Site> findByIdAndCustomerId(Long siteId, Long customerId);
-
-    Optional<Site> findByAddressIgnoreCaseAndCustomerId(
-        String address,
-        Long customerId
+    Optional<Site> findByCustomerCustomerIdAndAddressIgnoreCase(
+            Long customerId,
+            String address
     );
 }

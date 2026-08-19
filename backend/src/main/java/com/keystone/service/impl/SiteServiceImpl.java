@@ -20,7 +20,7 @@ public class SiteServiceImpl implements SiteService {
 
     @Override
     public List<Site> getSitesByCustomerId(Long customerId) {
-        return siteRepository.findByCustomerId(customerId);
+    	return siteRepository.findByCustomerCustomerId(customerId);
     }
 
     @Override
@@ -28,9 +28,9 @@ public class SiteServiceImpl implements SiteService {
             Long customerId,
             String address) {
 
-        return siteRepository.findByCustomerIdAndAddressIgnoreCase(
-                customerId,
-                address
-        );
+    	return siteRepository.findByCustomerCustomerIdAndAddressIgnoreCase(
+    	        customerId,
+    	        address
+    	);
     }
 }

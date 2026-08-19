@@ -2,6 +2,7 @@ package com.keystone.service.impl;
 
 import java.util.List;
 
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,14 +36,33 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         // Automatically create a default site for the customer
-        if (savedCustomer.getAddress() != null && !savedCustomer.getAddress().isBlank()) {
-            Site defaultSite = Site.builder()
-                    .name(savedCustomer.getCustomerName() + " - Main Plant")
-                    .address(savedCustomer.getAddress())
-                    .customer(savedCustomer)
-                    .build();
+        if (savedCustomer.getAddress() != null
+                && !savedCustomer.getAddress().isBlank()) {
 
-            siteRepository.save(defaultSite);
+            String address = savedCustomer.getAddress().trim();
+
+            boolean siteExists =
+                    siteRepository
+                            .findByCustomerCustomerIdAndAddressIgnoreCase(
+                                    savedCustomer.getCustomerId(),
+                                    address
+                            )
+                            .isPresent();
+
+            if (!siteExists) {
+
+                Site defaultSite = new Site();
+
+                defaultSite.setName(
+                        savedCustomer.getCustomerName() + " - Main Plant"
+                );
+
+                defaultSite.setAddress(address);
+
+                defaultSite.setCustomer(savedCustomer);
+
+                siteRepository.save(defaultSite);
+            }
         }
 
         return savedCustomer;
