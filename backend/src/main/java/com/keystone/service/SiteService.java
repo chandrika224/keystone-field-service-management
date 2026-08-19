@@ -1,14 +1,16 @@
 package com.keystone.service;
 
-
 import java.util.List;
 import java.util.Optional;
 
+import com.keystone.dto.SiteResponse;
 import com.keystone.entity.Site;
 
 public interface SiteService {
+	
+	List<SiteResponse> getAllSites();
 
-    List<Site> getSitesByCustomerId(Long customerId);
+    List<SiteResponse> getSitesByCustomerId(Long customerId);
 
     Optional<Site> findByCustomerIdAndAddress(
             Long customerId,

@@ -46,5 +46,15 @@ public class UserController {
     	log.info("user logged in:" +request);
         return userService.login(request);
     }
+    
+    @GetMapping("/profile")
+    public ResponseEntity<UserResponse> getProfile(Authentication authentication) {
+
+        String email = authentication.getName();
+
+        UserResponse response = userService.getProfile(email);
+
+        return ResponseEntity.ok(response);
+    }
 
 }
