@@ -1,0 +1,56 @@
+{
+  "info": {
+    "name": "Site API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ],
+  "item": [
+    {
+      "name": "Create Site",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/sites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Warehouse A\",\"address\":\"123 Main St\",\"customerId\":1}"
+        }
+      }
+    },
+    {
+      "name": "Get Site By Id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/sites/1"
+      }
+    },
+    {
+      "name": "Get Sites By Customer",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/sites/customer/1"
+      }
+    },
+    {
+      "name": "Update Site",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/sites/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Warehouse A - Renamed\",\"address\":\"456 New St\",\"customerId\":1}"
+        }
+      }
+    },
+    {
+      "name": "Delete Site",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/sites/1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "info": {
+    "name": "WorkOrder API",
+    "description": "All endpoints exposed by WorkOrderController",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "workOrderId", "value": "1" },
+    { "key": "customerId", "value": "1" },
+    { "key": "siteId", "value": "1" },
+    { "key": "technicianId", "value": "1" },
+    { "key": "customerEmail", "value": "customer@example.com" },
+    { "key": "technicianEmail", "value": "technician@example.com" },
+    { "key": "dispatcherBearerToken", "value": "PASTE_DISPATCHER_JWT_HERE" }
+  ],
+  "item": [
+    {
+      "name": "Work Order (Dispatcher/Admin)",
+      "item": [
+        {
+          "name": "Create Work Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/workorders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Replace HVAC filter\",\n  \"description\": \"Filter is clogged, needs replacement\",\n  \"priority\": \"HIGH\",\n  \"scheduledDate\": \"2026-09-05\",\n  \"customerId\": {{customerId}},\n  \"siteId\": {{siteId}},\n  \"technicianId\": {{technicianId}},\n  \"serviceType\": \"HVAC\",\n  \"address\": \"123 Main St\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Work Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders"
+          }
+        },
+        {
+          "name": "Get Work Order By ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/{{workOrderId}}"
+          }
+        },
+        {
+          "name": "Update Work Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/workorders/{{workOrderId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Replace HVAC filter - urgent\",\n  \"description\": \"Escalated, filter fully blocked\",\n  \"priority\": \"HIGH\",\n  \"scheduledDate\": \"2026-09-03\",\n  \"customerId\": {{customerId}},\n  \"siteId\": {{siteId}},\n  \"technicianId\": {{technicianId}},\n  \"serviceType\": \"HVAC\",\n  \"address\": \"123 Main St\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Assign Technician (dispatcher)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{dispatcherBearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/assign?technicianId={{technicianId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "assign"],
+              "query": [{ "key": "technicianId", "value": "{{technicianId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Work Order",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/workorders/{{workOrderId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "Create My Work Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/my?email={{customerEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "my"],
+              "query": [{ "key": "email", "value": "{{customerEmail}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Leaking faucet\",\n  \"description\": \"Kitchen faucet has been leaking for two days\",\n  \"serviceType\": \"Plumbing\",\n  \"address\": \"123 Main St\",\n  \"priority\": \"MEDIUM\",\n  \"scheduledDate\": \"2026-09-04\",\n  \"siteId\": {{siteId}}\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Work Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/my?email={{customerEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "my"],
+              "query": [{ "key": "email", "value": "{{customerEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Update My Work Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/my/{{workOrderId}}?email={{customerEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "my", "{{workOrderId}}"],
+              "query": [{ "key": "email", "value": "{{customerEmail}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Leaking faucet - worse now\",\n  \"description\": \"Now dripping constantly\",\n  \"serviceType\": \"Plumbing\",\n  \"address\": \"123 Main St\",\n  \"priority\": \"HIGH\",\n  \"scheduledDate\": \"2026-09-02\",\n  \"siteId\": {{siteId}}\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Work Orders By Customer",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/customer/{{customerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dispatcher Filters",
+      "item": [
+        {
+          "name": "Get Work Orders By Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/status/ASSIGNED"
+          }
+        },
+        {
+          "name": "Get Work Orders By Priority",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/priority/HIGH"
+          }
+        },
+        {
+          "name": "Get Work Orders By Technician",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/technician/{{technicianId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Status",
+      "item": [
+        {
+          "name": "Change Work Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/workorders/{{workOrderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Technician",
+      "item": [
+        {
+          "name": "Get My Technician Work Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/technician/my?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "technician", "my"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Technician Assignments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/technician/my/pending?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "technician", "my", "pending"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Accept Work Order",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/accept?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "accept"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Start Work Order",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/start?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "start"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Hold Work Order",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/hold?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "hold"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Resume Work Order",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/resume?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "resume"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        },
+        {
+          "name": "Complete Work Order",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/workorders/{{workOrderId}}/complete?email={{technicianEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "workorders", "{{workOrderId}}", "complete"],
+              "query": [{ "key": "email", "value": "{{technicianEmail}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Status History",
+      "item": [
+        {
+          "name": "Get Status History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workorders/{{workOrderId}}/status-history"
+          }
+        }
+      ]
+    }
+  ]
+}

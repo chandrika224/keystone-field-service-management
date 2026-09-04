@@ -74,3 +74,4 @@ updateProfile: async (request: {
     await api.post(`${AUTH_URL}/logout`);
   },
 };
+

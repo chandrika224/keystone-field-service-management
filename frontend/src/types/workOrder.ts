@@ -32,12 +32,29 @@ export interface CustomerWorkOrder {
   date: string;
 }
 
+export interface DispatcherWorkOrder {
+  id: number;
 
-export interface DispatcherWorkOrder
-  extends CustomerWorkOrder {
-  customer: string;
+  title: string;
+
+  description: string;
+
+  priority: WorkOrderPriority;
+
+  status: WorkOrderStatus;
+
+  scheduledDate: string;
+
+  completedDate?: string | null;
+
+  slaDueDate?: string | null;
+
+  slaBreached?: boolean;
+
+  customerName?: string;
+
+  technicianName?: string;
 }
-
 
 export interface Technician {
   id: string;
