@@ -8,10 +8,19 @@ import org.springframework.stereotype.Repository;
 import com.keystone.entity.Inventory;
 
 @Repository
-public interface InventoryRepository extends JpaRepository<Inventory, Long> {
+public interface InventoryRepository
+        extends JpaRepository<Inventory, Long> {
 
-    boolean existsByPartName(String partName);
+    // =========================================================
+    // CHECK WHETHER PART EXISTS
+    // =========================================================
 
-    Optional<Inventory> findByPartName(String partName);
+    boolean existsByPartNameIgnoreCase(String partName);
 
+
+    // =========================================================
+    // FIND PART BY NAME
+    // =========================================================
+
+    Optional<Inventory> findByPartNameIgnoreCase(String partName);
 }

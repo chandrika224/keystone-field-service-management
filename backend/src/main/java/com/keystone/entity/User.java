@@ -11,10 +11,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
+@Data
+@NoArgsConstructor
 public class User {
 
     // =========================================================
@@ -30,22 +35,22 @@ public class User {
     // BASIC INFORMATION
     // =========================================================
 
-    @Column(nullable = false)
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column
+    @Column(name = "phone")
     private String phone;
 
-    @Column
+    @Column(name = "address")
     private String address;
 
 
@@ -53,13 +58,13 @@ public class User {
     // STAFF INFORMATION
     // =========================================================
 
-    @Column(unique = true)
+    @Column(name = "employee_id", unique = true)
     private String employeeId;
 
-    @Column
+    @Column(name = "specialization")
     private String specialization;
 
-    @Column
+    @Column(name = "joined_date", nullable = false)
     private LocalDateTime joinedDate;
 
 
@@ -68,7 +73,7 @@ public class User {
     // =========================================================
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private Role role;
 
 
@@ -76,170 +81,25 @@ public class User {
     // ACTIVE STATUS
     // =========================================================
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
     private boolean active = true;
 
 
     // =========================================================
-    // CONSTRUCTOR
+    // PRE-PERSIST
     // =========================================================
 
-    public User() {
-    }
+    @PrePersist
+    protected void onCreate() {
 
+        if (joinedDate == null) {
+            joinedDate = LocalDateTime.now();
+        }
 
-    // =========================================================
-    // ID
-    // =========================================================
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-
-    // =========================================================
-    // FIRST NAME
-    // =========================================================
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-
-    // =========================================================
-    // LAST NAME
-    // =========================================================
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-
-    // =========================================================
-    // EMAIL
-    // =========================================================
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-
-    // =========================================================
-    // PASSWORD
-    // =========================================================
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-
-    // =========================================================
-    // PHONE
-    // =========================================================
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-
-    // =========================================================
-    // ADDRESS
-    // =========================================================
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-
-    // =========================================================
-    // EMPLOYEE ID
-    // =========================================================
-
-    public String getEmployeeId() {
-        return employeeId;
-    }
-
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
-    }
-
-
-    // =========================================================
-    // SPECIALIZATION
-    // =========================================================
-
-    public String getSpecialization() {
-        return specialization;
-    }
-
-    public void setSpecialization(String specialization) {
-        this.specialization = specialization;
-    }
-
-
-    // =========================================================
-    // JOINED DATE
-    // =========================================================
-
-    public LocalDateTime getJoinedDate() {
-        return joinedDate;
-    }
-
-    public void setJoinedDate(LocalDateTime joinedDate) {
-        this.joinedDate = joinedDate;
-    }
-
-
-    // =========================================================
-    // ROLE
-    // =========================================================
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-
-    // =========================================================
-    // ACTIVE
-    // =========================================================
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
+        if (role == null) {
+            throw new IllegalStateException(
+                    "User role cannot be null"
+            );
+        }
     }
 }

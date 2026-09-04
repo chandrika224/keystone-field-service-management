@@ -36,10 +36,11 @@ public class StaffController {
     // =========================================================
     // CREATE STAFF
     // POST /api/staff
+    // Manager only
     // =========================================================
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<StaffResponse> createStaff(
             @Valid @RequestBody CreateStaffRequest request) {
 
@@ -55,10 +56,11 @@ public class StaffController {
     // =========================================================
     // GET ALL STAFF
     // GET /api/staff
+    // Manager only
     // =========================================================
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<StaffDetailsResponse>> getAllStaff() {
 
         List<StaffDetailsResponse> staff =
@@ -67,14 +69,24 @@ public class StaffController {
         return ResponseEntity.ok(staff);
     }
 
+    @GetMapping("/dispatchers")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<StaffDetailsResponse>> getAllDispatchers() {
+
+        List<StaffDetailsResponse> dispatchers =
+                staffService.getAllDispatchers();
+
+        return ResponseEntity.ok(dispatchers);
+    }
 
     // =========================================================
     // GET STAFF BY ID
     // GET /api/staff/{id}
+    // Manager only
     // =========================================================
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<StaffDetailsResponse> getStaffById(
             @PathVariable Long id) {
 
@@ -88,10 +100,11 @@ public class StaffController {
     // =========================================================
     // UPDATE STAFF
     // PUT /api/staff/{id}
+    // Manager only
     // =========================================================
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<StaffDetailsResponse> updateStaff(
             @PathVariable Long id,
             @Valid @RequestBody UpdateStaffRequest request) {
@@ -106,10 +119,11 @@ public class StaffController {
     // =========================================================
     // ACTIVATE / DEACTIVATE STAFF
     // PATCH /api/staff/{id}/status
+    // Manager only
     // =========================================================
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<StaffDetailsResponse> updateStaffStatus(
             @PathVariable Long id,
             @Valid @RequestBody StaffStatusUpdateRequest request) {
@@ -127,15 +141,16 @@ public class StaffController {
     // =========================================================
     // DELETE STAFF
     // DELETE /api/staff/{id}
+    // Manager only
     // =========================================================
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String deleteStaff(
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Void> deleteStaff(
             @PathVariable Long id) {
 
         staffService.deleteStaff(id);
 
-        return staffService.deleteStaff(id);
+        return ResponseEntity.noContent().build();
     }
 }

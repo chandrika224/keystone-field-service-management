@@ -9,9 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.keystone.dto.staff.CreateStaffRequest;
 import com.keystone.dto.staff.StaffResponse;
+import com.keystone.entity.Technician;
 import com.keystone.entity.User;
 import com.keystone.enums.Role;
 import com.keystone.exception.ResourceAlreadyExistsException;
+import com.keystone.repository.TechnicianRepository;
 import com.keystone.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class CreateStaffService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TechnicianRepository technicianRepository;
+    
 
     @Transactional
     public StaffResponse createStaff(CreateStaffRequest request) {
@@ -116,29 +120,56 @@ public class CreateStaffService {
         );
 
 
-        // =====================================================
-        // 6. SAVE USER
-        // =====================================================
+     // =====================================================
+     // 6. SAVE USER
+     // =====================================================
 
-        User savedUser =
-                userRepository.save(user);
+     User savedUser = userRepository.save(user);
 
 
-        // =====================================================
-        // 7. GENERATE EMPLOYEE ID
-        // =====================================================
+     // =====================================================
+     // 7. GENERATE EMPLOYEE ID
+     // =====================================================
 
-        String employeeId =
-                generateEmployeeId(
-                        savedUser.getRole(),
-                        savedUser.getId()
-                );
+     String employeeId =
+             generateEmployeeId(
+                     savedUser.getRole(),
+                     savedUser.getId()
+             );
 
-        savedUser.setEmployeeId(employeeId);
+     savedUser.setEmployeeId(employeeId);
 
-        savedUser =
-                userRepository.save(savedUser);
+     savedUser = userRepository.save(savedUser);
 
+
+     // =====================================================
+     // 8. CREATE TECHNICIAN PROFILE AUTOMATICALLY
+     // =====================================================
+
+     if (savedUser.getRole() == Role.TECHNICIAN) {
+
+         Technician technician = new Technician();
+
+         technician.setUser(savedUser);
+
+         technician.setSpecialization(
+                 savedUser.getSpecialization() != null
+                         ? savedUser.getSpecialization()
+                         : "GENERAL"
+         );
+
+         technician.setActive(true);
+
+         technician.setAvailable(true);
+
+         technicianRepository.save(technician);
+
+         log.info(
+                 "Technician profile created automatically. User ID: {}, Technician ID: {}",
+                 savedUser.getId(),
+                 technician.getId()
+         );
+     }
 
         // =====================================================
         // 8. BUILD RESPONSE

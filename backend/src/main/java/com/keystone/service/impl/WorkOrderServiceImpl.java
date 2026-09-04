@@ -1,133 +1,179 @@
 package com.keystone.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
-import com.keystone.dto.PartUsageRequest;
-import com.keystone.dto.PartUsageResponse;
-import com.keystone.dto.TimeLogRequest;
-import com.keystone.dto.TimeLogResponse;
 import com.keystone.dto.WorkOrderRequest;
 import com.keystone.dto.WorkOrderResponse;
 import com.keystone.dto.WorkOrderStatusHistoryResponse;
-
 import com.keystone.entity.Customer;
-import com.keystone.entity.Inventory;
-import com.keystone.entity.PartUsage;
+import com.keystone.entity.Site;
 import com.keystone.entity.Technician;
-import com.keystone.entity.TimeLog;
+import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
-import com.keystone.entity.WorkOrderStatusHistory;
-
+import com.keystone.enums.ErrorCode;
 import com.keystone.enums.Priority;
+import com.keystone.enums.Role;
 import com.keystone.enums.WorkOrderStatus;
-
-import com.keystone.exception.ResourceNotFoundException;
-
-import com.keystone.repository.CustomerRepository;
-import com.keystone.repository.InventoryRepository;
-import com.keystone.repository.PartUsageRepository;
-import com.keystone.repository.TechnicianRepository;
-import com.keystone.repository.TimeLogRepository;
+import com.keystone.exception.KeystoneException;
 import com.keystone.repository.WorkOrderRepository;
 import com.keystone.repository.WorkOrderStatusHistoryRepository;
-
-import com.keystone.service.EmailService;
+import com.keystone.service.NotificationService;
 import com.keystone.service.WorkOrderService;
-import com.keystone.util.WorkOrderStatusValidator;
+import com.keystone.service.impl.helper.WorkOrderServiceHelper;
+import com.keystone.service.mapper.WorkOrderMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class WorkOrderServiceImpl implements WorkOrderService {
 
-    // =========================================================
-    // REPOSITORIES / SERVICES
-    // =========================================================
+    private final WorkOrderRepository workOrderRepository;
 
-    @Autowired
-    private WorkOrderRepository workOrderRepository;
+    private final WorkOrderServiceHelper helper;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final WorkOrderMapper mapper;
 
-    @Autowired
-    private TechnicianRepository technicianRepository;
+    private final WorkOrderStatusHistoryRepository
+            workOrderStatusHistoryRepository;
 
-    @Autowired
-    private WorkOrderStatusHistoryRepository historyRepository;
-
-    @Autowired
-    private TimeLogRepository timeLogRepository;
-
-    @Autowired
-    private PartUsageRepository partUsageRepository;
-
-    @Autowired
-    private InventoryRepository inventoryRepository;
-
-    @Autowired
-    private EmailService emailService;
+    private final NotificationService notificationService;
 
 
     // =========================================================
     // CREATE WORK ORDER
-    // Used by ADMIN / DISPATCHER / MANAGER
     // =========================================================
 
     @Override
     public WorkOrderResponse createWorkOrder(
+            String email,
             WorkOrderRequest request) {
 
+        log.info(
+                "Creating work order: customerId={}, technicianId={}, siteId={}",
+                request.getCustomerId(),
+                request.getTechnicianId(),
+                request.getSiteId()
+        );
+
+        // -----------------------------------------------------
+        // BUSINESS VALIDATION
+        // -----------------------------------------------------
+
+        User user =
+                helper.getUserByEmail(email);
+
         Customer customer =
-                customerRepository.findById(
-                        request.getCustomerId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found"));
+                helper.getCustomerById(
+                        request.getCustomerId()
+                );
 
         Technician technician =
-                technicianRepository.findById(
-                        request.getTechnicianId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found"));
+                helper.getTechnicianById(
+                        request.getTechnicianId()
+                );
+
+        Site site =
+                helper.getSiteById(
+                        request.getSiteId()
+                );
+
+        helper.validateCustomer(customer);
+
+        helper.validateTechnician(technician);
+
+        helper.validateSiteOwnership(
+                site,
+                customer
+        );
+
+        helper.validateScheduledDate(
+                request.getScheduledDate()
+        );
+
+        // -----------------------------------------------------
+        // CREATE ENTITY
+        // -----------------------------------------------------
 
         WorkOrder workOrder = new WorkOrder();
 
-        workOrder.setTitle(request.getTitle());
-        workOrder.setDescription(request.getDescription());
-        workOrder.setPriority(request.getPriority());
+        workOrder.setTitle(
+                request.getTitle()
+        );
+
+        workOrder.setDescription(
+                request.getDescription()
+        );
+
+        workOrder.setPriority(
+                request.getPriority()
+        );
+
         workOrder.setScheduledDate(
-                request.getScheduledDate());
+                request.getScheduledDate()
+        );
+
+        workOrder.setCustomer(
+                customer
+        );
+
+        workOrder.setSite(
+                site
+        );
+
+        workOrder.setTechnician(
+                technician
+        );
+
+        // -----------------------------------------------------
+        // INITIAL STATUS
+        // -----------------------------------------------------
 
         workOrder.setStatus(
-                WorkOrderStatus.NEW);
+                WorkOrderStatus.ASSIGNED
+        );
 
-        workOrder.setCreatedAt(
-                LocalDateTime.now());
+        workOrder.setAssignedAt(
+                LocalDateTime.now()
+        );
 
-        workOrder.setSlaDueDate(
-                LocalDateTime.now().plusHours(24));
-
-        workOrder.setSlaBreached(false);
-
-        workOrder.setCustomer(customer);
-        workOrder.setTechnician(technician);
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
 
         WorkOrder saved =
                 workOrderRepository.save(workOrder);
 
-        return mapToResponse(saved);
+        // -----------------------------------------------------
+        // NOTIFY TECHNICIAN
+        // -----------------------------------------------------
+
+        notifyTechnicianAssigned(
+                saved
+        );
+
+        log.info(
+                "Work order created successfully: workOrderId={}, siteId={}",
+                saved.getId(),
+                site.getId()
+        );
+
+        return mapper.mapToResponse(saved);
     }
 
 
     // =========================================================
-    // CREATE WORK ORDER BY CUSTOMER
+    // CREATE CUSTOMER WORK ORDER
     // =========================================================
 
     @Override
@@ -135,71 +181,135 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             CustomerWorkOrderRequest request) {
 
+        log.info(
+                "Customer creating work order: email={}, siteId={}",
+                email,
+                request.getSiteId()
+        );
+
+        // -----------------------------------------------------
+        // GET USER
+        // -----------------------------------------------------
+
+        User user =
+                helper.getUserByEmail(email);
+
+        // -----------------------------------------------------
+        // CUSTOMER ROLE VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateRole(
+                user,
+                Role.CUSTOMER
+        );
+
+        // -----------------------------------------------------
+        // GET CUSTOMER
+        // -----------------------------------------------------
+
         Customer customer =
-                customerRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found for email: "
-                                + email));
+                helper.getCustomerByUser(user);
+
+        // -----------------------------------------------------
+        // GET SITE
+        // -----------------------------------------------------
+
+        Site site =
+                helper.getSiteById(
+                        request.getSiteId()
+                );
+
+        // -----------------------------------------------------
+        // SITE OWNERSHIP VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateSiteOwnership(
+                site,
+                customer
+        );
+
+        // -----------------------------------------------------
+        // DATE VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateScheduledDate(
+                request.getScheduledDate()
+        );
+
+        // -----------------------------------------------------
+        // CREATE WORK ORDER
+        // -----------------------------------------------------
 
         WorkOrder workOrder = new WorkOrder();
 
         workOrder.setTitle(
-                request.getTitle());
+                request.getTitle()
+        );
 
         workOrder.setDescription(
-                request.getDescription());
+                request.getDescription()
+        );
 
         workOrder.setPriority(
-                request.getPriority());
+                request.getPriority()
+        );
 
         workOrder.setScheduledDate(
-                request.getScheduledDate());
+                request.getScheduledDate()
+        );
+
+        workOrder.setServiceType(
+                request.getServiceType()
+        );
+
+        // -----------------------------------------------------
+        // CUSTOMER
+        // -----------------------------------------------------
+
+        workOrder.setCustomer(
+                customer
+        );
+
+        // -----------------------------------------------------
+        // SITE
+        // -----------------------------------------------------
+
+        workOrder.setSite(
+                site
+        );
+
+        // -----------------------------------------------------
+        // INITIAL STATUS
+        // -----------------------------------------------------
 
         workOrder.setStatus(
-                WorkOrderStatus.NEW);
+                WorkOrderStatus.NEW
+        );
 
-        workOrder.setCustomer(customer);
-
-        // Customer-created work order is initially unassigned
-        workOrder.setTechnician(null);
-
-        workOrder.setCreatedAt(
-                LocalDateTime.now());
-
-        workOrder.setSlaDueDate(
-                LocalDateTime.now().plusHours(24));
-
-        workOrder.setSlaBreached(false);
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
 
         WorkOrder saved =
                 workOrderRepository.save(workOrder);
 
-        return mapToResponse(saved);
-    }
+        log.info(
+                "Customer work order created: workOrderId={}, customerId={}, siteId={}",
+                saved.getId(),
+                customer.getCustomerId(),
+                site.getId()
+        );
 
+        /*
+         * No dispatcher notification here because the current
+         * WorkOrder model does not identify a dispatcher at the
+         * time the customer creates the work order.
+         *
+         * Dispatcher can see NEW work orders through the
+         * dispatcher work-order APIs.
+         */
 
-    // =========================================================
-    // GET MY CUSTOMER WORK ORDERS
-    // =========================================================
-
-    @Override
-    public List<WorkOrderResponse> getMyWorkOrders(
-            String email) {
-
-        Customer customer =
-                customerRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found for email: "
-                                + email));
-
-        return workOrderRepository
-                .findByCustomerCustomerId(
-                        customer.getCustomerId())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return mapper.mapToResponse(saved);
     }
 
 
@@ -208,12 +318,16 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<WorkOrderResponse> getAllWorkOrders() {
 
-        return workOrderRepository.findAll()
+        log.info("Fetching all work orders");
+
+        return workOrderRepository
+                .findAll()
                 .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .map(mapper::mapToResponse)
+                .toList();
     }
 
 
@@ -222,135 +336,160 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public WorkOrderResponse getWorkOrderById(
-            Long id) {
+            Long workOrderId) {
+
+        log.info(
+                "Fetching work order: workOrderId={}",
+                workOrderId
+        );
 
         WorkOrder workOrder =
-                workOrderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+                helper.getWorkOrderById(
+                        workOrderId
+                );
 
-        return mapToResponse(workOrder);
+        return mapper.mapToResponse(
+                workOrder
+        );
     }
 
 
     // =========================================================
     // UPDATE WORK ORDER
-    // Used by ADMIN / DISPATCHER / MANAGER
     // =========================================================
 
     @Override
     public WorkOrderResponse updateWorkOrder(
-            Long id,
+            Long workOrderId,
             WorkOrderRequest request) {
 
+        log.info(
+                "Updating work order: workOrderId={}, siteId={}",
+                workOrderId,
+                request.getSiteId()
+        );
+
+        // -----------------------------------------------------
+        // GET WORK ORDER
+        // -----------------------------------------------------
+
         WorkOrder workOrder =
-                workOrderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+                helper.getWorkOrderById(
+                        workOrderId
+                );
+
+        helper.validateWorkOrderCanBeUpdated(
+                workOrder
+        );
+
+        // -----------------------------------------------------
+        // GET CUSTOMER
+        // -----------------------------------------------------
 
         Customer customer =
-                customerRepository.findById(
-                        request.getCustomerId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found"));
+                helper.getCustomerById(
+                        request.getCustomerId()
+                );
+
+        // -----------------------------------------------------
+        // GET TECHNICIAN
+        // -----------------------------------------------------
 
         Technician technician =
-                technicianRepository.findById(
-                        request.getTechnicianId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found"));
+                helper.getTechnicianById(
+                        request.getTechnicianId()
+                );
+
+        // -----------------------------------------------------
+        // GET SITE
+        // -----------------------------------------------------
+
+        Site site =
+                helper.getSiteById(
+                        request.getSiteId()
+                );
+
+        // -----------------------------------------------------
+        // VALIDATIONS
+        // -----------------------------------------------------
+
+        helper.validateCustomer(
+                customer
+        );
+
+        helper.validateTechnician(
+                technician
+        );
+
+        helper.validateSiteOwnership(
+                site,
+                customer
+        );
+
+        helper.validateScheduledDate(
+                request.getScheduledDate()
+        );
+
+        // -----------------------------------------------------
+        // UPDATE FIELDS
+        // -----------------------------------------------------
 
         workOrder.setTitle(
-                request.getTitle());
+                request.getTitle()
+        );
 
         workOrder.setDescription(
-                request.getDescription());
+                request.getDescription()
+        );
 
         workOrder.setPriority(
-                request.getPriority());
+                request.getPriority()
+        );
 
         workOrder.setScheduledDate(
-                request.getScheduledDate());
+                request.getScheduledDate()
+        );
 
-        workOrder.setCustomer(customer);
-        workOrder.setTechnician(technician);
+        workOrder.setCustomer(
+                customer
+        );
 
-        WorkOrder updated =
-                workOrderRepository.save(workOrder);
+        workOrder.setSite(
+                site
+        );
 
-        return mapToResponse(updated);
-    }
+        workOrder.setTechnician(
+                technician
+        );
 
-
-    // =========================================================
-    // UPDATE MY WORK ORDER
-    // Customer can update only their own work order
-    // =========================================================
-
-    @Override
-    public WorkOrderResponse updateMyWorkOrder(
-            String email,
-            Long workOrderId,
-            CustomerWorkOrderRequest request) {
-
-        Customer customer =
-                customerRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found for email: "
-                                + email));
-
-        WorkOrder workOrder =
-                workOrderRepository.findById(workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
-
-        // Security check
-        if (workOrder.getCustomer() == null ||
-                !workOrder.getCustomer()
-                        .getCustomerId()
-                        .equals(customer.getCustomerId())) {
-
-            throw new ResourceNotFoundException(
-                    "Work Order not found for this customer");
-        }
-
-        // Completed / closed / cancelled orders cannot be edited
-        if (workOrder.getStatus() == WorkOrderStatus.COMPLETED ||
-                workOrder.getStatus() == WorkOrderStatus.CLOSED ||
-                workOrder.getStatus() == WorkOrderStatus.CANCELLED) {
-
-            throw new IllegalArgumentException(
-                    "This work order cannot be edited");
-        }
-
-        workOrder.setTitle(
-                request.getTitle());
-
-        workOrder.setDescription(
-                request.getDescription());
-
-        workOrder.setPriority(
-                request.getPriority());
-
-        workOrder.setScheduledDate(
-                request.getScheduledDate());
-
-        // Do not modify:
-        // customer
-        // technician
-        // status
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
 
         WorkOrder updated =
-                workOrderRepository.save(workOrder);
+                workOrderRepository.save(
+                        workOrder
+                );
 
-        return mapToResponse(updated);
+        // -----------------------------------------------------
+        // NOTIFY AFFECTED USERS
+        // -----------------------------------------------------
+
+        notifyWorkOrderUpdated(
+                updated
+        );
+
+        log.info(
+                "Work order updated successfully: workOrderId={}, siteId={}",
+                workOrderId,
+                site.getId()
+        );
+
+        return mapper.mapToResponse(
+                updated
+        );
     }
 
 
@@ -359,15 +498,367 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public void deleteWorkOrder(Long id) {
+    public void deleteWorkOrder(
+            Long workOrderId) {
+
+        log.info(
+                "Deleting work order: workOrderId={}",
+                workOrderId
+        );
 
         WorkOrder workOrder =
-                workOrderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+                helper.getWorkOrderById(
+                        workOrderId
+                );
 
-        workOrderRepository.delete(workOrder);
+        helper.validateWorkOrderCanBeDeleted(
+                workOrder
+        );
+
+        workOrderRepository.delete(
+                workOrder
+        );
+
+        log.info(
+                "Work order deleted successfully: workOrderId={}",
+                workOrderId
+        );
+    }
+
+
+    // =========================================================
+    // CUSTOMER - MY WORK ORDERS
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getMyWorkOrders(
+            String email) {
+
+        log.info(
+                "Fetching customer work orders: email={}",
+                email
+        );
+
+        User user =
+                helper.getUserByEmail(
+                        email
+                );
+
+        helper.validateRole(
+                user,
+                Role.CUSTOMER
+        );
+
+        Customer customer =
+                helper.getCustomerByUser(
+                        user
+                );
+
+        return helper
+                .getWorkOrdersByCustomer(
+                        customer.getCustomerId()
+                )
+                .stream()
+                .map(mapper::mapToResponse)
+                .toList();
+    }
+
+
+    // =========================================================
+    // CUSTOMER - UPDATE MY WORK ORDER
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse updateMyWorkOrder(
+            String email,
+            Long workOrderId,
+            CustomerWorkOrderRequest request) {
+
+        log.info(
+                "Customer updating work order: email={}, workOrderId={}, siteId={}",
+                email,
+                workOrderId,
+                request.getSiteId()
+        );
+
+        // -----------------------------------------------------
+        // GET USER
+        // -----------------------------------------------------
+
+        User user =
+                helper.getUserByEmail(
+                        email
+                );
+
+        // -----------------------------------------------------
+        // CUSTOMER ROLE
+        // -----------------------------------------------------
+
+        helper.validateRole(
+                user,
+                Role.CUSTOMER
+        );
+
+        // -----------------------------------------------------
+        // GET CUSTOMER
+        // -----------------------------------------------------
+
+        Customer customer =
+                helper.getCustomerByUser(
+                        user
+                );
+
+        // -----------------------------------------------------
+        // GET WORK ORDER
+        // -----------------------------------------------------
+
+        WorkOrder workOrder =
+                helper.getWorkOrderById(
+                        workOrderId
+                );
+
+        // -----------------------------------------------------
+        // WORK ORDER OWNERSHIP
+        // -----------------------------------------------------
+
+        helper.validateCustomerOwnership(
+                workOrder,
+                customer
+        );
+
+        // -----------------------------------------------------
+        // WORK ORDER STATUS
+        // -----------------------------------------------------
+
+        helper.validateWorkOrderCanBeUpdated(
+                workOrder
+        );
+
+        // -----------------------------------------------------
+        // GET SITE
+        // -----------------------------------------------------
+
+        Site site =
+                helper.getSiteById(
+                        request.getSiteId()
+                );
+
+        // -----------------------------------------------------
+        // SITE OWNERSHIP
+        // -----------------------------------------------------
+
+        helper.validateSiteOwnership(
+                site,
+                customer
+        );
+
+        // -----------------------------------------------------
+        // DATE VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateScheduledDate(
+                request.getScheduledDate()
+        );
+
+        // -----------------------------------------------------
+        // UPDATE BASIC INFORMATION
+        // -----------------------------------------------------
+
+        workOrder.setTitle(
+                request.getTitle()
+        );
+
+        workOrder.setDescription(
+                request.getDescription()
+        );
+
+        workOrder.setPriority(
+                request.getPriority()
+        );
+
+        workOrder.setScheduledDate(
+                request.getScheduledDate()
+        );
+
+        // -----------------------------------------------------
+        // UPDATE SERVICE INFORMATION
+        // -----------------------------------------------------
+
+        workOrder.setServiceType(
+                request.getServiceType()
+        );
+
+        // -----------------------------------------------------
+        // UPDATE SITE
+        // -----------------------------------------------------
+
+        workOrder.setSite(
+                site
+        );
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        WorkOrder updated =
+                workOrderRepository.save(
+                        workOrder
+                );
+
+        // -----------------------------------------------------
+        // NOTIFY TECHNICIAN
+        // -----------------------------------------------------
+
+        notifyTechnicianWorkOrderUpdated(
+                updated
+        );
+
+        log.info(
+                "Customer work order updated successfully: workOrderId={}, siteId={}",
+                workOrderId,
+                site.getId()
+        );
+
+        return mapper.mapToResponse(
+                updated
+        );
+    }
+
+
+    // =========================================================
+    // ASSIGN TECHNICIAN (DISPATCHER)
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse assignTechnician(
+            String dispatcherEmail,
+            Long workOrderId,
+            Long technicianId) {
+
+        log.info(
+                "Dispatcher assigning technician: dispatcherEmail={}, workOrderId={}, technicianId={}",
+                dispatcherEmail,
+                workOrderId,
+                technicianId
+        );
+
+        User dispatcher =
+                helper.getUserByEmail(
+                        dispatcherEmail
+                );
+
+        helper.validateRole(
+                dispatcher,
+                Role.DISPATCHER
+        );
+
+        WorkOrder workOrder =
+                helper.getWorkOrderById(
+                        workOrderId
+                );
+
+        helper.validateWorkOrderCanBeAssigned(
+                workOrder
+        );
+
+        Technician technician =
+                helper.getTechnicianById(
+                        technicianId
+                );
+
+        // -----------------------------------------------------
+        // VALIDATE TECHNICIAN
+        // -----------------------------------------------------
+
+        helper.validateTechnicianForAssignment(
+                technician
+        );
+
+        WorkOrderStatus oldStatus =
+                workOrder.getStatus();
+
+        // -----------------------------------------------------
+        // ASSIGN TECHNICIAN
+        // -----------------------------------------------------
+
+        workOrder.setTechnician(
+                technician
+        );
+
+        workOrder.setAssignedBy(
+                dispatcher
+        );
+
+        workOrder.setStatus(
+                WorkOrderStatus.ASSIGNED
+        );
+
+        workOrder.setAssignedAt(
+                LocalDateTime.now()
+        );
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        WorkOrder updated =
+                workOrderRepository.save(
+                        workOrder
+                );
+
+        // -----------------------------------------------------
+        // STATUS HISTORY
+        // -----------------------------------------------------
+
+        helper.recordStatusChange(
+                updated,
+                oldStatus,
+                WorkOrderStatus.ASSIGNED,
+                dispatcherEmail
+        );
+
+        // -----------------------------------------------------
+        // TECHNICIAN NOTIFICATION
+        // -----------------------------------------------------
+
+        notifyTechnicianAssigned(
+                updated
+        );
+
+        log.info(
+                "Technician assigned successfully: workOrderId={}, technicianId={}, dispatcherId={}",
+                workOrderId,
+                technicianId,
+                dispatcher.getId()
+        );
+
+        return mapper.mapToResponse(
+                updated
+        );
+    }
+
+
+    // =========================================================
+    // GET BY CUSTOMER
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getByCustomer(
+            Long customerId) {
+
+        helper.getCustomerById(
+                customerId
+        );
+
+        return helper
+                .getWorkOrdersByCustomer(
+                        customerId
+                )
+                .stream()
+                .map(mapper::mapToResponse)
+                .toList();
     }
 
 
@@ -376,14 +867,18 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public List<WorkOrderResponse>
-            getWorkOrdersByStatus(
-                    WorkOrderStatus status) {
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getWorkOrdersByStatus(
+            WorkOrderStatus status) {
+
+        helper.validateStatus(
+                status
+        );
 
         return workOrderRepository
                 .findByStatus(status)
                 .stream()
-                .map(this::mapToResponse)
+                .map(mapper::mapToResponse)
                 .toList();
     }
 
@@ -393,30 +888,21 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public List<WorkOrderResponse>
-            getWorkOrdersByPriority(
-                    Priority priority) {
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getWorkOrdersByPriority(
+            Priority priority) {
+
+        if (priority == null) {
+
+            throw new KeystoneException(
+                    ErrorCode.INVALID_WORK_ORDER_PRIORITY
+            );
+        }
 
         return workOrderRepository
                 .findByPriority(priority)
                 .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-
-    // =========================================================
-    // GET BY CUSTOMER
-    // =========================================================
-
-    @Override
-    public List<WorkOrderResponse>
-            getByCustomer(Long customerId) {
-
-        return workOrderRepository
-                .findByCustomerCustomerId(customerId)
-                .stream()
-                .map(this::mapToResponse)
+                .map(mapper::mapToResponse)
                 .toList();
     }
 
@@ -426,197 +912,137 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public List<WorkOrderResponse>
-            getByTechnician(Long technicianId) {
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getByTechnician(
+            Long technicianId) {
 
-        return workOrderRepository
-                .findByTechnicianId(technicianId)
+        helper.getTechnicianById(
+                technicianId
+        );
+
+        return helper
+                .getWorkOrdersByTechnician(
+                        technicianId
+                )
                 .stream()
-                .map(this::mapToResponse)
+                .map(mapper::mapToResponse)
                 .toList();
     }
 
 
     // =========================================================
     // CHANGE STATUS
-    // Dispatcher / Manager / Admin
     // =========================================================
 
     @Override
     public WorkOrderResponse changeStatus(
-            Long id,
+            Long workOrderId,
             ChangeStatusRequest request) {
 
-        WorkOrder workOrder =
-                workOrderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+        log.info(
+                "Changing status: workOrderId={}, newStatus={}",
+                workOrderId,
+                request.getStatus()
+        );
 
-        WorkOrderStatus oldStatus =
+        WorkOrder workOrder =
+                helper.getWorkOrderById(
+                        workOrderId
+                );
+
+        WorkOrderStatus currentStatus =
                 workOrder.getStatus();
 
         WorkOrderStatus newStatus =
                 request.getStatus();
 
-        if (!WorkOrderStatusValidator.isValidTransition(
-                oldStatus,
-                newStatus)) {
+        helper.validateStatus(
+                newStatus
+        );
 
-            throw new IllegalArgumentException(
-                    "Invalid status transition from "
-                    + oldStatus
-                    + " to "
-                    + newStatus);
-        }
+        helper.validateStatusTransition(
+                currentStatus,
+                newStatus
+        );
 
-        workOrder.setStatus(newStatus);
+        workOrder.setStatus(
+                newStatus
+        );
 
-        // =====================================================
-        // ASSIGNED
-        // =====================================================
-
-        if (newStatus == WorkOrderStatus.ASSIGNED) {
-
-            workOrder.setAssignedAt(
-                    LocalDateTime.now());
-
-            if (workOrder.getTechnician() != null) {
-
-                emailService.sendEmail(
-                        workOrder.getTechnician().getEmail(),
-
-                        "Work Order Assigned",
-
-                        "A new work order has been assigned.\n\n"
-                        + "Title : "
-                        + workOrder.getTitle());
-            }
-        }
-
-
-        // =====================================================
-        // IN PROGRESS
-        // =====================================================
-
-        if (newStatus == WorkOrderStatus.IN_PROGRESS) {
-
-            if (workOrder.getStartedAt() == null) {
-
-                workOrder.setStartedAt(
-                        LocalDateTime.now());
-            }
-        }
-
-
-        // =====================================================
-        // COMPLETED
-        // =====================================================
-
-        if (newStatus == WorkOrderStatus.COMPLETED) {
-
-            workOrder.setCompletedAt(
-                    LocalDateTime.now());
-
-            if (workOrder.getSlaDueDate() != null
-                    && workOrder.getCompletedAt()
-                            .isAfter(
-                                    workOrder.getSlaDueDate())) {
-
-                workOrder.setSlaBreached(true);
-            }
-
-            if (Boolean.TRUE.equals(
-                    workOrder.getSlaBreached())) {
-
-                if (workOrder.getCustomer() != null) {
-
-                    emailService.sendEmail(
-                            workOrder.getCustomer().getEmail(),
-
-                            "SLA Breached",
-
-                            "Your work order was completed "
-                            + "after the SLA due date.");
-                }
-            }
-
-            if (workOrder.getCustomer() != null) {
-
-                emailService.sendEmail(
-                        workOrder.getCustomer().getEmail(),
-
-                        "Work Order Completed",
-
-                        "Your work order has been "
-                        + "completed successfully.");
-            }
-        }
-
+        updateTimeline(
+                workOrder,
+                newStatus
+        );
 
         WorkOrder updated =
-                workOrderRepository.save(workOrder);
+                workOrderRepository.save(
+                        workOrder
+                );
 
+        log.info(
+                "Status changed: workOrderId={}, {} -> {}",
+                workOrderId,
+                currentStatus,
+                newStatus
+        );
 
-        // =====================================================
-        // STATUS HISTORY
-        // =====================================================
-
-        WorkOrderStatusHistory history =
-                new WorkOrderStatusHistory();
-
-        history.setWorkOrder(updated);
-
-        history.setFromStatus(oldStatus);
-
-        history.setToStatus(newStatus);
-
-        history.setChangedBy("SYSTEM");
-
-        history.setChangedAt(
-                LocalDateTime.now());
-
-        historyRepository.save(history);
-
-        return mapToResponse(updated);
+        return mapper.mapToResponse(
+                updated
+        );
     }
 
 
     // =========================================================
-    // TECHNICIAN - GET MY WORK ORDERS
+    // TECHNICIAN - MY WORK ORDERS
     // =========================================================
 
     @Override
-    public List<WorkOrderResponse>
-            getMyTechnicianWorkOrders(
-                    String email) {
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getMyTechnicianWorkOrders(
+            String email) {
 
         Technician technician =
-                technicianRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found for email: "
-                                + email));
+                helper.getTechnicianByEmail(
+                        email
+                );
 
-        return workOrderRepository.findAll()
+        return helper
+                .getWorkOrdersByTechnician(
+                        technician.getId()
+                )
                 .stream()
-                .filter(workOrder ->
-                        workOrder.getTechnician() != null
-                        && workOrder.getTechnician()
-                                .getId()
-                                .equals(
-                                        technician.getId()))
-                .map(this::mapToResponse)
+                .map(mapper::mapToResponse)
                 .toList();
     }
 
 
     // =========================================================
-    // TECHNICIAN - ACCEPT WORK ORDER
-    //
-    // There is no ACCEPTED status in WorkOrderStatus.
-    // Therefore acceptance validates that the work order
-    // is assigned to this technician and is ASSIGNED.
+    // PENDING TECHNICIAN ASSIGNMENTS
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkOrderResponse> getPendingTechnicianAssignments(
+            String email) {
+
+        Technician technician =
+                helper.getTechnicianByEmail(
+                        email
+                );
+
+        return workOrderRepository
+                .findByTechnician_IdAndStatus(
+                        technician.getId(),
+                        WorkOrderStatus.ASSIGNED
+                )
+                .stream()
+                .map(mapper::mapToResponse)
+                .toList();
+    }
+
+
+    // =========================================================
+    // ACCEPT WORK ORDER
     // =========================================================
 
     @Override
@@ -624,25 +1050,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             Long workOrderId) {
 
-        WorkOrder workOrder =
-                getTechnicianWorkOrder(
-                        email,
-                        workOrderId);
-
-        if (workOrder.getStatus()
-                != WorkOrderStatus.ASSIGNED) {
-
-            throw new IllegalArgumentException(
-                    "Only ASSIGNED work orders can be accepted");
-        }
-
-        return mapToResponse(workOrder);
+        return changeTechnicianStatus(
+                email,
+                workOrderId,
+                WorkOrderStatus.ASSIGNED,
+                WorkOrderStatus.ACCEPTED
+        );
     }
 
 
     // =========================================================
-    // TECHNICIAN - START WORK ORDER
-    // ASSIGNED -> IN_PROGRESS
+    // START WORK ORDER
     // =========================================================
 
     @Override
@@ -650,33 +1068,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             Long workOrderId) {
 
-        WorkOrder workOrder =
-                getTechnicianWorkOrder(
-                        email,
-                        workOrderId);
-
-        if (workOrder.getStatus()
-                != WorkOrderStatus.ASSIGNED) {
-
-            throw new IllegalArgumentException(
-                    "Only ASSIGNED work orders can be started");
-        }
-
-        ChangeStatusRequest request =
-                new ChangeStatusRequest();
-
-        request.setStatus(
-                WorkOrderStatus.IN_PROGRESS);
-
-        return changeStatus(
+        return changeTechnicianStatus(
+                email,
                 workOrderId,
-                request);
+                WorkOrderStatus.ACCEPTED,
+                WorkOrderStatus.IN_PROGRESS
+        );
     }
 
 
     // =========================================================
-    // TECHNICIAN - HOLD WORK ORDER
-    // IN_PROGRESS -> ON_HOLD
+    // HOLD WORK ORDER
     // =========================================================
 
     @Override
@@ -684,33 +1086,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             Long workOrderId) {
 
-        WorkOrder workOrder =
-                getTechnicianWorkOrder(
-                        email,
-                        workOrderId);
-
-        if (workOrder.getStatus()
-                != WorkOrderStatus.IN_PROGRESS) {
-
-            throw new IllegalArgumentException(
-                    "Only IN_PROGRESS work orders can be put on hold");
-        }
-
-        ChangeStatusRequest request =
-                new ChangeStatusRequest();
-
-        request.setStatus(
-                WorkOrderStatus.ON_HOLD);
-
-        return changeStatus(
+        return changeTechnicianStatus(
+                email,
                 workOrderId,
-                request);
+                WorkOrderStatus.IN_PROGRESS,
+                WorkOrderStatus.ON_HOLD
+        );
     }
 
 
     // =========================================================
-    // TECHNICIAN - RESUME WORK ORDER
-    // ON_HOLD -> IN_PROGRESS
+    // RESUME WORK ORDER
     // =========================================================
 
     @Override
@@ -718,33 +1104,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             Long workOrderId) {
 
-        WorkOrder workOrder =
-                getTechnicianWorkOrder(
-                        email,
-                        workOrderId);
-
-        if (workOrder.getStatus()
-                != WorkOrderStatus.ON_HOLD) {
-
-            throw new IllegalArgumentException(
-                    "Only ON_HOLD work orders can be resumed");
-        }
-
-        ChangeStatusRequest request =
-                new ChangeStatusRequest();
-
-        request.setStatus(
-                WorkOrderStatus.IN_PROGRESS);
-
-        return changeStatus(
+        return changeTechnicianStatus(
+                email,
                 workOrderId,
-                request);
+                WorkOrderStatus.ON_HOLD,
+                WorkOrderStatus.IN_PROGRESS
+        );
     }
 
 
     // =========================================================
-    // TECHNICIAN - COMPLETE WORK ORDER
-    // IN_PROGRESS -> COMPLETED
+    // COMPLETE WORK ORDER
     // =========================================================
 
     @Override
@@ -752,63 +1122,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             String email,
             Long workOrderId) {
 
-        WorkOrder workOrder =
-                getTechnicianWorkOrder(
-                        email,
-                        workOrderId);
-
-        if (workOrder.getStatus()
-                != WorkOrderStatus.IN_PROGRESS) {
-
-            throw new IllegalArgumentException(
-                    "Only IN_PROGRESS work orders can be completed");
-        }
-
-        ChangeStatusRequest request =
-                new ChangeStatusRequest();
-
-        request.setStatus(
-                WorkOrderStatus.COMPLETED);
-
-        return changeStatus(
+        return changeTechnicianStatus(
+                email,
                 workOrderId,
-                request);
-    }
-
-
-    // =========================================================
-    // HELPER
-    // Get work order and verify technician ownership
-    // =========================================================
-
-    private WorkOrder getTechnicianWorkOrder(
-            String email,
-            Long workOrderId) {
-
-        Technician technician =
-                technicianRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found for email: "
-                                + email));
-
-        WorkOrder workOrder =
-                workOrderRepository.findById(workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
-
-        if (workOrder.getTechnician() == null
-                || !workOrder.getTechnician()
-                        .getId()
-                        .equals(
-                                technician.getId())) {
-
-            throw new ResourceNotFoundException(
-                    "Work Order not assigned to this technician");
-        }
-
-        return workOrder;
+                WorkOrderStatus.IN_PROGRESS,
+                WorkOrderStatus.COMPLETED
+        );
     }
 
 
@@ -817,340 +1136,645 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     // =========================================================
 
     @Override
-    public List<WorkOrderStatusHistoryResponse>
-            getStatusHistory(Long workOrderId) {
+    @Transactional(readOnly = true)
+    public List<WorkOrderStatusHistoryResponse> getStatusHistory(
+            Long workOrderId) {
 
-        WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+        helper.getWorkOrderById(
+                workOrderId
+        );
 
-        return historyRepository
-                .findByWorkOrderOrderByChangedAtDesc(
-                        workOrder)
+        return workOrderStatusHistoryRepository
+                .findByWorkOrder_IdOrderByChangedAtAsc(
+                        workOrderId
+                )
                 .stream()
-                .map(history -> {
-
-                    WorkOrderStatusHistoryResponse response =
-                            new WorkOrderStatusHistoryResponse();
-
-                    response.setFromStatus(
-                            history.getFromStatus());
-
-                    response.setToStatus(
-                            history.getToStatus());
-
-                    response.setChangedBy(
-                            history.getChangedBy());
-
-                    response.setChangedAt(
-                            history.getChangedAt());
-
-                    return response;
-                })
+                .map(mapper::mapToStatusHistoryResponse)
                 .toList();
     }
 
 
     // =========================================================
-    // TIME LOG
+    // PRIVATE - TECHNICIAN STATUS CHANGE
     // =========================================================
 
-    @Override
-    public TimeLogResponse addTimeLog(
+    private WorkOrderResponse changeTechnicianStatus(
+            String email,
             Long workOrderId,
-            TimeLogRequest request) {
+            WorkOrderStatus requiredCurrentStatus,
+            WorkOrderStatus newStatus) {
 
-        WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+        log.info(
+                "Technician status change: email={}, workOrderId={}, {} -> {}",
+                email,
+                workOrderId,
+                requiredCurrentStatus,
+                newStatus
+        );
 
         Technician technician =
-                technicianRepository.findById(
-                        request.getTechnicianId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found"));
-
-        TimeLog timeLog =
-                new TimeLog();
-
-        timeLog.setWorkOrder(workOrder);
-
-        timeLog.setTechnician(technician);
-
-        timeLog.setMinutesWorked(
-                request.getMinutesWorked());
-
-        timeLog.setNotes(
-                request.getNotes());
-
-        timeLog.setLoggedAt(
-                LocalDateTime.now());
-
-        TimeLog saved =
-                timeLogRepository.save(timeLog);
-
-        TimeLogResponse response =
-                new TimeLogResponse();
-
-        response.setId(
-                saved.getId());
-
-        response.setMinutesWorked(
-                saved.getMinutesWorked());
-
-        response.setNotes(
-                saved.getNotes());
-
-        response.setLoggedAt(
-                saved.getLoggedAt());
-
-        response.setTechnicianName(
-                technician.getFirstName()
-                + " "
-                + technician.getLastName());
-
-        return response;
-    }
-
-
-    // =========================================================
-    // GET TIME LOGS
-    // =========================================================
-
-    @Override
-    public List<TimeLogResponse>
-            getTimeLogs(Long workOrderId) {
+                helper.getTechnicianByEmail(
+                        email
+                );
 
         WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+                helper.getWorkOrderById(
+                        workOrderId
+                );
 
-        return timeLogRepository
-                .findByWorkOrder(workOrder)
-                .stream()
-                .map(log -> {
+        helper.validateTechnicianAssignment(
+                workOrder,
+                technician
+        );
 
-                    TimeLogResponse response =
-                            new TimeLogResponse();
+        helper.validateTechnicianStatus(
+                workOrder.getStatus(),
+                requiredCurrentStatus
+        );
 
-                    response.setId(
-                            log.getId());
+        helper.validateStatusTransition(
+                workOrder.getStatus(),
+                newStatus
+        );
 
-                    response.setMinutesWorked(
-                            log.getMinutesWorked());
+        // -----------------------------------------------------
+        // CHANGE STATUS
+        // -----------------------------------------------------
 
-                    response.setNotes(
-                            log.getNotes());
+        workOrder.setStatus(
+                newStatus
+        );
 
-                    response.setLoggedAt(
-                            log.getLoggedAt());
+        updateTimeline(
+                workOrder,
+                newStatus
+        );
 
-                    if (log.getTechnician() != null) {
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
 
-                        response.setTechnicianName(
-                                log.getTechnician()
-                                        .getFirstName()
-                                + " "
-                                + log.getTechnician()
-                                        .getLastName());
-                    }
+        WorkOrder updated =
+                workOrderRepository.save(
+                        workOrder
+                );
 
-                    return response;
+        // -----------------------------------------------------
+        // NOTIFY DISPATCHER
+        // -----------------------------------------------------
 
-                })
-                .toList();
-    }
+        sendTechnicianStatusNotification(
+                updated,
+                requiredCurrentStatus,
+                newStatus
+        );
 
+        // -----------------------------------------------------
+        // NOTIFY CUSTOMER WHEN COMPLETED
+        // -----------------------------------------------------
 
-    // =========================================================
-    // PART USAGE
-    // =========================================================
+        if (newStatus == WorkOrderStatus.COMPLETED) {
 
-    @Override
-    public PartUsageResponse addPartUsage(
-            Long workOrderId,
-            PartUsageRequest request) {
-
-        WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
-
-        Inventory inventory =
-                inventoryRepository.findById(
-                        request.getInventoryId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Inventory not found"));
-
-        if (inventory.getQuantity()
-                < request.getQuantityUsed()) {
-
-            throw new IllegalArgumentException(
-                    "Insufficient stock available");
+            notifyCustomerCompleted(
+                    updated
+            );
         }
 
-        inventory.setQuantity(
-                inventory.getQuantity()
-                - request.getQuantityUsed());
+        log.info(
+                "Technician status updated: workOrderId={}, newStatus={}",
+                workOrderId,
+                newStatus
+        );
 
-        inventoryRepository.save(inventory);
-
-        PartUsage usage =
-                new PartUsage();
-
-        usage.setWorkOrder(workOrder);
-
-        usage.setInventory(inventory);
-
-        usage.setQuantityUsed(
-                request.getQuantityUsed());
-
-        PartUsage saved =
-                partUsageRepository.save(usage);
-
-        PartUsageResponse response =
-                new PartUsageResponse();
-
-        response.setId(
-                saved.getId());
-
-        response.setPartName(
-                inventory.getPartName());
-
-        response.setQuantityUsed(
-                saved.getQuantityUsed());
-
-        return response;
+        return mapper.mapToResponse(
+                updated
+        );
     }
 
 
     // =========================================================
-    // GET PART USAGE
+    // TECHNICIAN STATUS NOTIFICATION
     // =========================================================
 
-    @Override
-    public List<PartUsageResponse>
-            getPartUsage(Long workOrderId) {
+    private void sendTechnicianStatusNotification(
+            WorkOrder workOrder,
+            WorkOrderStatus oldStatus,
+            WorkOrderStatus newStatus) {
 
-        WorkOrder workOrder =
-                workOrderRepository.findById(
-                        workOrderId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Work Order not found"));
+        User dispatcher =
+                workOrder.getAssignedBy();
 
-        return partUsageRepository
-                .findByWorkOrder(workOrder)
-                .stream()
-                .map(part -> {
+        if (dispatcher == null) {
 
-                    PartUsageResponse response =
-                            new PartUsageResponse();
+            log.warn(
+                    "No dispatcher found for work order notification: workOrderId={}",
+                    workOrder.getId()
+            );
 
-                    response.setId(
-                            part.getId());
+            return;
+        }
 
-                    response.setPartName(
-                            part.getInventory()
-                                    .getPartName());
+        String title;
+        String message;
+        String type;
 
-                    response.setQuantityUsed(
-                            part.getQuantityUsed());
+        // -----------------------------------------------------
+        // ACCEPTED
+        // -----------------------------------------------------
 
-                    return response;
+        if (oldStatus == WorkOrderStatus.ASSIGNED
+                && newStatus == WorkOrderStatus.ACCEPTED) {
 
-                })
-                .toList();
+            title = "Work Order Accepted";
+
+            message =
+                    "Technician has accepted work order #"
+                    + workOrder.getId()
+                    + ".";
+
+            type = "WORK_ORDER_ACCEPTED";
+
+        }
+
+        // -----------------------------------------------------
+        // STARTED
+        // -----------------------------------------------------
+
+        else if (oldStatus == WorkOrderStatus.ACCEPTED
+                && newStatus == WorkOrderStatus.IN_PROGRESS) {
+
+            title = "Work Order Started";
+
+            message =
+                    "Technician has started work order #"
+                    + workOrder.getId()
+                    + ".";
+
+            type = "WORK_ORDER_STARTED";
+
+        }
+
+        // -----------------------------------------------------
+        // ON HOLD
+        // -----------------------------------------------------
+
+        else if (oldStatus == WorkOrderStatus.IN_PROGRESS
+                && newStatus == WorkOrderStatus.ON_HOLD) {
+
+            title = "Work Order On Hold";
+
+            message =
+                    "Work order #"
+                    + workOrder.getId()
+                    + " has been put on hold by the technician.";
+
+            type = "WORK_ORDER_ON_HOLD";
+
+        }
+
+        // -----------------------------------------------------
+        // RESUMED
+        // -----------------------------------------------------
+
+        else if (oldStatus == WorkOrderStatus.ON_HOLD
+                && newStatus == WorkOrderStatus.IN_PROGRESS) {
+
+            title = "Work Order Resumed";
+
+            message =
+                    "Technician has resumed work order #"
+                    + workOrder.getId()
+                    + ".";
+
+            type = "WORK_ORDER_RESUMED";
+
+        }
+
+        // -----------------------------------------------------
+        // COMPLETED
+        // -----------------------------------------------------
+
+        else if (oldStatus == WorkOrderStatus.IN_PROGRESS
+                && newStatus == WorkOrderStatus.COMPLETED) {
+
+            title = "Work Order Completed";
+
+            message =
+                    "Work order #"
+                    + workOrder.getId()
+                    + " has been completed by the technician.";
+
+            type = "WORK_ORDER_COMPLETED";
+
+        }
+
+        else {
+            return;
+        }
+
+        notificationService.createNotification(
+                dispatcher,
+                workOrder,
+                title,
+                message,
+                type
+        );
     }
 
 
     // =========================================================
-    // MAP ENTITY TO RESPONSE
+    // TECHNICIAN ASSIGNED NOTIFICATION
     // =========================================================
 
-    private WorkOrderResponse mapToResponse(
+    private void notifyTechnicianAssigned(
             WorkOrder workOrder) {
 
-        WorkOrderResponse response =
-                new WorkOrderResponse();
+        Technician technician =
+                workOrder.getTechnician();
 
-        response.setId(
-                workOrder.getId());
+        if (technician == null
+                || technician.getUser() == null) {
 
-        response.setTitle(
-                workOrder.getTitle());
+            log.warn(
+                    "Cannot notify technician because technician/user is missing: workOrderId={}",
+                    workOrder.getId()
+            );
 
-        response.setDescription(
-                workOrder.getDescription());
-
-        response.setPriority(
-                workOrder.getPriority());
-
-        response.setStatus(
-                workOrder.getStatus());
-
-        response.setScheduledDate(
-                workOrder.getScheduledDate());
-
-        response.setCompletedDate(
-                workOrder.getCompletedDate());
-
-
-        // =====================================================
-        // CUSTOMER
-        // =====================================================
-
-        if (workOrder.getCustomer() != null) {
-
-            response.setCustomerName(
-                    workOrder.getCustomer()
-                            .getCustomerName());
+            return;
         }
 
+        notificationService.createNotification(
+                technician.getUser(),
+                workOrder,
+                "New Work Order Assigned",
+                "Work order #"
+                        + workOrder.getId()
+                        + " has been assigned to you.",
+                "WORK_ORDER_ASSIGNED"
+        );
 
-        // =====================================================
+        log.info(
+                "Technician assignment notification created: workOrderId={}, technicianId={}",
+                workOrder.getId(),
+                technician.getId()
+        );
+    }
+
+
+    // =========================================================
+    // CUSTOMER - WORK ORDER COMPLETED
+    // =========================================================
+
+    private void notifyCustomerCompleted(
+            WorkOrder workOrder) {
+
+        Customer customer =
+                workOrder.getCustomer();
+
+        if (customer == null) {
+
+            log.warn(
+                    "Cannot notify customer: customer is null, workOrderId={}",
+                    workOrder.getId()
+            );
+
+            return;
+        }
+
+        User customerUser =
+                customer.getUser();
+
+        if (customerUser == null) {
+
+            log.warn(
+                    "Cannot notify customer: user is null, workOrderId={}",
+                    workOrder.getId()
+            );
+
+            return;
+        }
+
+        notificationService.createNotification(
+                customerUser,
+                workOrder,
+                "Work Order Completed",
+                "Your work order #"
+                        + workOrder.getId()
+                        + " has been completed.",
+                "WORK_ORDER_COMPLETED"
+        );
+
+        log.info(
+                "Customer completion notification created: workOrderId={}, customerId={}",
+                workOrder.getId(),
+                customer.getCustomerId()
+        );
+    }
+
+
+    // =========================================================
+    // WORK ORDER UPDATED
+    // =========================================================
+
+    private void notifyWorkOrderUpdated(
+            WorkOrder workOrder) {
+
+        // -----------------------------------------------------
         // TECHNICIAN
-        // =====================================================
+        // -----------------------------------------------------
 
-        if (workOrder.getTechnician() != null) {
+        Technician technician =
+                workOrder.getTechnician();
 
-            response.setTechnicianName(
-                    workOrder.getTechnician()
-                            .getFirstName()
-                    + " "
-                    + workOrder.getTechnician()
-                            .getLastName());
+        if (technician != null
+                && technician.getUser() != null) {
 
-        } else {
-
-            response.setTechnicianName(
-                    "Unassigned");
+            notificationService.createNotification(
+                    technician.getUser(),
+                    workOrder,
+                    "Work Order Updated",
+                    "Work order #"
+                            + workOrder.getId()
+                            + " has been updated.",
+                    "WORK_ORDER_UPDATED"
+            );
         }
 
+        // -----------------------------------------------------
+        // CUSTOMER
+        // -----------------------------------------------------
 
-        // =====================================================
-        // SLA
-        // =====================================================
+        Customer customer =
+                workOrder.getCustomer();
 
-        response.setSlaDueDate(
-                workOrder.getSlaDueDate());
+        if (customer != null
+                && customer.getUser() != null) {
 
-        response.setSlaBreached(
-                workOrder.getSlaBreached());
+            notificationService.createNotification(
+                    customer.getUser(),
+                    workOrder,
+                    "Work Order Updated",
+                    "Your work order #"
+                            + workOrder.getId()
+                            + " has been updated.",
+                    "WORK_ORDER_UPDATED"
+            );
+        }
+    }
 
-        return response;
+
+    // =========================================================
+    // CUSTOMER UPDATED WORK ORDER
+    // =========================================================
+
+    private void notifyTechnicianWorkOrderUpdated(
+            WorkOrder workOrder) {
+
+        Technician technician =
+                workOrder.getTechnician();
+
+        if (technician == null
+                || technician.getUser() == null) {
+
+            return;
+        }
+
+        notificationService.createNotification(
+                technician.getUser(),
+                workOrder,
+                "Work Order Updated",
+                "Customer has updated work order #"
+                        + workOrder.getId()
+                        + ".",
+                "WORK_ORDER_UPDATED"
+        );
+    }
+
+
+    // =========================================================
+    // UPDATE TIMELINE
+    // =========================================================
+
+    private void updateTimeline(
+            WorkOrder workOrder,
+            WorkOrderStatus status) {
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        // -----------------------------------------------------
+        // ASSIGNED
+        // -----------------------------------------------------
+
+        if (status == WorkOrderStatus.ASSIGNED
+                && workOrder.getAssignedAt() == null) {
+
+            workOrder.setAssignedAt(
+                    now
+            );
+        }
+
+        // -----------------------------------------------------
+        // IN PROGRESS
+        // -----------------------------------------------------
+
+        if (status == WorkOrderStatus.IN_PROGRESS
+                && workOrder.getStartedAt() == null) {
+
+            workOrder.setStartedAt(
+                    now
+            );
+        }
+
+        // -----------------------------------------------------
+        // COMPLETED
+        // -----------------------------------------------------
+
+        if (status == WorkOrderStatus.COMPLETED) {
+
+            workOrder.setCompletedAt(
+                    now
+            );
+
+            workOrder.setCompletedDate(
+                    LocalDate.now()
+            );
+        }
+    }
+
+
+    // =========================================================
+    // CANCEL WORK ORDER
+    // =========================================================
+
+    @Override
+    public WorkOrderResponse cancelWorkOrder(
+            String email,
+            Long workOrderId) {
+
+        log.info(
+                "Technician cancelling work order: email={}, workOrderId={}",
+                email,
+                workOrderId
+        );
+
+        Technician technician =
+                helper.getTechnicianByEmail(
+                        email
+                );
+
+        WorkOrder workOrder =
+                helper.getWorkOrderById(
+                        workOrderId
+                );
+
+        // -----------------------------------------------------
+        // VALIDATE ASSIGNMENT
+        // -----------------------------------------------------
+
+        helper.validateTechnicianAssignment(
+                workOrder,
+                technician
+        );
+
+        WorkOrderStatus currentStatus =
+                workOrder.getStatus();
+
+        // -----------------------------------------------------
+        // VALIDATE CANCELLATION STATUS
+        // -----------------------------------------------------
+
+        if (currentStatus != WorkOrderStatus.ASSIGNED
+                && currentStatus != WorkOrderStatus.ACCEPTED
+                && currentStatus != WorkOrderStatus.ON_HOLD) {
+
+            log.warn(
+                    "Technician cannot cancel work order: workOrderId={}, currentStatus={}",
+                    workOrderId,
+                    currentStatus
+            );
+
+            throw new KeystoneException(
+                    ErrorCode.INVALID_WORK_ORDER_STATUS
+            );
+        }
+
+        // -----------------------------------------------------
+        // VALIDATE TRANSITION
+        // -----------------------------------------------------
+
+        helper.validateStatusTransition(
+                currentStatus,
+                WorkOrderStatus.CANCELLED
+        );
+
+        // -----------------------------------------------------
+        // CHANGE STATUS
+        // -----------------------------------------------------
+
+        workOrder.setStatus(
+                WorkOrderStatus.CANCELLED
+        );
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        WorkOrder updated =
+                workOrderRepository.save(
+                        workOrder
+                );
+
+        // -----------------------------------------------------
+        // NOTIFY DISPATCHER
+        // -----------------------------------------------------
+
+        notifyDispatcherCancelled(
+                updated
+        );
+
+        // -----------------------------------------------------
+        // NOTIFY CUSTOMER
+        // -----------------------------------------------------
+
+        notifyCustomerCancelled(
+                updated
+        );
+
+        log.info(
+                "Work order cancelled successfully: workOrderId={}, {} -> {}",
+                workOrderId,
+                currentStatus,
+                WorkOrderStatus.CANCELLED
+        );
+
+        return mapper.mapToResponse(
+                updated
+        );
+    }
+
+
+    // =========================================================
+    // DISPATCHER - WORK ORDER CANCELLED
+    // =========================================================
+
+    private void notifyDispatcherCancelled(
+            WorkOrder workOrder) {
+
+        User dispatcher =
+                workOrder.getAssignedBy();
+
+        if (dispatcher == null) {
+
+            log.warn(
+                    "Cannot notify dispatcher: dispatcher is null, workOrderId={}",
+                    workOrder.getId()
+            );
+
+            return;
+        }
+
+        notificationService.createNotification(
+                dispatcher,
+                workOrder,
+                "Work Order Cancelled",
+                "Technician has cancelled work order #"
+                        + workOrder.getId()
+                        + ".",
+                "WORK_ORDER_CANCELLED"
+        );
+    }
+
+
+    // =========================================================
+    // CUSTOMER - WORK ORDER CANCELLED
+    // =========================================================
+
+    private void notifyCustomerCancelled(
+            WorkOrder workOrder) {
+
+        Customer customer =
+                workOrder.getCustomer();
+
+        if (customer == null
+                || customer.getUser() == null) {
+
+            log.warn(
+                    "Cannot notify customer: customer/user missing, workOrderId={}",
+                    workOrder.getId()
+            );
+
+            return;
+        }
+
+        notificationService.createNotification(
+                customer.getUser(),
+                workOrder,
+                "Work Order Cancelled",
+                "Your work order #"
+                        + workOrder.getId()
+                        + " has been cancelled.",
+                "WORK_ORDER_CANCELLED"
+        );
     }
 }

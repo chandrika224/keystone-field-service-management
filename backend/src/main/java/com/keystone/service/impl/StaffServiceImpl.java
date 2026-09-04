@@ -73,6 +73,17 @@ public class StaffServiceImpl implements StaffService {
 
 	    return response;
 	}
+	
+	@Override
+	public List<StaffDetailsResponse> getAllDispatchers() {
+
+	    List<User> users =
+	            userRepository.findByRole(Role.DISPATCHER);
+
+	    return users.stream()
+	            .map(staffDetailsMapper::mapToStaffDetailsResponse)
+	            .toList();
+	}
 
 	@Override
 	public StaffDetailsResponse updateStaff(Long id, UpdateStaffRequest request) {
@@ -140,6 +151,8 @@ public class StaffServiceImpl implements StaffService {
 
 	    return "Staff deleted successfully";
 	}
+	
+	
 
 
 

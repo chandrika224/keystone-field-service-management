@@ -13,18 +13,47 @@ import com.keystone.enums.WorkOrderStatus;
 public interface WorkOrderRepository
         extends JpaRepository<WorkOrder, Long> {
 
+    // =========================================================
+    // FIND BY STATUS
+    // =========================================================
+
     List<WorkOrder> findByStatus(WorkOrderStatus status);
+
+
+    // =========================================================
+    // FIND BY PRIORITY
+    // =========================================================
 
     List<WorkOrder> findByPriority(Priority priority);
 
-    List<WorkOrder> findByCustomerCustomerId(Long customerId);
 
-    List<WorkOrder> findByTechnicianId(Long technicianId);
+    // =========================================================
+    // CUSTOMER WORK ORDERS
+    // =========================================================
 
-    List<WorkOrder> findByTechnicianIdAndStatus(
+    List<WorkOrder> findByCustomer_CustomerId(Long customerId);
+
+
+    // =========================================================
+    // TECHNICIAN WORK ORDERS
+    // =========================================================
+
+    List<WorkOrder> findByTechnician_Id(Long technicianId);
+
+
+    // =========================================================
+    // TECHNICIAN + STATUS
+    // =========================================================
+
+    List<WorkOrder> findByTechnician_IdAndStatus(
             Long technicianId,
             WorkOrderStatus status
     );
+
+
+    // =========================================================
+    // SLA
+    // =========================================================
 
     long countBySlaBreachedTrue();
 

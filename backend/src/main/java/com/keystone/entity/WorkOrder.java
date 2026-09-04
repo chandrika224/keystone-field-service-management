@@ -6,15 +6,41 @@ import java.time.LocalDateTime;
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "work_orders")
+@Data
+@NoArgsConstructor
 public class WorkOrder {
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+
+    // =========================================================
+    // BASIC INFORMATION
+    // =========================================================
 
     @Column(nullable = false)
     private String title;
@@ -22,168 +48,135 @@ public class WorkOrder {
     @Column(length = 1000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
+
+    // =========================================================
+    // PRIORITY
+    // =========================================================
+
+    @Enumerated(EnumType.STRING) 
+    @Column( name = "priority", nullable = false ) 
     private Priority priority;
+    
+    // =========================================================
+    // STATUS
+    // =========================================================
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private WorkOrderStatus status;
 
+    // =========================================================
+    // SCHEDULING
+    // =========================================================
+
+    @Column(name = "scheduled_date")
     private LocalDate scheduledDate;
 
+
+    // =========================================================
+    // COMPLETION
+    // =========================================================
+
+    @Column(name = "completed_date")
     private LocalDate completedDate;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
+
+    // =========================================================
+    // CUSTOMER
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Customer customer;
-    
-    
-    
 
-    @ManyToOne
+
+    // =========================================================
+    // SITE
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Site site;
+
+
+    // =========================================================
+    // ASSIGNED TECHNICIAN
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "technician_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Technician technician;
-    
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
 
-        this.slaDueDate = createdAt.plusHours(24);
 
-        this.slaBreached = false;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    // =========================================================
+    // ASSIGNED BY
+    // Dispatcher who assigned the technician
+    // =========================================================
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_by")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User assignedBy;
 
-	public LocalDateTime getAssignedAt() {
-		return assignedAt;
-	}
 
-	public void setAssignedAt(LocalDateTime assignedAt) {
-		this.assignedAt = assignedAt;
-	}
+    // =========================================================
+    // TIMELINE
+    // =========================================================
 
-	public LocalDateTime getStartedAt() {
-		return startedAt;
-	}
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-	public void setStartedAt(LocalDateTime startedAt) {
-		this.startedAt = startedAt;
-	}
-
-	public LocalDateTime getCompletedAt() {
-		return completedAt;
-	}
-
-	public void setCompletedAt(LocalDateTime completedAt) {
-		this.completedAt = completedAt;
-	}
-
-	public LocalDateTime getSlaDueDate() {
-		return slaDueDate;
-	}
-
-	public void setSlaDueDate(LocalDateTime slaDueDate) {
-		this.slaDueDate = slaDueDate;
-	}
-
-	public Boolean getSlaBreached() {
-		return slaBreached;
-	}
-
-	public void setSlaBreached(Boolean slaBreached) {
-		this.slaBreached = slaBreached;
-	}
-
-	private LocalDateTime createdAt;
-
+    @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 
+    @Column(name = "started_at")
     private LocalDateTime startedAt;
 
+    @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+
+    // =========================================================
+    // SLA
+    // =========================================================
+
+    @Column(name = "sla_due_date", nullable = false)
     private LocalDateTime slaDueDate;
 
-    private Boolean slaBreached = false;
+    @Column(name = "sla_breached", nullable = false)
+    private boolean slaBreached = false;
 
-    public WorkOrder() {
-    }
 
-    public Long getId() {
-        return id;
-    }
+    // =========================================================
+    // PRE-PERSIST
+    // =========================================================
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @PrePersist
+    protected void prePersist() {
 
-    public String getTitle() {
-        return title;
-    }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+        if (slaDueDate == null) {
+            slaDueDate = createdAt.plusHours(24);
+        }
 
-    public String getDescription() {
-        return description;
+        if (status == null) {
+            status = WorkOrderStatus.NEW;
+        }
     }
+    
+    @Column(name = "service_type", nullable = false)
+    private String serviceType;
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-
-    public WorkOrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(WorkOrderStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getScheduledDate() {
-        return scheduledDate;
-    }
-
-    public void setScheduledDate(LocalDate scheduledDate) {
-        this.scheduledDate = scheduledDate;
-    }
-
-    public LocalDate getCompletedDate() {
-        return completedDate;
-    }
-
-    public void setCompletedDate(LocalDate completedDate) {
-        this.completedDate = completedDate;
-    }
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
-
-    public Technician getTechnician() {
-        return technician;
-    }
-
-    public void setTechnician(Technician technician) {
-        this.technician = technician;
-    }
+    @Column(name = "address", length = 1000)
+    private String address;
 }

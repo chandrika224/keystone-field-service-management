@@ -2,39 +2,28 @@ package com.keystone.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
+@Data
 public class TimeLogRequest {
 
-    @NotNull
-    private Long technicianId;
+    // =========================================================
+    // WORK TIME
+    // =========================================================
 
-    @NotNull
-    @Min(1)
+    @NotNull(message = "Minutes worked is required")
+    @Min(value = 1, message = "Minutes worked must be at least 1 minute")
     private Integer minutesWorked;
 
+
+    // =========================================================
+    // NOTES
+    // =========================================================
+
+    @Size(
+        max = 1000,
+        message = "Notes must not exceed 1000 characters"
+    )
     private String notes;
-
-    public Long getTechnicianId() {
-        return technicianId;
-    }
-
-    public void setTechnicianId(Long technicianId) {
-        this.technicianId = technicianId;
-    }
-
-    public Integer getMinutesWorked() {
-        return minutesWorked;
-    }
-
-    public void setMinutesWorked(Integer minutesWorked) {
-        this.minutesWorked = minutesWorked;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
 }

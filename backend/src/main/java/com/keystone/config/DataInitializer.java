@@ -19,27 +19,83 @@ public class DataInitializer {
 
         return args -> {
 
-            if (!userRepository.existsByEmail("manager@keystone.com")) {
+            // =====================================================
+            // MANAGER
+            // =====================================================
 
-                User manager = new User();
+            User manager =
+                    userRepository
+                            .findByEmail("manager@keystone.com")
+                            .orElse(null);
+
+            // =====================================================
+            // CREATE MANAGER
+            // =====================================================
+
+            if (manager == null) {
+
+                manager = new User();
 
                 manager.setFirstName("Keystone");
                 manager.setLastName("Manager");
-
-                manager.setEmail(
-                        "manager@keystone.com"
-                );
+                manager.setEmail("manager@keystone.com");
 
                 manager.setPassword(
                         passwordEncoder.encode("manager123")
                 );
 
                 manager.setRole(Role.MANAGER);
-
                 manager.setActive(true);
 
                 userRepository.save(manager);
+
+                System.out.println(
+                        "MANAGER CREATED"
+                );
+
+            } else {
+
+                // =================================================
+                // UPDATE EXISTING MANAGER
+                // =================================================
+
+                manager.setFirstName("Keystone");
+                manager.setLastName("Manager");
+
+                manager.setRole(Role.MANAGER);
+                manager.setActive(true);
+
+                // Reset password
+                manager.setPassword(
+                        passwordEncoder.encode("manager123")
+                );
+
+                userRepository.save(manager);
+
+                System.out.println(
+                        "MANAGER UPDATED"
+                );
             }
+
+            // =====================================================
+            // VERIFY PASSWORD
+            // =====================================================
+
+            User savedManager =
+                    userRepository
+                            .findByEmail("manager@keystone.com")
+                            .orElseThrow();
+
+            boolean passwordMatches =
+                    passwordEncoder.matches(
+                            "manager123",
+                            savedManager.getPassword()
+                    );
+
+            System.out.println(
+                    "PASSWORD MATCH RESULT = "
+                    + passwordMatches
+            );
         };
     }
 }

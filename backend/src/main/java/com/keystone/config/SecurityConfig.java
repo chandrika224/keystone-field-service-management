@@ -3,6 +3,7 @@ package com.keystone.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -69,37 +70,51 @@ public class SecurityConfig {
                 ).permitAll()
 
 
-                // ==========================================
-                // CUSTOMER WORK ORDER APIs
-                // ==========================================
+             // ==========================================
+             // CUSTOMER WORK ORDER APIs
+             // ==========================================
 
-                .requestMatchers(
-                    "/api/workorders/my",
-                    "/api/workorders/my/**"
-                ).hasRole("CUSTOMER")
-
-
-                // ==========================================
-                // TECHNICIAN WORK ORDER APIs
-                // ==========================================
-
-                .requestMatchers(
-                    "/api/workorders/technician/**"
-                ).hasRole("TECHNICIAN")
+             .requestMatchers(
+                 "/api/workorders/my",
+                 "/api/workorders/my/**"
+             ).hasRole("CUSTOMER")
 
 
-                // ==========================================
-                // MANAGER / DISPATCHER WORK ORDER APIs
-                // ==========================================
+             // ==========================================
+             // TECHNICIAN WORK ORDER APIs
+             // ==========================================
 
-                .requestMatchers(
-                    "/api/workorders/**"
-                ).hasAnyRole(
-                    "MANAGER",
-                    "DISPATCHER"
-                )
+             // Technician's own work orders
+             .requestMatchers(
+                 "/api/workorders/technician/my",
+                 "/api/workorders/technician/my/**"
+             ).hasRole("TECHNICIAN")
 
+             // Technician status workflow
+             .requestMatchers(
+                 "/api/workorders/*/accept",
+                 "/api/workorders/*/start",
+                 "/api/workorders/*/hold",
+                 "/api/workorders/*/resume",
+                 "/api/workorders/*/complete",
+                 "/api/workorders/*/cancel"
+             ).hasRole("TECHNICIAN")
+             
+             .requestMatchers(HttpMethod.GET, "/api/workorders/{workOrderId}")
+             .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
+             
 
+             // ==========================================
+             // MANAGER / DISPATCHER WORK ORDER APIs
+             // ==========================================
+
+             .requestMatchers(
+                 "/api/workorders/**"
+             ).hasAnyRole(
+                 "MANAGER",
+                 "DISPATCHER"
+             )
+             
                 // ==========================================
                 // CUSTOMER APIs
                 // ==========================================
@@ -137,16 +152,75 @@ public class SecurityConfig {
 
 
                 // ==========================================
-                // TECHNICIANS
+                // SITE APIs
                 // ==========================================
 
                 .requestMatchers(
-                    "/api/technicians/**"
+                    "/api/sites/**"
+                ).hasAnyRole(
+                    "CUSTOMER",
+                    "MANAGER",
+                    "DISPATCHER"
+                )
+
+
+                // ==========================================
+                // TECHNICIANS
+                // ==========================================
+
+                // ------------------------------------------
+                // TECHNICIAN SELF PROFILE
+                // ------------------------------------------
+
+                .requestMatchers(
+                    "/api/technicians/me"
+                ).hasRole("TECHNICIAN")
+
+
+                // ------------------------------------------
+                // TECHNICIAN SELF AVAILABILITY
+                // ------------------------------------------
+
+                .requestMatchers(
+                    "/api/technicians/me/availability"
+                ).hasRole("TECHNICIAN")
+
+
+                // ------------------------------------------
+                // VIEW ALL TECHNICIANS
+                // ------------------------------------------
+
+                .requestMatchers(
+                    "/api/technicians"
                 ).hasAnyRole(
                     "MANAGER",
                     "DISPATCHER"
                 )
 
+
+                // ------------------------------------------
+                // VIEW AVAILABLE TECHNICIANS
+                // ------------------------------------------
+
+                .requestMatchers(
+                    "/api/technicians/available"
+                ).hasAnyRole(
+                    "MANAGER",
+                    "DISPATCHER"
+                )
+
+
+                // ------------------------------------------
+                // MANAGER TECHNICIAN MANAGEMENT
+                // ------------------------------------------
+
+             // View all technicians
+                .requestMatchers(
+                    "/api/technicians"
+                ).hasAnyRole(
+                    "MANAGER",
+                    "DISPATCHER"
+                )
 
                 // ==========================================
                 // EVERYTHING ELSE

@@ -1,3 +1,4 @@
+
 package com.keystone.dto;
 
 import java.time.LocalDate;
@@ -6,111 +7,106 @@ import java.time.LocalDateTime;
 import com.keystone.enums.Priority;
 import com.keystone.enums.WorkOrderStatus;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
 public class WorkOrderResponse {
 
+    // =========================================================
+    // BASIC INFORMATION
+    // =========================================================
+
     private Long id;
+
     private String title;
+
     private String description;
+
+
+    // =========================================================
+    // PRIORITY & STATUS
+    // =========================================================
+
     private Priority priority;
+
     private WorkOrderStatus status;
+
+
+    // =========================================================
+    // SCHEDULING
+    // =========================================================
+
     private LocalDate scheduledDate;
+
+
+    // =========================================================
+    // COMPLETION
+    // =========================================================
+
     private LocalDate completedDate;
-    private LocalDateTime slaDueDate;
-    
 
-    public LocalDateTime getSlaDueDate() {
-		return slaDueDate;
-	}
+    private LocalDateTime completedAt;
 
-	public void setSlaDueDate(LocalDateTime slaDueDate) {
-		this.slaDueDate = slaDueDate;
-	}
 
-	public Boolean getSlaBreached() {
-		return slaBreached;
-	}
+    // =========================================================
+    // SITE
+    // =========================================================
 
-	public void setSlaBreached(Boolean slaBreached) {
-		this.slaBreached = slaBreached;
-	}
+    private Long siteId;
 
-	private Boolean slaBreached;
+    private String address;
+
+
+    // =========================================================
+    // SERVICE
+    // =========================================================
+
+    private String serviceType;
+
+
+    // =========================================================
+    // CUSTOMER
+    // =========================================================
+
+    private Long customerId;
 
     private String customerName;
+
+
+    // =========================================================
+    // TECHNICIAN
+    // =========================================================
+
+    private Long technicianId;
+
     private String technicianName;
 
-    public WorkOrderResponse() {
-    }
 
-    public Long getId() {
-        return id;
-    }
+    // =========================================================
+    // ASSIGNMENT
+    // =========================================================
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private Long assignedById;
 
-    public String getTitle() {
-        return title;
-    }
+    private LocalDateTime assignedAt;
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
 
-    public String getDescription() {
-        return description;
-    }
+    // =========================================================
+    // TIMELINE
+    // =========================================================
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    private LocalDateTime createdAt;
 
-    public Priority getPriority() {
-        return priority;
-    }
+    private LocalDateTime startedAt;
 
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
 
-    public WorkOrderStatus getStatus() {
-        return status;
-    }
+    // =========================================================
+    // SLA
+    // =========================================================
 
-    public void setStatus(WorkOrderStatus status) {
-        this.status = status;
-    }
+    private LocalDateTime slaDueDate;
 
-    public LocalDate getScheduledDate() {
-        return scheduledDate;
-    }
-
-    public void setScheduledDate(LocalDate scheduledDate) {
-        this.scheduledDate = scheduledDate;
-    }
-
-    public LocalDate getCompletedDate() {
-        return completedDate;
-    }
-
-    public void setCompletedDate(LocalDate completedDate) {
-        this.completedDate = completedDate;
-    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public String getTechnicianName() {
-        return technicianName;
-    }
-
-    public void setTechnicianName(String technicianName) {
-        this.technicianName = technicianName;
-    }
+    private Boolean slaBreached;
 }

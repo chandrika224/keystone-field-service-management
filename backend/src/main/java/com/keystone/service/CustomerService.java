@@ -5,19 +5,62 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.keystone.entity.Customer;
+import com.keystone.dto.CustomerRequest;
+import com.keystone.dto.CustomerResponse;
 
 public interface CustomerService {
 
-    Customer saveCustomer(Customer customer);
+    // =========================================================
+    // CREATE CUSTOMER
+    // =========================================================
 
-    Page<Customer> getAllCustomers(Pageable pageable);
+    CustomerResponse saveCustomer(
+            CustomerRequest request
+    );
 
-    Customer getCustomerById(Long id);
 
-    Customer updateCustomer(Long id, Customer customer);
-    
-    List<Customer> searchCustomers(String customerName);
+    // =========================================================
+    // GET ALL CUSTOMERS
+    // =========================================================
 
-    void deleteCustomer(Long id);
+    Page<CustomerResponse> getAllCustomers(
+            Pageable pageable
+    );
+
+
+    // =========================================================
+    // GET CUSTOMER BY ID
+    // =========================================================
+
+    CustomerResponse getCustomerById(
+            Long customerId
+    );
+
+
+    // =========================================================
+    // UPDATE CUSTOMER
+    // =========================================================
+
+    CustomerResponse updateCustomer(
+            Long customerId,
+            CustomerRequest request
+    );
+
+
+    // =========================================================
+    // SEARCH CUSTOMERS
+    // =========================================================
+
+    List<CustomerResponse> searchCustomers(
+            String customerName
+    );
+
+
+    // =========================================================
+    // DELETE CUSTOMER
+    // =========================================================
+
+    void deleteCustomer(
+            Long customerId
+    );
 }

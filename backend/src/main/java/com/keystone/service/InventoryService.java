@@ -7,13 +7,18 @@ import com.keystone.dto.InventoryResponse;
 
 public interface InventoryService {
 
-    InventoryResponse addInventory(InventoryRequest request);
+	 InventoryResponse createInventory(
+	            InventoryRequest request);
 
-    List<InventoryResponse> getAllInventory();
+	    List<InventoryResponse> getAllInventory();
 
-    InventoryResponse getInventoryById(Long inventoryId);
+	    InventoryResponse getInventoryById(
+	            Long inventoryId);
 
-    InventoryResponse updateInventory(Long inventoryId, InventoryRequest request);
+	    InventoryResponse updateInventory(
+	            Long inventoryId,
+	            InventoryRequest request);
 
-    void deleteInventory(Long inventoryId);
+	    void deleteInventory(
+	            Long inventoryId);
 }

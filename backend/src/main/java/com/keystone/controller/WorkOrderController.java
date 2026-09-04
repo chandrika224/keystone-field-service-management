@@ -1,8 +1,9 @@
 package com.keystone.controller;
 
+
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,10 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.keystone.dto.ChangeStatusRequest;
 import com.keystone.dto.CustomerWorkOrderRequest;
-import com.keystone.dto.PartUsageRequest;
-import com.keystone.dto.PartUsageResponse;
-import com.keystone.dto.TimeLogRequest;
-import com.keystone.dto.TimeLogResponse;
+import com.keystone.dto.CustomerWorkOrderUpdateRequest;
 import com.keystone.dto.WorkOrderRequest;
 import com.keystone.dto.WorkOrderResponse;
 import com.keystone.dto.WorkOrderStatusHistoryResponse;
@@ -30,329 +28,422 @@ import com.keystone.enums.WorkOrderStatus;
 import com.keystone.service.WorkOrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/workorders")
-@Tag(
-    name = "Work Order",
-    description = "Work Order Management APIs"
-)
+@RequiredArgsConstructor
 @Slf4j
 public class WorkOrderController {
 
-    @Autowired
-    private WorkOrderService workOrderService;
+    private final WorkOrderService workOrderService;
 
 
-    // ============================================================
-    // CREATE WORK ORDER
-    // ============================================================
+    // =========================================================
+    // WORK ORDER
+    // =========================================================
 
-    @Operation(summary = "Create Work Order")
+    /**
+     * Create a work order.
+     *
+     * Used by dispatcher/admin.
+     */
     @PostMapping
-    public WorkOrderResponse createWorkOrder(
+    public ResponseEntity<WorkOrderResponse> createWorkOrder(
+            Authentication authentication,
             @Valid @RequestBody WorkOrderRequest request) {
 
-        return workOrderService.createWorkOrder(request);
+        String dispatcherEmail = authentication.getName();
+
+        log.info(
+                "Received request to create work order by dispatcherEmail={}",
+                dispatcherEmail
+        );
+
+        WorkOrderResponse response =
+                workOrderService.createWorkOrder(dispatcherEmail, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
 
-    // ============================================================
-    // GET ALL WORK ORDERS
-    // ============================================================
+    /**
+     * Get all work orders.
+     */
     @GetMapping
-    public List<WorkOrderResponse> getAllWorkOrders() {
+    public ResponseEntity<List<WorkOrderResponse>> getAllWorkOrders() {
 
-        log.info("========== GET ALL WORK ORDERS CALLED ==========");
-
-        List<WorkOrderResponse> workOrders =
-                workOrderService.getAllWorkOrders();
-
-        log.info("Work orders returned: " + workOrders.size());
-
-        return workOrders;
-    }
-
-    // ============================================================
-    // GET WORK ORDER BY ID
-    // ============================================================
-
-    @Operation(summary = "Get Work Order By ID")
-    @GetMapping("/{id}")
-    public WorkOrderResponse getWorkOrderById(
-            @PathVariable Long id) {
-
-        return workOrderService.getWorkOrderById(id);
-    }
-
-
-    // ============================================================
-    // UPDATE WORK ORDER
-    // ============================================================
-
-    @Operation(summary = "Update Work Order")
-    @PutMapping("/{id}")
-    public WorkOrderResponse updateWorkOrder(
-            @PathVariable Long id,
-            @Valid @RequestBody WorkOrderRequest request) {
-
-        return workOrderService.updateWorkOrder(
-                id,
-                request
+        return ResponseEntity.ok(
+                workOrderService.getAllWorkOrders()
         );
     }
 
 
-    // ============================================================
-    // CHANGE STATUS
-    // ============================================================
+    /**
+     * Get work order by ID.
+     */
+    @GetMapping("/{workOrderId}")
+    public ResponseEntity<WorkOrderResponse> getWorkOrderById(
+            @PathVariable Long workOrderId) {
 
-    @PatchMapping("/{id}/status")
+        return ResponseEntity.ok(
+                workOrderService.getWorkOrderById(workOrderId)
+        );
+    }
+
+
+    /**
+     * Update work order.
+     */
+    @PutMapping("/{workOrderId}")
+    public ResponseEntity<WorkOrderResponse> updateWorkOrder(
+            @PathVariable Long workOrderId,
+            @Valid @RequestBody WorkOrderRequest request) {
+
+        return ResponseEntity.ok(
+                workOrderService.updateWorkOrder(
+                        workOrderId,
+                        request
+                )
+        );
+    }
+
+    @Operation(summary = "Assign a technician to a work order (dispatcher only)")
+    @PatchMapping("/{workOrderId}/assign")
+    public ResponseEntity<WorkOrderResponse> assignTechnician(
+            Authentication authentication,
+            @PathVariable Long workOrderId,
+            @RequestParam Long technicianId) {
+
+        String dispatcherEmail = authentication.getName();
+
+        log.info(
+                "Received request to assign technicianId={} to workOrderId={} by dispatcherEmail={}",
+                technicianId,
+                workOrderId,
+                dispatcherEmail
+        );
+
+        WorkOrderResponse response = workOrderService.assignTechnician(
+                dispatcherEmail,
+                workOrderId,
+                technicianId
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Delete work order.
+     */
+    @DeleteMapping("/{workOrderId}")
+    public ResponseEntity<Void> deleteWorkOrder(
+            @PathVariable Long workOrderId) {
+
+        workOrderService.deleteWorkOrder(workOrderId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // =========================================================
+    // CUSTOMER
+    // =========================================================
+
+    /**
+     * Customer creates their own work order.
+     */
+    @PostMapping("/my")
+    public ResponseEntity<WorkOrderResponse> createCustomerWorkOrder(
+            @RequestParam String email,
+            @Valid @RequestBody CustomerWorkOrderRequest request) {
+
+        WorkOrderResponse response =
+                workOrderService.createCustomerWorkOrder(
+                        email,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+
+    /**
+     * Get logged-in customer's work orders.
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<WorkOrderResponse>> getMyWorkOrders(
+            @RequestParam String email) {
+
+        return ResponseEntity.ok(
+                workOrderService.getMyWorkOrders(email)
+        );
+    }
+
+
+    /**
+     * Customer updates their own work order.
+     */
+    @PutMapping("/my/{workOrderId}")
+    public ResponseEntity<WorkOrderResponse> updateMyWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId,
+            @Valid @RequestBody CustomerWorkOrderRequest request) {
+
+        return ResponseEntity.ok(
+            workOrderService.updateMyWorkOrder(
+                email,
+                workOrderId,
+                request
+            )
+        );
+    }
+
+
+    /**
+     * Get work orders by customer ID.
+     */
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<WorkOrderResponse>> getByCustomer(
+            @PathVariable Long customerId) {
+
+        return ResponseEntity.ok(
+                workOrderService.getByCustomer(customerId)
+        );
+    }
+
+
+    // =========================================================
+    // DISPATCHER
+    // =========================================================
+
+    /**
+     * Get work orders by status.
+     *
+     * Example:
+     * GET /api/workorders/status/ASSIGNED
+     */
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<WorkOrderResponse>> getWorkOrdersByStatus(
+            @PathVariable WorkOrderStatus status) {
+
+        return ResponseEntity.ok(
+                workOrderService.getWorkOrdersByStatus(status)
+        );
+    }
+
+
+    /**
+     * Get work orders by priority.
+     *
+     * Example:
+     * GET /api/workorders/priority/HIGH
+     */
+    @GetMapping("/priority/{priority}")
+    public ResponseEntity<List<WorkOrderResponse>> getWorkOrdersByPriority(
+            @PathVariable Priority priority) {
+
+        return ResponseEntity.ok(
+                workOrderService.getWorkOrdersByPriority(priority)
+        );
+    }
+
+
+    /**
+     * Get work orders assigned to a technician.
+     */
+    @GetMapping("/technician/{technicianId}")
+    public ResponseEntity<List<WorkOrderResponse>> getByTechnician(
+            @PathVariable Long technicianId) {
+
+        return ResponseEntity.ok(
+                workOrderService.getByTechnician(technicianId)
+        );
+    }
+
+
+    // =========================================================
+    // STATUS
+    // =========================================================
+
+    /**
+     * Change work order status.
+     *
+     * Example:
+     * PUT /api/workorders/10/status
+     */
+    @PutMapping("/{workOrderId}/status")
     public ResponseEntity<WorkOrderResponse> changeStatus(
-            @PathVariable Long id,
+            @PathVariable Long workOrderId,
             @Valid @RequestBody ChangeStatusRequest request) {
 
         return ResponseEntity.ok(
                 workOrderService.changeStatus(
-                        id,
+                        workOrderId,
                         request
                 )
         );
     }
 
 
-    // ============================================================
-    // DELETE WORK ORDER
-    // ============================================================
+    // =========================================================
+    // TECHNICIAN
+    // =========================================================
 
-    @Operation(summary = "Delete Work Order")
-    @DeleteMapping("/{id}")
-    public String deleteWorkOrder(
-            @PathVariable Long id) {
-
-        workOrderService.deleteWorkOrder(id);
-
-        return "Work Order deleted successfully";
-    }
-
-
-    // ============================================================
-    // GET WORK ORDERS BY STATUS
-    // ============================================================
-
-    @Operation(summary = "Get Work Orders By Status")
-    @GetMapping("/status")
-    public List<WorkOrderResponse> getWorkOrdersByStatus(
-            @RequestParam WorkOrderStatus status) {
-
-        return workOrderService.getWorkOrdersByStatus(
-                status
-        );
-    }
-
-
-    // ============================================================
-    // GET STATUS HISTORY
-    // ============================================================
-
-    @GetMapping("/{id}/history")
-    public ResponseEntity<
-            List<WorkOrderStatusHistoryResponse>>
-    getStatusHistory(
-            @PathVariable Long id) {
+    /**
+     * Get logged-in technician's work orders.
+     */
+    @GetMapping("/technician/my")
+    public ResponseEntity<List<WorkOrderResponse>>
+    getMyTechnicianWorkOrders(
+            @RequestParam String email) {
 
         return ResponseEntity.ok(
-                workOrderService.getStatusHistory(id)
+                workOrderService.getMyTechnicianWorkOrders(email)
         );
     }
 
 
-    // ============================================================
-    // GET WORK ORDERS BY PRIORITY
-    // ============================================================
-
-    @Operation(summary = "Get Work Orders By Priority")
-    @GetMapping("/priority")
-    public List<WorkOrderResponse> getWorkOrdersByPriority(
-            @RequestParam Priority priority) {
-
-        return workOrderService.getWorkOrdersByPriority(
-                priority
-        );
-    }
-
-
-    // ============================================================
-    // GET WORK ORDERS BY CUSTOMER
-    // Existing API
-    // ============================================================
-
-    @Operation(summary = "Get Work Orders By Customer")
-    @GetMapping("/customer/{customerId}")
-    public List<WorkOrderResponse> getByCustomer(
-            @PathVariable Long customerId) {
-
-        return workOrderService.getByCustomer(
-                customerId
-        );
-    }
-
-
-    // ============================================================
-    // ADD TIME LOG
-    // ============================================================
-
-    @PostMapping("/{id}/time")
-    public ResponseEntity<TimeLogResponse> addTimeLog(
-            @PathVariable Long id,
-            @Valid @RequestBody TimeLogRequest request) {
+    /**
+     * Get pending assignments for technician.
+     */
+    @GetMapping("/technician/my/pending")
+    public ResponseEntity<List<WorkOrderResponse>>
+    getPendingTechnicianAssignments(
+            @RequestParam String email) {
 
         return ResponseEntity.ok(
-                workOrderService.addTimeLog(
-                        id,
-                        request
-                )
+                workOrderService.getPendingTechnicianAssignments(email)
         );
     }
 
 
-    // ============================================================
-    // ADD PART USAGE
-    // ============================================================
-
-    @PostMapping("/{id}/parts")
-    public ResponseEntity<PartUsageResponse> addPartUsage(
-            @PathVariable Long id,
-            @Valid @RequestBody PartUsageRequest request) {
+    /**
+     * Technician accepts work order.
+     */
+    @PutMapping("/{workOrderId}/accept")
+    public ResponseEntity<WorkOrderResponse> acceptWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
 
         return ResponseEntity.ok(
-                workOrderService.addPartUsage(
-                        id,
-                        request
-                )
-        );
-    }
-
-
-    // ============================================================
-    // GET PART USAGE
-    // ============================================================
-
-    @GetMapping("/{id}/parts")
-    public ResponseEntity<
-            List<PartUsageResponse>>
-    getPartUsage(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                workOrderService.getPartUsage(id)
-        );
-    }
-
-
-    // ============================================================
-    // GET TIME LOGS
-    // ============================================================
-
-    @GetMapping("/{id}/time")
-    public ResponseEntity<
-            List<TimeLogResponse>>
-    getTimeLogs(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                workOrderService.getTimeLogs(id)
-        );
-    }
-
-
-    // ============================================================
-    // GET WORK ORDERS BY TECHNICIAN
-    // ============================================================
-
-    @Operation(summary = "Get Work Orders By Technician")
-    @GetMapping("/technician/{technicianId}")
-    public List<WorkOrderResponse> getByTechnician(
-            @PathVariable Long technicianId) {
-
-        return workOrderService.getByTechnician(
-                technicianId
-        );
-    }
-
-
-    // ============================================================
-    // CUSTOMER - CREATE MY WORK ORDER
-    // ============================================================
-
-    @Operation(
-        summary = "Create Work Order for Current Customer"
-    )
-    @PostMapping("/my")
-    public ResponseEntity<WorkOrderResponse>
-    createMyWorkOrder(
-            @Valid
-            @RequestBody CustomerWorkOrderRequest request,
-            Authentication authentication) {
-
-        String email =
-                authentication.getName();
-
-        return ResponseEntity.ok(
-                workOrderService.createCustomerWorkOrder(
+                workOrderService.acceptWorkOrder(
                         email,
-                        request
+                        workOrderId
                 )
         );
     }
 
 
-    // ============================================================
-    // CUSTOMER - GET MY WORK ORDERS
-    // ============================================================
-
-    @Operation(
-        summary = "Get Current Customer Work Orders"
-    )
-    @GetMapping("/my")
-    public ResponseEntity<
-            List<WorkOrderResponse>>
-    getMyWorkOrders(
-            Authentication authentication) {
-
-        String email =
-                authentication.getName();
+    /**
+     * Technician starts work order.
+     */
+    @PutMapping("/{workOrderId}/start")
+    public ResponseEntity<WorkOrderResponse> startWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
 
         return ResponseEntity.ok(
-                workOrderService.getMyWorkOrders(
-                        email
+                workOrderService.startWorkOrder(
+                        email,
+                        workOrderId
                 )
         );
     }
- // ============================================================
- // CUSTOMER - UPDATE MY WORK ORDER
- // ============================================================
 
- @Operation(
-     summary = "Update Current Customer Work Order"
- )
- @PutMapping("/my/{id}")
- public ResponseEntity<WorkOrderResponse> updateMyWorkOrder(
-         @PathVariable Long id,
-         @Valid @RequestBody CustomerWorkOrderRequest request,
-         Authentication authentication) {
 
-     String email = authentication.getName();
+    /**
+     * Technician puts work order on hold.
+     */
+    @PutMapping("/{workOrderId}/hold")
+    public ResponseEntity<WorkOrderResponse> holdWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
 
-     return ResponseEntity.ok(
-             workOrderService.updateMyWorkOrder(
-                     email,
-                     id,
-                     request
-             )
-     );
- }
+        return ResponseEntity.ok(
+                workOrderService.holdWorkOrder(
+                        email,
+                        workOrderId
+                )
+        );
+    }
+
+
+    /**
+     * Technician resumes work order.
+     */
+    @PutMapping("/{workOrderId}/resume")
+    public ResponseEntity<WorkOrderResponse> resumeWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
+
+        return ResponseEntity.ok(
+                workOrderService.resumeWorkOrder(
+                        email,
+                        workOrderId
+                )
+        );
+    }
+
+
+    /**
+     * Technician completes work order.
+     */
+    @PutMapping("/{workOrderId}/complete")
+    public ResponseEntity<WorkOrderResponse> completeWorkOrder(
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
+
+        return ResponseEntity.ok(
+                workOrderService.completeWorkOrder(
+                        email,
+                        workOrderId
+                )
+        );
+    }
+
+    @PutMapping("/{workOrderId}/cancel")
+    public ResponseEntity<WorkOrderResponse> cancelWorkOrder(
+            Authentication authentication,
+            @RequestParam String email,
+            @PathVariable Long workOrderId) {
+
+        log.info(
+                "CANCEL ENDPOINT HIT: authenticatedUser={}, emailParam={}, workOrderId={}, authorities={}",
+                authentication.getName(),
+                email,
+                workOrderId,
+                authentication.getAuthorities()
+        );
+
+        return ResponseEntity.ok(
+                workOrderService.cancelWorkOrder(
+                        email,
+                        workOrderId
+                )
+        );
+    }
+
+    // =========================================================
+    // STATUS HISTORY
+    // =========================================================
+
+    /**
+     * Get status history for a work order.
+     */
+    @GetMapping("/{workOrderId}/status-history")
+    public ResponseEntity<List<WorkOrderStatusHistoryResponse>>
+    getStatusHistory(
+            @PathVariable Long workOrderId) {
+
+        return ResponseEntity.ok(
+                workOrderService.getStatusHistory(workOrderId)
+        );
+    }
 }

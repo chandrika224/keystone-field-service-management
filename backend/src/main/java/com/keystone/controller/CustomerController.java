@@ -2,82 +2,132 @@ package com.keystone.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.keystone.entity.Customer;
+import com.keystone.dto.CustomerRequest;
+import com.keystone.dto.CustomerResponse;
 import com.keystone.service.CustomerService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/customers")
-@Tag(name = "Customer", description = "Customer Management APIs")
+@RequiredArgsConstructor
+@Tag(name = "Customers", description = "Customer Management APIs")
 public class CustomerController {
 
-    @Autowired
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
-    // Create Customer
-    @Operation(summary = "Create Customer")
+    // ==========================================
+    // CREATE CUSTOMER
+    // POST /api/customers
+    // ==========================================
+    @Operation(summary = "Create a new customer")
     @PostMapping
-    public Customer saveCustomer(@Valid @RequestBody Customer customer) {
-        return customerService.saveCustomer(customer);
+    public ResponseEntity<CustomerResponse> createCustomer(
+            @Valid @RequestBody CustomerRequest request) {
+
+        log.info("Received request to create customer: email={}", request.getEmail());
+
+        CustomerResponse response = customerService.saveCustomer(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
-    // Get All Customers
-    @Operation(summary = "Get All Customers")
+    // ==========================================
+    // GET ALL CUSTOMERS (PAGINATED)
+    // GET /api/customers?page=0&size=20&sort=customerName
+    // ==========================================
+    @Operation(summary = "Get all customers, paginated")
     @GetMapping
-    public Page<Customer> getAllCustomers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "customerName") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+    public ResponseEntity<Page<CustomerResponse>> getAllCustomers(
+            @PageableDefault(size = 20, sort = "customerName") Pageable pageable) {
 
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
+        log.info(
+                "Received request to fetch customers: page={}, size={}",
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+        );
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<CustomerResponse> customers = customerService.getAllCustomers(pageable);
 
-        return customerService.getAllCustomers(pageable);
+        return ResponseEntity.ok(customers);
     }
 
-    // Get Customer By Id
-    @Operation(summary = "Get Customer By ID")
-    @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable Long id) {
-        return customerService.getCustomerById(id);
+    // ==========================================
+    // GET CUSTOMER BY ID
+    // GET /api/customers/{customerId}
+    // ==========================================
+    @Operation(summary = "Get a customer by ID")
+    @GetMapping("/{customerId}")
+    public ResponseEntity<CustomerResponse> getCustomerById(
+            @PathVariable Long customerId) {
+
+        log.info("Received request to fetch customerId={}", customerId);
+
+        CustomerResponse response = customerService.getCustomerById(customerId);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Update Customer
-    @Operation(summary = "Update Customer")
-    @PutMapping("/{id}")
-    public Customer updateCustomer(@PathVariable Long id,
-                                   @Valid @RequestBody Customer customer) {
-        return customerService.updateCustomer(id, customer);
+    // ==========================================
+    // UPDATE CUSTOMER
+    // PUT /api/customers/{customerId}
+    // ==========================================
+    @Operation(summary = "Update an existing customer")
+    @PutMapping("/{customerId}")
+    public ResponseEntity<CustomerResponse> updateCustomer(
+            @PathVariable Long customerId,
+            @Valid @RequestBody CustomerRequest request) {
+
+        log.info("Received request to update customerId={}", customerId);
+
+        CustomerResponse response = customerService.updateCustomer(customerId, request);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Search Customer By Name
-    @Operation(summary = "Search Customer By Name")
+    // ==========================================
+    // SEARCH CUSTOMERS BY NAME
+    // GET /api/customers/search?customerName=acme
+    // ==========================================
+    @Operation(summary = "Search customers by name")
     @GetMapping("/search")
-    public List<Customer> searchCustomers(
+    public ResponseEntity<List<CustomerResponse>> searchCustomers(
             @RequestParam String customerName) {
 
-        return customerService.searchCustomers(customerName);
+        log.info("Received request to search customers: customerName={}", customerName);
+
+        List<CustomerResponse> results = customerService.searchCustomers(customerName);
+
+        return ResponseEntity.ok(results);
     }
 
-    // Delete Customer
-    @Operation(summary = "Delete Customer")
-    @DeleteMapping("/{id}")
-    public String deleteCustomer(@PathVariable Long id) {
-        customerService.deleteCustomer(id);
-        return "Customer deleted successfully";
+    // ==========================================
+    // DELETE CUSTOMER
+    // DELETE /api/customers/{customerId}
+    // ==========================================
+    @Operation(summary = "Delete a customer")
+    @DeleteMapping("/{customerId}")
+    public ResponseEntity<Void> deleteCustomer(
+            @PathVariable Long customerId) {
+
+        log.info("Received request to delete customerId={}", customerId);
+
+        customerService.deleteCustomer(customerId);
+
+        return ResponseEntity.noContent().build();
     }
 }

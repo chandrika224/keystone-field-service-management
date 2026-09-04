@@ -1,32 +1,19 @@
 package com.keystone.dto;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
 public class PartUsageResponse {
 
     private Long id;
+
+    private Long workOrderId;
+
+    private Long inventoryId;
+
     private String partName;
+
     private Integer quantityUsed;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getPartName() {
-        return partName;
-    }
-
-    public void setPartName(String partName) {
-        this.partName = partName;
-    }
-
-    public Integer getQuantityUsed() {
-        return quantityUsed;
-    }
-
-    public void setQuantityUsed(Integer quantityUsed) {
-        this.quantityUsed = quantityUsed;
-    }
 }

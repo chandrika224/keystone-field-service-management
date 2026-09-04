@@ -2,71 +2,91 @@ package com.keystone.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "time_logs")
+@Data
+@NoArgsConstructor
 public class TimeLog {
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+
+    // =========================================================
+    // WORK ORDER
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_order_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private WorkOrder workOrder;
 
-    @ManyToOne
+
+    // =========================================================
+    // TECHNICIAN
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "technician_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Technician technician;
 
+
+    // =========================================================
+    // WORK TIME
+    // =========================================================
+
+    @Column(name = "minutes_worked")
     private Integer minutesWorked;
 
+
+    // =========================================================
+    // NOTES
+    // =========================================================
+
+    @Column(name = "notes")
     private String notes;
 
+
+    // =========================================================
+    // LOGGED TIME
+    // =========================================================
+
+    @Column(name = "logged_at")
     private LocalDateTime loggedAt;
 
-    public Long getId() {
-        return id;
-    }
 
-    public WorkOrder getWorkOrder() {
-        return workOrder;
-    }
+    // =========================================================
+    // PRE-PERSIST
+    // =========================================================
 
-    public void setWorkOrder(WorkOrder workOrder) {
-        this.workOrder = workOrder;
-    }
+    @PrePersist
+    protected void prePersist() {
 
-    public Technician getTechnician() {
-        return technician;
-    }
-
-    public void setTechnician(Technician technician) {
-        this.technician = technician;
-    }
-
-    public Integer getMinutesWorked() {
-        return minutesWorked;
-    }
-
-    public void setMinutesWorked(Integer minutesWorked) {
-        this.minutesWorked = minutesWorked;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public LocalDateTime getLoggedAt() {
-        return loggedAt;
-    }
-
-    public void setLoggedAt(LocalDateTime loggedAt) {
-        this.loggedAt = loggedAt;
+        if (loggedAt == null) {
+            loggedAt = LocalDateTime.now();
+        }
     }
 }

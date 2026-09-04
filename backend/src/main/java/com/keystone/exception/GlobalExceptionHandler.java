@@ -17,59 +17,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	@ExceptionHandler(InvalidCredentialsException.class)
-	public ResponseEntity<Object> handleInvalidCredentials(
-	        InvalidCredentialsException ex) {
 
-	    Map<String, Object> body = new LinkedHashMap<>();
-	    body.put("timestamp", LocalDateTime.now());
-	    body.put("status", HttpStatus.UNAUTHORIZED.value());
-	    body.put("message", ex.getMessage());
+    @ExceptionHandler(KeystoneException.class)
+    public ResponseEntity<ErrorResponse> handleKeystoneException(
+            KeystoneException exception) {
 
-	    return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
-	}
+        var errorCode = exception.getErrorCode();
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Object> handleResourceNotFound(ResourceNotFoundException ex) {
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                errorCode.getHttpStatus().value()
+        );
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<Object> handleDuplicateResource(DuplicateResourceException ex) {
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.CONFLICT.value());
-        body.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
-    }
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
-
-        Map<String, String> errors = new HashMap<>();
-
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage()));
-
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleException(Exception ex) {
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
     }
 }

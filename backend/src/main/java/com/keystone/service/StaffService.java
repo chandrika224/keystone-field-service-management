@@ -34,4 +34,6 @@ public interface StaffService {
     // DELETE
     String deleteStaff(Long id);
 
+	List<StaffDetailsResponse> getAllDispatchers();
+
 }

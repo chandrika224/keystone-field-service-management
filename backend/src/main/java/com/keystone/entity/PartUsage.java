@@ -1,50 +1,60 @@
 package com.keystone.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "part_usage")
+@Data
+@NoArgsConstructor
 public class PartUsage {
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+
+    // =========================================================
+    // WORK ORDER
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_order_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private WorkOrder workOrder;
 
-    @ManyToOne
+
+    // =========================================================
+    // INVENTORY
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inventory_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Inventory inventory;
 
+
+    // =========================================================
+    // QUANTITY USED
+    // =========================================================
+
+    @Column(name = "quantity_used")
     private Integer quantityUsed;
-
-    public Long getId() {
-        return id;
-    }
-
-    public WorkOrder getWorkOrder() {
-        return workOrder;
-    }
-
-    public void setWorkOrder(WorkOrder workOrder) {
-        this.workOrder = workOrder;
-    }
-
-    public Inventory getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(Inventory inventory) {
-        this.inventory = inventory;
-    }
-
-    public Integer getQuantityUsed() {
-        return quantityUsed;
-    }
-
-    public void setQuantityUsed(Integer quantityUsed) {
-        this.quantityUsed = quantityUsed;
-    }
 }

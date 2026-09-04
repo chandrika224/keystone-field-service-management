@@ -1,256 +1,571 @@
 package com.keystone.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.keystone.dto.TechnicianRequest;
 import com.keystone.dto.TechnicianResponse;
 import com.keystone.entity.Technician;
-import com.keystone.exception.DuplicateResourceException;
-import com.keystone.exception.ResourceNotFoundException;
+import com.keystone.entity.User;
+import com.keystone.enums.ErrorCode;
+import com.keystone.enums.Role;
+import com.keystone.exception.KeystoneException;
 import com.keystone.repository.TechnicianRepository;
+import com.keystone.repository.UserRepository;
 import com.keystone.service.TechnicianService;
+import com.keystone.service.impl.helper.TechnicianHelper;
+import com.keystone.service.mapper.TechnicianMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
-public class TechnicianServiceImpl implements TechnicianService {
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class TechnicianServiceImpl
+        implements TechnicianService {
 
-    @Autowired
-    private TechnicianRepository technicianRepository;
+    private final TechnicianRepository technicianRepository;
+
+    private final UserRepository userRepository;
+
+    private final TechnicianHelper helper;
+
+    private final TechnicianMapper mapper;
 
 
-    // ============================================================
-    // CREATE TECHNICIAN
-    // ============================================================
+    // =========================================================
+    // ADD TECHNICIAN
+    // =========================================================
 
     @Override
     public TechnicianResponse addTechnician(
             TechnicianRequest request) {
 
-        if (technicianRepository.existsByEmail(
-                request.getEmail())) {
-
-            throw new DuplicateResourceException(
-                    "Technician email already exists"
-            );
-        }
-
-        Technician technician = new Technician();
-
-        technician.setFirstName(
-                request.getFirstName()
-        );
-
-        technician.setLastName(
-                request.getLastName()
-        );
-
-        technician.setEmail(
+        log.info(
+                "Creating technician: email={}",
                 request.getEmail()
         );
 
-        technician.setPhone(
+
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateFirstName(
+                request.getFirstName()
+        );
+
+        helper.validateLastName(
+                request.getLastName()
+        );
+
+        helper.validateEmail(
+                request.getEmail()
+        );
+
+        helper.validatePhone(
                 request.getPhone()
         );
 
-        technician.setSpecialization(
+        helper.validateSpecialization(
                 request.getSpecialization()
         );
 
-        technician.setStatus(
-                request.getStatus()
+
+        // -----------------------------------------------------
+        // FIND USER
+        // -----------------------------------------------------
+
+        User user = userRepository
+                .findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+
+                    log.warn(
+                            "User not found for technician email={}",
+                            request.getEmail()
+                    );
+
+                    return new KeystoneException(
+                            com.keystone.enums.ErrorCode.USER_NOT_FOUND
+                    );
+                });
+
+
+        // -----------------------------------------------------
+        // VALIDATE USER ROLE
+        // -----------------------------------------------------
+
+        if (user.getRole() != Role.TECHNICIAN) {
+
+            log.warn(
+                    "User is not a technician: email={}, role={}",
+                    request.getEmail(),
+                    user.getRole()
+            );
+
+            throw new KeystoneException(
+                    com.keystone.enums.ErrorCode.TECHNICIAN_ACCESS_DENIED
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // CHECK EXISTING TECHNICIAN PROFILE
+        // -----------------------------------------------------
+
+        helper.validateTechnicianNotExistsForUser(
+                user.getId()
         );
 
-        Technician saved =
-                technicianRepository.save(technician);
 
-        return mapToResponse(saved);
+        // -----------------------------------------------------
+        // UPDATE USER INFORMATION
+        // -----------------------------------------------------
+
+        mapper.updateUser(
+                user,
+                request
+        );
+
+
+        // -----------------------------------------------------
+        // CREATE TECHNICIAN
+        // -----------------------------------------------------
+
+        Technician technician =
+                mapper.mapToEntity(
+                        request,
+                        user
+                );
+
+
+        // -----------------------------------------------------
+        // SAVE USER
+        // -----------------------------------------------------
+
+        userRepository.save(user);
+
+
+        // -----------------------------------------------------
+        // SAVE TECHNICIAN
+        // -----------------------------------------------------
+
+        Technician savedTechnician =
+                technicianRepository.save(
+                        technician
+                );
+
+
+        log.info(
+                "Technician created successfully: technicianId={}",
+                savedTechnician.getId()
+        );
+
+
+        // -----------------------------------------------------
+        // RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(
+                savedTechnician
+        );
     }
 
 
-    // ============================================================
+    // =========================================================
     // GET ALL TECHNICIANS
-    // ============================================================
+    // =========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<TechnicianResponse> getAllTechnicians() {
 
-        return technicianRepository.findAll()
+        log.info(
+                "Fetching all technicians"
+        );
+
+        return technicianRepository
+                .findAll()
                 .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .map(mapper::mapToResponse)
+                .toList();
     }
+    
+	 // =========================================================
+	 // GET AVAILABLE TECHNICIANS
+	 // =========================================================
+	
+	 @Override
+	 @Transactional(readOnly = true)
+	 public List<TechnicianResponse> getAvailableTechnicians() {
+	
+	     log.info(
+	             "Fetching available technicians"
+	     );
+	
+	     return technicianRepository
+	             .findByActiveTrueAndAvailableTrue()
+	             .stream()
+	             .map(mapper::mapToResponse)
+	             .toList();
+	 }
 
 
-    // ============================================================
+    // =========================================================
     // GET TECHNICIAN BY ID
-    // ============================================================
+    // =========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public TechnicianResponse getTechnicianById(
             Long id) {
 
-        Technician technician =
-                technicianRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found with ID : "
-                                        + id
-                        )
-                );
+        log.info(
+                "Fetching technician: technicianId={}",
+                id
+        );
 
-        return mapToResponse(technician);
+        helper.validateTechnicianId(id);
+
+        Technician technician =
+                helper.getTechnicianById(id);
+
+        return mapper.mapToResponse(
+                technician
+        );
     }
 
 
-    // ============================================================
-    // GET CURRENT LOGGED-IN TECHNICIAN
-    // ============================================================
-
-    @Override
-    public TechnicianResponse getMyProfile(
-            String email) {
-
-        Technician technician =
-                technicianRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found with email : "
-                                        + email
-                        )
-                );
-
-        return mapToResponse(technician);
-    }
-
-
-    // ============================================================
+    // =========================================================
     // UPDATE TECHNICIAN
-    // ============================================================
+    // =========================================================
 
     @Override
     public TechnicianResponse updateTechnician(
             Long id,
             TechnicianRequest request) {
 
+        log.info(
+                "Updating technician: technicianId={}",
+                id
+        );
+
+
+        // -----------------------------------------------------
+        // FETCH EXISTING TECHNICIAN
+        // -----------------------------------------------------
+
+        helper.validateTechnicianId(id);
+
         Technician technician =
-                technicianRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found with ID : "
-                                        + id
-                        )
-                );
+                helper.getTechnicianById(id);
 
-        /*
-         * Check whether the new email already belongs
-         * to another technician.
-         */
-        if (!technician.getEmail().equals(
-                request.getEmail())
-                && technicianRepository.existsByEmail(
-                        request.getEmail())) {
+        helper.validateTechnicianCanBeUpdated(
+                technician
+        );
 
-            throw new DuplicateResourceException(
-                    "Technician email already exists"
-            );
-        }
 
-        technician.setFirstName(
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateFirstName(
                 request.getFirstName()
         );
 
-        technician.setLastName(
+        helper.validateLastName(
                 request.getLastName()
         );
 
-        technician.setEmail(
+        helper.validateEmail(
                 request.getEmail()
         );
 
-        technician.setPhone(
+        helper.validatePhone(
                 request.getPhone()
         );
 
-        technician.setSpecialization(
+        helper.validateSpecialization(
                 request.getSpecialization()
         );
 
-        technician.setStatus(
-                request.getStatus()
+
+        // -----------------------------------------------------
+        // GET ASSOCIATED USER
+        // -----------------------------------------------------
+
+        helper.validateUser(
+                technician
         );
 
-        Technician updated =
-                technicianRepository.save(technician);
-
-        return mapToResponse(updated);
-    }
+        User user =
+                technician.getUser();
 
 
-    // ============================================================
-    // DELETE TECHNICIAN
-    // ============================================================
+        // -----------------------------------------------------
+        // CHECK EMAIL CHANGE
+        // -----------------------------------------------------
 
-    @Override
-    public void deleteTechnician(Long id) {
+        if (!user.getEmail()
+                .equalsIgnoreCase(request.getEmail())) {
 
-        Technician technician =
-                technicianRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Technician not found with ID : "
-                                        + id
-                        )
+            userRepository
+                    .findByEmail(request.getEmail())
+                    .ifPresent(existingUser -> {
+
+                        if (!existingUser
+                                .getId()
+                                .equals(user.getId())) {
+
+                            throw new KeystoneException(
+                                    com.keystone.enums.ErrorCode
+                                            .DUPLICATE_CUSTOMER_EMAIL
+                            );
+                        }
+                    });
+        }
+
+
+        // -----------------------------------------------------
+        // UPDATE USER
+        // -----------------------------------------------------
+
+        mapper.updateUser(
+                user,
+                request
+        );
+
+
+        // -----------------------------------------------------
+        // UPDATE TECHNICIAN
+        // -----------------------------------------------------
+
+        mapper.updateEntity(
+                technician,
+                request
+        );
+
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        userRepository.save(user);
+
+        Technician updatedTechnician =
+                technicianRepository.save(
+                        technician
                 );
 
-        technicianRepository.delete(technician);
+
+        log.info(
+                "Technician updated successfully: technicianId={}",
+                id
+        );
+
+
+        // -----------------------------------------------------
+        // RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(
+                updatedTechnician
+        );
     }
 
 
-    // ============================================================
-    // ENTITY → RESPONSE
-    // ============================================================
+    // =========================================================
+    // DELETE TECHNICIAN
+    // =========================================================
 
-    private TechnicianResponse mapToResponse(
-            Technician technician) {
+    @Override
+    public void deleteTechnician(
+            Long id) {
 
-        TechnicianResponse response =
-                new TechnicianResponse();
-
-        response.setId(
-                technician.getId()
+        log.info(
+                "Deleting technician: technicianId={}",
+                id
         );
 
-        response.setFirstName(
-                technician.getFirstName()
+
+        // -----------------------------------------------------
+        // FETCH TECHNICIAN
+        // -----------------------------------------------------
+
+        helper.validateTechnicianId(id);
+
+        Technician technician =
+                helper.getTechnicianById(id);
+
+
+        // -----------------------------------------------------
+        // VALIDATE DELETE
+        // -----------------------------------------------------
+
+        helper.validateTechnicianCanBeDeleted(
+                technician
         );
 
-        response.setLastName(
-                technician.getLastName()
+
+        // -----------------------------------------------------
+        // DELETE TECHNICIAN
+        // -----------------------------------------------------
+
+        technicianRepository.delete(
+                technician
         );
 
-        response.setEmail(
-                technician.getEmail()
-        );
 
-        response.setPhone(
-                technician.getPhone()
+        log.info(
+                "Technician deleted successfully: technicianId={}",
+                id
         );
-
-        response.setSpecialization(
-                technician.getSpecialization()
-        );
-
-        response.setStatus(
-                technician.getStatus()
-        );
-
-        response.setRole(
-                technician.getRole()
-        );
-
-        return response;
     }
+
+
+    // =========================================================
+    // GET MY PROFILE
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public TechnicianResponse getMyProfile(
+            String email) {
+
+        log.info(
+                "Fetching technician profile: email={}",
+                email
+        );
+
+
+        // -----------------------------------------------------
+        // GET TECHNICIAN
+        // -----------------------------------------------------
+
+        Technician technician =
+                helper.getTechnicianByEmail(
+                        email
+                );
+
+
+        // -----------------------------------------------------
+        // VALIDATE TECHNICIAN
+        // -----------------------------------------------------
+
+        helper.validateTechnician(
+                technician
+        );
+
+
+        // -----------------------------------------------------
+        // RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(
+                technician
+        );
+    }
+    
+ // =========================================================
+ // UPDATE MY AVAILABILITY
+ // =========================================================
+
+ @Override
+ public TechnicianResponse updateMyAvailability(
+         String email,
+         Boolean available) {
+
+     log.info(
+             "Updating technician availability: email={}, available={}",
+             email,
+             available
+     );
+
+
+     // -----------------------------------------------------
+     // VALIDATE REQUEST
+     // -----------------------------------------------------
+
+     if (available == null) {
+
+         throw new KeystoneException(
+                 ErrorCode.INVALID_REQUEST
+         );
+     }
+
+
+     // -----------------------------------------------------
+     // GET TECHNICIAN
+     // -----------------------------------------------------
+
+     Technician technician =
+             helper.getTechnicianByEmail(
+                     email
+             );
+
+
+     // -----------------------------------------------------
+     // VALIDATE TECHNICIAN
+     // -----------------------------------------------------
+
+     helper.validateTechnician(
+             technician
+     );
+
+
+     // -----------------------------------------------------
+     // CHECK ACTIVE ACCOUNT
+     // -----------------------------------------------------
+
+     if (!technician.isActive()) {
+
+         log.warn(
+                 "Inactive technician attempted to change availability: email={}",
+                 email
+         );
+
+         throw new KeystoneException(
+                 com.keystone.enums.ErrorCode.TECHNICIAN_ACCESS_DENIED
+         );
+     }
+
+
+     // -----------------------------------------------------
+     // UPDATE AVAILABILITY
+     // -----------------------------------------------------
+
+     technician.setAvailable(
+             available
+     );
+
+
+     // -----------------------------------------------------
+     // SAVE
+     // -----------------------------------------------------
+
+     Technician updatedTechnician =
+             technicianRepository.save(
+                     technician
+             );
+
+
+     log.info(
+             "Technician availability updated successfully: email={}, available={}",
+             email,
+             available
+     );
+
+
+     // -----------------------------------------------------
+     // RESPONSE
+     // -----------------------------------------------------
+
+     return mapper.mapToResponse(
+             updatedTechnician
+     );
+ }
 }

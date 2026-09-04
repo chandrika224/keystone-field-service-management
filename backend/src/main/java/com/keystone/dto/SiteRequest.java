@@ -10,7 +10,7 @@ public class SiteRequest {
     @NotBlank(message = "Site name is required")
     private String name;
 
-    @NotBlank(message = "Address is required")
+    @NotBlank(message = "Site address is required")
     private String address;
 
     @NotNull(message = "Customer ID is required")

@@ -2,81 +2,315 @@ package com.keystone.service.impl;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.keystone.dto.CustomerRequest;
+import com.keystone.dto.CustomerResponse;
 import com.keystone.entity.Customer;
-import com.keystone.exception.DuplicateResourceException;
-import com.keystone.exception.ResourceNotFoundException;
-import com.keystone.repository.CustomerRepository;
 import com.keystone.service.CustomerService;
+import com.keystone.service.impl.helper.CustomerHelper;
+import com.keystone.service.mapper.CustomerMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class CustomerServiceImpl implements CustomerService {
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final CustomerHelper helper;
+    private final CustomerMapper mapper;
+
+
+    // =========================================================
+    // CREATE CUSTOMER
+    // =========================================================
 
     @Override
-    public Customer saveCustomer(Customer customer) {
+    public CustomerResponse saveCustomer(
+            CustomerRequest request) {
 
-        if (customerRepository.existsByEmail(customer.getEmail())) {
-        	throw new DuplicateResourceException("Customer email already exists");
-        }
+        log.info(
+                "Creating customer: email={}",
+                request.getEmail()
+        );
 
-        return customerRepository.save(customer);
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateCustomerName(
+                request.getCustomerName()
+        );
+
+        helper.validateEmail(
+                request.getEmail()
+        );
+
+        helper.validatePhone(
+                request.getPhone()
+        );
+
+        helper.validateAddress(
+                request.getAddress()
+        );
+
+        helper.validateEmailNotDuplicate(
+                request.getEmail()
+        );
+
+        // -----------------------------------------------------
+        // DTO -> ENTITY
+        // -----------------------------------------------------
+
+        Customer customer =
+                mapper.mapToEntity(request);
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Customer savedCustomer =
+                helper.saveCustomer(customer);
+
+        log.info(
+                "Customer created successfully: customerId={}",
+                savedCustomer.getCustomerId()
+        );
+
+        // -----------------------------------------------------
+        // ENTITY -> RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(savedCustomer);
     }
 
+
+    // =========================================================
+    // GET ALL CUSTOMERS
+    // =========================================================
+
     @Override
-    public Page<Customer> getAllCustomers(Pageable pageable) {
-        return customerRepository.findAll(pageable);
+    @Transactional(readOnly = true)
+    public Page<CustomerResponse> getAllCustomers(
+            Pageable pageable) {
+
+        log.info(
+                "Fetching all customers: page={}, size={}",
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+        );
+
+        return helper
+                .getAllCustomers(pageable)
+                .map(mapper::mapToResponse);
     }
 
-    @Override
-    public Customer getCustomerById(Long id) {
 
-        return customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Customer not found with ID : " + id));
+    // =========================================================
+    // GET CUSTOMER BY ID
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomerResponse getCustomerById(
+            Long customerId) {
+
+        log.info(
+                "Fetching customer: customerId={}",
+                customerId
+        );
+
+        // -----------------------------------------------------
+        // VALIDATE ID
+        // -----------------------------------------------------
+
+        helper.validateCustomerId(customerId);
+
+        // -----------------------------------------------------
+        // FETCH CUSTOMER
+        // -----------------------------------------------------
+
+        Customer customer =
+                helper.getCustomerById(customerId);
+
+        // -----------------------------------------------------
+        // ENTITY -> RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(customer);
     }
 
+
+    // =========================================================
+    // UPDATE CUSTOMER
+    // =========================================================
+
     @Override
-    public Customer updateCustomer(Long id, Customer customer) {
+    public CustomerResponse updateCustomer(
+            Long customerId,
+            CustomerRequest request) {
 
-        Customer existingCustomer = customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Customer not found with ID : " + id));
+        log.info(
+                "Updating customer: customerId={}",
+                customerId
+        );
 
-        if (!existingCustomer.getEmail().equals(customer.getEmail())
-                && customerRepository.existsByEmail(customer.getEmail())) {
+        // -----------------------------------------------------
+        // VALIDATE CUSTOMER ID
+        // -----------------------------------------------------
 
-        	throw new ResourceNotFoundException("Customer not found");
-        }
+        helper.validateCustomerId(customerId);
 
-        existingCustomer.setCustomerName(customer.getCustomerName());
-        existingCustomer.setEmail(customer.getEmail());
-        existingCustomer.setPhone(customer.getPhone());
-        existingCustomer.setAddress(customer.getAddress());
+        // -----------------------------------------------------
+        // FETCH EXISTING CUSTOMER
+        // -----------------------------------------------------
 
-        return customerRepository.save(existingCustomer);
+        Customer existingCustomer =
+                helper.getCustomerById(customerId);
+
+        helper.validateCustomerCanBeUpdated(
+                existingCustomer
+        );
+
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateCustomerName(
+                request.getCustomerName()
+        );
+
+        helper.validateEmail(
+                request.getEmail()
+        );
+
+        helper.validatePhone(
+                request.getPhone()
+        );
+
+        helper.validateAddress(
+                request.getAddress()
+        );
+
+        helper.validateEmailNotDuplicate(
+                request.getEmail(),
+                customerId
+        );
+
+        // -----------------------------------------------------
+        // UPDATE ENTITY
+        // -----------------------------------------------------
+
+        mapper.updateEntity(
+                existingCustomer,
+                request
+        );
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Customer updatedCustomer =
+                helper.saveCustomer(existingCustomer);
+
+        log.info(
+                "Customer updated successfully: customerId={}",
+                customerId
+        );
+
+        // -----------------------------------------------------
+        // ENTITY -> RESPONSE
+        // -----------------------------------------------------
+
+        return mapper.mapToResponse(
+                updatedCustomer
+        );
     }
-    @Override
-    public List<Customer> searchCustomers(String customerName) {
 
-        return customerRepository.findByCustomerNameContainingIgnoreCase(customerName);
+
+    // =========================================================
+    // SEARCH CUSTOMERS
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CustomerResponse> searchCustomers(
+            String customerName) {
+
+        log.info(
+                "Searching customers: customerName={}",
+                customerName
+        );
+
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateCustomerName(
+                customerName
+        );
+
+        // -----------------------------------------------------
+        // SEARCH
+        // -----------------------------------------------------
+
+        return helper
+                .searchCustomers(customerName)
+                .stream()
+                .map(mapper::mapToResponse)
+                .toList();
     }
 
+
+    // =========================================================
+    // DELETE CUSTOMER
+    // =========================================================
+
     @Override
-    public void deleteCustomer(Long id) {
+    public void deleteCustomer(
+            Long customerId) {
 
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Customer not found with ID : " + id));
+        log.info(
+                "Deleting customer: customerId={}",
+                customerId
+        );
 
-        customerRepository.delete(customer);
+        // -----------------------------------------------------
+        // VALIDATE ID
+        // -----------------------------------------------------
+
+        helper.validateCustomerId(customerId);
+
+        // -----------------------------------------------------
+        // FETCH CUSTOMER
+        // -----------------------------------------------------
+
+        Customer customer =
+                helper.getCustomerById(customerId);
+
+        // -----------------------------------------------------
+        // BUSINESS VALIDATION
+        // -----------------------------------------------------
+
+        helper.validateCustomerCanBeDeleted(
+                customer
+        );
+
+        // -----------------------------------------------------
+        // DELETE
+        // -----------------------------------------------------
+
+        helper.deleteCustomer(customer);
+
+        log.info(
+                "Customer deleted successfully: customerId={}",
+                customerId
+        );
     }
 }

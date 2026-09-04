@@ -1,18 +1,19 @@
 package com.keystone.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import com.keystone.dto.InventoryRequest;
 import com.keystone.dto.InventoryResponse;
 import com.keystone.entity.Inventory;
-import com.keystone.exception.DuplicateResourceException;
-import com.keystone.exception.ResourceNotFoundException;
+import com.keystone.enums.ErrorCode;
+import com.keystone.exception.KeystoneException;
 import com.keystone.repository.InventoryRepository;
 import com.keystone.service.InventoryService;
+
+
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -20,85 +21,221 @@ public class InventoryServiceImpl implements InventoryService {
     @Autowired
     private InventoryRepository inventoryRepository;
 
-    @Override
-    public InventoryResponse addInventory(InventoryRequest request) {
+	@Override
+	public InventoryResponse createInventory(InventoryRequest request) {
+		// -----------------------------------------------------
+        // BUSINESS VALIDATION
+        // -----------------------------------------------------
 
-        if (inventoryRepository.existsByPartName(request.getPartName())) {
-            throw new DuplicateResourceException("Part already exists");
+		if (inventoryRepository
+		        .existsByPartNameIgnoreCase(request.getPartName())) {
+            throw new KeystoneException(
+                    ErrorCode.DUPLICATE_INVENTORY_PART
+            );
         }
+        
+        // -----------------------------------------------------
+        // CREATE ENTITY
+        // -----------------------------------------------------
 
         Inventory inventory = new Inventory();
 
-        inventory.setPartName(request.getPartName());
-        inventory.setCategory(request.getCategory());
-        inventory.setQuantity(request.getQuantity());
-        inventory.setUnitPrice(request.getPrice());
-        inventory.setSupplier(request.getSupplier());
+        inventory.setPartName(
+                request.getPartName()
+        );
 
-        Inventory saved = inventoryRepository.save(inventory);
+        inventory.setCategory(
+                request.getCategory()
+        );
 
-        return mapToResponse(saved);
-    }
+        inventory.setQuantity(
+                request.getQuantity()
+        );
+
+        inventory.setUnitPrice(
+                request.getUnitPrice()
+        );
+
+        inventory.setSupplier(
+                request.getSupplier()
+        );
+     // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Inventory savedInventory =
+                inventoryRepository.save(inventory);
+
+
+        // -----------------------------------------------------
+        // RESPONSE
+        // -----------------------------------------------------
+
+        return mapToResponse(savedInventory);
+	}
+	
+
+	 // =========================================================
+    // GET ALL INVENTORY
+    // =========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<InventoryResponse> getAllInventory() {
 
-        return inventoryRepository.findAll()
+        return inventoryRepository
+                .findAll()
                 .stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
+    
+    
+    // =========================================================
+    // GET INVENTORY BY ID
+    // =========================================================
 
     @Override
-    public InventoryResponse getInventoryById(Long inventoryId) {
+    @Transactional(readOnly = true)
+    public InventoryResponse getInventoryById(
+            Long inventoryId) {
 
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Inventory not found"));
+        Inventory inventory =
+                inventoryRepository
+                        .findById(inventoryId)
+                        .orElseThrow(() ->
+                                new KeystoneException(
+                                        ErrorCode.INVENTORY_NOT_FOUND
+                                )
+                        );
 
         return mapToResponse(inventory);
     }
 
+	@Override
+	public InventoryResponse updateInventory(Long inventoryId, InventoryRequest request) {
+		// -----------------------------------------------------
+        // FIND EXISTING INVENTORY
+        // -----------------------------------------------------
+
+        Inventory inventory =
+                inventoryRepository
+                        .findById(inventoryId)
+                        .orElseThrow(() ->
+                                new KeystoneException(
+                                        ErrorCode.INVENTORY_NOT_FOUND
+                                )
+                        );
+        
+     // -----------------------------------------------------
+        // CHECK DUPLICATE PART NAME
+        // -----------------------------------------------------
+
+        inventoryRepository
+                .findByPartNameIgnoreCase(request.getPartName())
+                .ifPresent(existingInventory -> {
+
+                    if (!existingInventory
+                            .getInventoryId()
+                            .equals(inventoryId)) {
+
+                        throw new KeystoneException(
+                                ErrorCode.DUPLICATE_INVENTORY_PART
+                        );
+                    }
+                });
+        
+        // -----------------------------------------------------
+        // UPDATE ENTITY
+        // -----------------------------------------------------
+
+        inventory.setPartName(
+                request.getPartName()
+        );
+
+        inventory.setCategory(
+                request.getCategory()
+        );
+
+        inventory.setQuantity(
+                request.getQuantity()
+        );
+
+        inventory.setUnitPrice(
+                request.getUnitPrice()
+        );
+
+        inventory.setSupplier(
+                request.getSupplier()
+        );
+        
+     // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Inventory updatedInventory =
+                inventoryRepository.save(inventory);
+
+
+        return mapToResponse(updatedInventory);
+	}
+
+	// =========================================================
+    // DELETE INVENTORY
+    // =========================================================
+
     @Override
-    public InventoryResponse updateInventory(Long inventoryId,
-                                             InventoryRequest request) {
+    public void deleteInventory(
+            Long inventoryId) {
 
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Inventory not found"));
-
-        inventory.setPartName(request.getPartName());
-        inventory.setCategory(request.getCategory());
-        inventory.setQuantity(request.getQuantity());
-        inventory.setUnitPrice(request.getPrice());
-        inventory.setSupplier(request.getSupplier());
-
-        Inventory updated = inventoryRepository.save(inventory);
-
-        return mapToResponse(updated);
-    }
-
-    @Override
-    public void deleteInventory(Long inventoryId) {
-
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Inventory not found"));
+        Inventory inventory =
+                inventoryRepository
+                        .findById(inventoryId)
+                        .orElseThrow(() ->
+                                new KeystoneException(
+                                        ErrorCode.INVENTORY_NOT_FOUND
+                                )
+                        );
 
         inventoryRepository.delete(inventory);
     }
+    // =========================================================
+    // ENTITY → RESPONSE
+    // =========================================================
 
-    private InventoryResponse mapToResponse(Inventory inventory) {
+    private InventoryResponse mapToResponse(
+            Inventory inventory) {
 
-        InventoryResponse response = new InventoryResponse();
+        InventoryResponse response =
+                new InventoryResponse();
 
-        response.setInventoryId(inventory.getInventoryId());
-        response.setPartName(inventory.getPartName());
-        response.setCategory(inventory.getCategory());
-        response.setQuantity(inventory.getQuantity());
-        response.setUnitPrice(inventory.getUnitPrice());
-        response.setSupplier(inventory.getSupplier());
+        response.setInventoryId(
+                inventory.getInventoryId()
+        );
+
+        response.setPartName(
+                inventory.getPartName()
+        );
+
+        response.setCategory(
+                inventory.getCategory()
+        );
+
+        response.setQuantity(
+                inventory.getQuantity()
+        );
+
+        response.setUnitPrice(
+                inventory.getUnitPrice()
+        );
+
+        response.setSupplier(
+                inventory.getSupplier()
+        );
 
         return response;
     }
+
+	
+   
 }

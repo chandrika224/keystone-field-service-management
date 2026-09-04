@@ -15,18 +15,40 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "work_order_status_history")
+@Data
+@NoArgsConstructor
 public class WorkOrderStatusHistory {
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    // =========================================================
+    // WORK ORDER
+    // =========================================================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_order_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private WorkOrder workOrder;
+
+
+    // =========================================================
+    // STATUS TRANSITION
+    // =========================================================
 
     @Enumerated(EnumType.STRING)
     @Column(name = "from_status")
@@ -36,57 +58,14 @@ public class WorkOrderStatusHistory {
     @Column(name = "to_status")
     private WorkOrderStatus toStatus;
 
+
+    // =========================================================
+    // AUDIT INFORMATION
+    // =========================================================
+
     @Column(name = "changed_by")
     private String changedBy;
 
     @Column(name = "changed_at")
     private LocalDateTime changedAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public WorkOrder getWorkOrder() {
-        return workOrder;
-    }
-
-    public void setWorkOrder(WorkOrder workOrder) {
-        this.workOrder = workOrder;
-    }
-
-    public WorkOrderStatus getFromStatus() {
-        return fromStatus;
-    }
-
-    public void setFromStatus(WorkOrderStatus fromStatus) {
-        this.fromStatus = fromStatus;
-    }
-
-    public WorkOrderStatus getToStatus() {
-        return toStatus;
-    }
-
-    public void setToStatus(WorkOrderStatus toStatus) {
-        this.toStatus = toStatus;
-    }
-
-    public String getChangedBy() {
-        return changedBy;
-    }
-
-    public void setChangedBy(String changedBy) {
-        this.changedBy = changedBy;
-    }
-
-    public LocalDateTime getChangedAt() {
-        return changedAt;
-    }
-
-    public void setChangedAt(LocalDateTime changedAt) {
-        this.changedAt = changedAt;
-    }
 }

@@ -9,20 +9,29 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "sites")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class Site {
+
+    // =========================================================
+    // ID
+    // =========================================================
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+
+    // =========================================================
+    // SITE INFORMATION
+    // =========================================================
 
     @Column(nullable = false)
     private String name;
@@ -30,7 +39,17 @@ public class Site {
     @Column(nullable = false, length = 1000)
     private String address;
 
+
+    // =========================================================
+    // CUSTOMER RELATIONSHIP
+    // =========================================================
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(
+        name = "customer_id",
+        nullable = false
+    )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Customer customer;
 }
