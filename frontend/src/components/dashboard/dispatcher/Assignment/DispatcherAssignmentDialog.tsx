@@ -18,11 +18,8 @@ import {
 } from "@/components/ui/select";
 
 import { Button } from "@/components/ui/button";
-
-import type {
-  DispatcherWorkOrder,
-  Technician,
-} from "@/types/workOrder";
+import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type { Technician } from "@/types/technician";
 
 interface DispatcherAssignmentDialogProps {
   open: boolean;
@@ -32,7 +29,7 @@ interface DispatcherAssignmentDialogProps {
 
   technicians: Technician[];
 
-  onAssign: (technician: Technician) => void;
+  onAssign: (technicianId: number) => void;
 }
 
 export default function DispatcherAssignmentDialog({
@@ -42,44 +39,45 @@ export default function DispatcherAssignmentDialog({
   technicians,
   onAssign,
 }: DispatcherAssignmentDialogProps) {
-
   const [selectedTechnicianId, setSelectedTechnicianId] =
     useState("");
 
   useEffect(() => {
-    setSelectedTechnicianId("");
-  }, [workOrder]);
+    if (open) {
+      setSelectedTechnicianId("");
+    }
+  }, [open, workOrder]);
 
   if (!workOrder) {
     return null;
   }
 
   /*
-   * Only technicians who have marked themselves
-   * Available can be selected.
+   * The parent should ideally pass technicians from
+   * GET /api/technicians/available.
    *
-   * Dispatcher does NOT change availability.
+   * We still protect the UI by checking active + available.
    */
   const availableTechnicians = technicians.filter(
     (technician) =>
-      technician.status === "Available"
+      technician.active && technician.available
   );
 
   const selectedTechnician =
     technicians.find(
       (technician) =>
-        technician.id === selectedTechnicianId
+        String(technician.id) === selectedTechnicianId
     ) ?? null;
 
   const isReassignment =
-    workOrder.technician !== "Unassigned";
+    workOrder.technicianId !== null;
 
   const handleSubmit = () => {
     if (!selectedTechnician) {
       return;
     }
 
-    onAssign(selectedTechnician);
+    onAssign(selectedTechnician.id);
   };
 
   return (
@@ -87,11 +85,8 @@ export default function DispatcherAssignmentDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-
       <DialogContent className="sm:max-w-lg">
-
         <DialogHeader>
-
           <DialogTitle>
             {isReassignment
               ? "Reassign Technician"
@@ -101,7 +96,6 @@ export default function DispatcherAssignmentDialog({
           <DialogDescription>
             Select an available technician for this work order.
           </DialogDescription>
-
         </DialogHeader>
 
         <div className="space-y-5">
@@ -109,57 +103,48 @@ export default function DispatcherAssignmentDialog({
           {/* Work Order */}
 
           <div className="rounded-lg border bg-muted/40 p-4">
-
             <p className="text-sm text-muted-foreground">
               Work Order
             </p>
 
             <p className="mt-1 font-semibold">
-              {workOrder.id}
+              #{workOrder.id}
             </p>
 
             <p className="text-sm">
-              {workOrder.service}
+              {workOrder.title}
             </p>
-
           </div>
 
           {/* Customer */}
 
           <div>
-
             <p className="text-sm text-muted-foreground">
               Customer
             </p>
 
             <p className="font-medium">
-              {workOrder.customer}
+              {workOrder.customerName}
             </p>
-
           </div>
 
           {/* Current Technician */}
 
           {isReassignment && (
-
             <div>
-
               <p className="text-sm text-muted-foreground">
                 Current Technician
               </p>
 
               <p className="font-medium">
-                {workOrder.technician}
+                {workOrder.technicianName ?? "Not assigned"}
               </p>
-
             </div>
-
           )}
 
           {/* Technician */}
 
           <div className="space-y-2">
-
             <p className="text-sm font-medium">
               {isReassignment
                 ? "New Technician"
@@ -168,60 +153,47 @@ export default function DispatcherAssignmentDialog({
 
             <Select
               value={selectedTechnicianId}
-              onValueChange={(value) => {
-                if (value !== null) {
-                  setSelectedTechnicianId(value);
-                }
-              }}
+              onValueChange={(value) =>
+                setSelectedTechnicianId(value ?? "")
+              }
             >
-
               <SelectTrigger>
                 <SelectValue placeholder="Select technician" />
               </SelectTrigger>
 
               <SelectContent>
-
                 {availableTechnicians.length === 0 ? (
-
                   <SelectItem
                     value="NO_TECHNICIANS"
                     disabled
                   >
                     No available technicians
                   </SelectItem>
-
                 ) : (
-
                   availableTechnicians.map(
                     (technician) => (
-
                       <SelectItem
                         key={technician.id}
-                        value={technician.id}
+                        value={String(technician.id)}
                       >
-                        {technician.name} —{" "}
+                        {technician.firstName}{" "}
+                        {technician.lastName} —{" "}
                         {technician.specialization}
                       </SelectItem>
-
                     )
                   )
-
                 )}
-
               </SelectContent>
-
             </Select>
-
           </div>
 
           {/* Selected Technician Information */}
 
           {selectedTechnician && (
-
             <div className="rounded-lg border p-4">
-
               <p className="font-semibold">
-                {selectedTechnician.name}
+                {selectedTechnician.firstName}{" "}
+                {selectedTechnician.lastName}
               </p>
 
               <p className="text-sm text-muted-foreground">
@@ -229,27 +201,32 @@ export default function DispatcherAssignmentDialog({
               </p>
 
               <p className="mt-2 text-sm">
-                Active Jobs:{" "}
+                Email:{" "}
                 <span className="font-medium">
-                  {selectedTechnician.currentJobs}
+                  {selectedTechnician.email}
+                </span>
+              </p>
+
+              <p className="text-sm">
+                Phone:{" "}
+                <span className="font-medium">
+                  {selectedTechnician.phone}
                 </span>
               </p>
 
               <p className="text-sm">
                 Availability:{" "}
                 <span className="font-medium">
-                  {selectedTechnician.status}
+                  {selectedTechnician.available
+                    ? "Available"
+                    : "Unavailable"}
                 </span>
               </p>
-
             </div>
-
           )}
-
         </div>
 
         <DialogFooter>
-
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -265,11 +242,8 @@ export default function DispatcherAssignmentDialog({
               ? "Reassign"
               : "Assign"}
           </Button>
-
         </DialogFooter>
-
       </DialogContent>
-
     </Dialog>
   );
 }

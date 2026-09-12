@@ -46,6 +46,7 @@ export default function LoginForm() {
       const user = await login(data);
 
       console.log("Logged in user:", user);
+      console.log("Customer ID:", user.customerId);
       console.log("Logged-in Role:", user.role);
 
       switch (user.role?.toUpperCase()) {

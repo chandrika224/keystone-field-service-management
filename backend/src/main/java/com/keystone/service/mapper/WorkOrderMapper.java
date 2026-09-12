@@ -78,13 +78,24 @@ public class WorkOrderMapper {
         // SITE
         // -----------------------------------------------------
 
-        if (workOrder.getSite() != null) {
+     // =========================================================
+     // SITE
+     // =========================================================
 
-            response.setSiteId(
-                    workOrder.getSite()
-                            .getId()
-            );
-        }
+     if (workOrder.getSite() != null) {
+
+         response.setSiteId(
+                 workOrder.getSite().getId()
+         );
+
+         response.setSiteName(
+                 workOrder.getSite().getName()
+         );
+
+         response.setAddress(
+                 workOrder.getSite().getAddress()
+         );
+     }
 
         // -----------------------------------------------------
         // TECHNICIAN

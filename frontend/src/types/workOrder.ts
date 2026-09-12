@@ -1,6 +1,7 @@
 export type WorkOrderStatus =
   | "NEW"
   | "ASSIGNED"
+  | "ACCEPTED"
   | "IN_PROGRESS"
   | "ON_HOLD"
   | "COMPLETED"
@@ -12,56 +13,85 @@ export type WorkOrderPriority =
   | "MEDIUM"
   | "HIGH";
 
-
 export interface CustomerWorkOrder {
-  id: string;
+  id: number;
 
   title: string;
   description: string;
 
   priority: WorkOrderPriority;
-
   status: WorkOrderStatus;
 
   scheduledDate: string;
 
-  technician: string;
+  completedDate: string | null;
+  completedAt: string | null;
 
-  // Keep these because your existing UI uses them
+  siteId: number;
+  siteName: string | null;
+
+  address: string | null;
+
+  serviceType: string;
+
+  customerId: number;
+  customerName: string;
+
+  technicianId: number | null;
+  technicianName: string | null;
+
+  assignedById: number | null;
+  assignedAt: string | null;
+
+  createdAt: string;
+
+  startedAt: string | null;
+
+  slaDueDate: string;
+  slaBreached: boolean;
+
+  // Existing UI compatibility fields
   service: string;
   date: string;
+  technician: string;
 }
 
 export interface DispatcherWorkOrder {
   id: number;
 
   title: string;
-
   description: string;
 
   priority: WorkOrderPriority;
-
   status: WorkOrderStatus;
 
   scheduledDate: string;
 
-  completedDate?: string | null;
+  completedDate: string | null;
+  completedAt: string | null;
 
-  slaDueDate?: string | null;
+  siteId: number | null;
+  siteName: string | null;
 
-  slaBreached?: boolean;
+  // This is the customer's registered address
+  address: string | null;
 
-  customerName?: string;
+  serviceType: string | null;
 
-  technicianName?: string;
+  customerId: number;
+  customerName: string;
+
+  technicianId: number | null;
+  technicianName: string | null;
+
+  assignedById: number | null;
+  assignedAt: string | null;
+
+  createdAt: string;
+
+  startedAt: string | null;
+
+  slaDueDate: string | null;
+  slaBreached: boolean;
 }
 
-export interface Technician {
-  id: string;
-  name: string;
-  specialization: string;
-  email: string;
-  phone: string;
-  status: "Available" | "Busy";
-  currentJobs: number;
-}

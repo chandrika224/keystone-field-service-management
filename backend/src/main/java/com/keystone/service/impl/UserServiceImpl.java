@@ -248,7 +248,7 @@ public class UserServiceImpl implements UserService {
 
                 customerId =
                         customerRepository
-                                .findByEmail(user.getEmail())
+                                .findByUser_Id(user.getId())
                                 .map(Customer::getCustomerId)
                                 .orElse(null);
             }
@@ -362,9 +362,8 @@ public class UserServiceImpl implements UserService {
 
             savedCustomer =
                     customerRepository
-                            .findByEmail(email)
+                            .findByUser_Id(savedUser.getId())
                             .orElse(null);
-
 
             if (savedCustomer != null) {
 
@@ -388,7 +387,7 @@ public class UserServiceImpl implements UserService {
                         );
             }
         }
-
+        
 
         // =====================================================
         // RESPONSE
@@ -414,10 +413,9 @@ public class UserServiceImpl implements UserService {
 
             customer =
                     customerRepository
-                            .findByEmail(user.getEmail())
+                            .findByUser_Id(user.getId())
                             .orElse(null);
         }
-
 
         return buildUserResponse(
                 user,

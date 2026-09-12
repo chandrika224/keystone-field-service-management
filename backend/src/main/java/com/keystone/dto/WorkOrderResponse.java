@@ -54,9 +54,11 @@ public class WorkOrderResponse {
     // SITE
     // =========================================================
 
-    private Long siteId;
-
-    private String address;
+	 private Long siteId;
+	
+	 private String siteName;
+	
+	 private String address;
 
 
     // =========================================================

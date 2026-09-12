@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import type { Technician } from "@/types/workOrder";
+import type { Technician } from "@/types/technician";
 
 interface DispatcherChangeAvailabilityDialogProps {
   open: boolean;

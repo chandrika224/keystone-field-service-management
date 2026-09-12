@@ -91,15 +91,15 @@ export default function DispatcherAssignmentToolbar({
             All Priorities
           </SelectItem>
 
-          <SelectItem value="High">
+          <SelectItem value="HIGH">
             High
           </SelectItem>
 
-          <SelectItem value="Medium">
+          <SelectItem value="MEDIUM">
             Medium
           </SelectItem>
 
-          <SelectItem value="Low">
+          <SelectItem value="LOW">
             Low
           </SelectItem>
         </SelectContent>

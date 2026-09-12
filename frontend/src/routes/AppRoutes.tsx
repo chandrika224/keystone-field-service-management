@@ -79,6 +79,7 @@ import ManagerInventory from "@/pages/manager/ManagerInventory";
 import ManagerReports from "@/pages/manager/ManagerReports";
 import ManagerStaff from "@/pages/manager/ManagerStaff";
 import ManagerSettings from "@/pages/manager/ManagerSettings";
+import MySites from "@/pages/customer/Sites";
 
 // ============================================================
 // APP ROUTES
@@ -177,6 +178,11 @@ export default function AppRoutes() {
             path="/customer/work-orders"
             element={<WorkOrders />}
           />
+
+          <Route
+              path="/customer/sites"
+              element={<MySites />}
+            />
 
           <Route
             path="/customer/profile"

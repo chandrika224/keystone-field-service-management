@@ -4,6 +4,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import type { Site } from "@/types/site";
 
 import {
   Building2,
@@ -11,7 +12,6 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-import type { Site } from "@/services/siteService";
 
 interface ManagerSiteDetailsDrawerProps {
   open: boolean;

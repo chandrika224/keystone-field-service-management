@@ -14,10 +14,15 @@ import DispatcherAssignmentDialog
 
 import type {
   DispatcherWorkOrder,
-  Technician,
 } from "@/types/workOrder";
 
+import type {
+  Technician,
+} from "@/types/technician";
+
 import { workOrderService } from "@/services/workOrderService";
+
+import { technicianService } from "@/services/technicianService";
 
 export default function DispatcherAssignment() {
 
@@ -42,6 +47,7 @@ export default function DispatcherAssignment() {
 
   // ============================================================
   // FETCH WORK ORDERS
+  // GET /api/workorders
   // ============================================================
 
   useEffect(() => {
@@ -85,6 +91,49 @@ export default function DispatcherAssignment() {
     };
 
     fetchWorkOrders();
+
+  }, []);
+
+
+  // ============================================================
+  // FETCH AVAILABLE TECHNICIANS
+  // GET /api/technicians/available
+  // ============================================================
+
+  useEffect(() => {
+
+    const fetchAvailableTechnicians = async () => {
+
+      try {
+
+        console.log(
+          "Fetching available technicians..."
+        );
+
+        const data =
+          await technicianService.getAvailableTechnicians();
+
+        console.log(
+          "Available technicians:",
+          data
+        );
+
+        setTechniciansData(data);
+
+      } catch (error) {
+
+        console.error(
+          "Failed to fetch available technicians:",
+          error
+        );
+
+        toast.error(
+          "Failed to load available technicians."
+        );
+      }
+    };
+
+    fetchAvailableTechnicians();
 
   }, []);
 
@@ -184,7 +233,7 @@ export default function DispatcherAssignment() {
   // ============================================================
 
   const handleAssign = async (
-    technician: Technician
+    technicianId: number
   ) => {
 
     if (!selectedWorkOrder) {
@@ -194,8 +243,8 @@ export default function DispatcherAssignment() {
     try {
 
       console.log(
-        "Assigning technician:",
-        technician
+        "Assigning technician ID:",
+        technicianId
       );
 
       console.log(
@@ -204,35 +253,21 @@ export default function DispatcherAssignment() {
       );
 
 
-      /*
-       * IMPORTANT:
-       *
-       * Call your existing backend assignment API here.
-       *
-       * Example:
-       *
-       * await workOrderService.assignTechnician(
-       *   selectedWorkOrder.id,
-       *   Number(technician.id)
-       * );
-       */
+      // ========================================================
+      // CALL BACKEND ASSIGNMENT API
+      // PATCH /api/workorders/{id}/assign?technicianId={id}
+      // ========================================================
+
+      const updatedOrder =
+        await workOrderService.assignTechnician(
+          selectedWorkOrder.id,
+          technicianId
+        );
 
 
-      // --------------------------------------------------------
-      // TEMPORARY UI UPDATE
-      // --------------------------------------------------------
-
-      const updatedOrder: DispatcherWorkOrder = {
-
-        ...selectedWorkOrder,
-
-        technicianName:
-          technician.name,
-
-        status: "ASSIGNED",
-
-      };
-
+      // ========================================================
+      // UPDATE WORK ORDER LIST
+      // ========================================================
 
       setWorkOrders((prev) =>
         prev.map((order) =>
@@ -243,13 +278,30 @@ export default function DispatcherAssignment() {
       );
 
 
+      // ========================================================
+      // UPDATE SELECTED WORK ORDER
+      // ========================================================
+
+      setSelectedWorkOrder(
+        updatedOrder
+      );
+
+
+      // ========================================================
+      // CLOSE DIALOG
+      // ========================================================
+
       setAssignDialogOpen(false);
 
       setSelectedWorkOrder(null);
 
 
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
       toast.success(
-        `Work order assigned to ${technician.name}.`
+        `${updatedOrder.technicianName} assigned successfully.`
       );
 
     } catch (error) {
@@ -362,19 +414,12 @@ export default function DispatcherAssignment() {
       ======================================================== */}
 
       <DispatcherAssignmentToolbar
-
         search={search}
-
         onSearchChange={setSearch}
-
         status={status}
-
         onStatusChange={setStatus}
-
         priority={priority}
-
         onPriorityChange={setPriority}
-
       />
 
 
@@ -383,11 +428,8 @@ export default function DispatcherAssignment() {
       ======================================================== */}
 
       <DispatcherAssignmentTable
-
         workOrders={filteredWorkOrders}
-
         onAssign={handleOpenAssignment}
-
       />
 
 
@@ -396,21 +438,14 @@ export default function DispatcherAssignment() {
       ======================================================== */}
 
       <DispatcherAssignmentDialog
-
         open={assignDialogOpen}
-
         onOpenChange={setAssignDialogOpen}
-
         workOrder={selectedWorkOrder}
-
         technicians={techniciansData}
-
         onAssign={handleAssign}
-
       />
 
     </div>
 
   );
-
 }

@@ -29,6 +29,12 @@ export const customerNavigation: SidebarNavigationItem[] = [
     path: "/customer/work-orders",
   },
   {
+    title: "My sites",
+    icon: ClipboardList,
+    path: "/customer/sites",
+  },
+
+  {
     title: "Profile",
     icon: User,
     path: "/customer/profile",

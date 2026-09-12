@@ -16,6 +16,8 @@ import type {
   CustomerWorkOrder,
 } from "@/types/workOrder";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 
 // ============================================================
 // COMPONENT
@@ -25,16 +27,16 @@ export default function WorkOrders() {
 
   const location = useLocation();
 
+  const { user } = useAuth();
+
 
   // ==========================================================
   // FILTERS
   // ==========================================================
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [status, setStatus] =
-    useState("ALL");
+  const [status, setStatus] = useState("ALL");
 
 
   // ==========================================================
@@ -80,57 +82,50 @@ export default function WorkOrders() {
   // LOAD CUSTOMER WORK ORDERS
   // ==========================================================
 
-  useEffect(() => {
-    loadWorkOrders();
-  }, []);
-
-
-  async function loadWorkOrders() {
+  const loadWorkOrders = async () => {
 
     try {
 
       setLoading(true);
 
-      const response =
-        await workOrderService.getMyWorkOrders();
+
+      if (!user?.email) {
+
+        console.error(
+          "Customer email is not available"
+        );
+
+        return;
+      }
 
 
-      // Convert backend response
-      // to your existing frontend model
+      const data =
+        await workOrderService.getMyWorkOrders(
+          user.email
+        );
 
-      const orders: CustomerWorkOrder[] =
-        response.map((order) => ({
 
-          id: String(order.id),
+      // --------------------------------------------------------
+      // Add UI compatibility fields
+      // --------------------------------------------------------
 
-          title: order.title,
+      const mappedWorkOrders =
+        data.map((order) => ({
+          ...order,
 
-          description:
-            order.description,
+          service: order.serviceType,
 
-          priority:
-            order.priority,
-
-          status:
-            order.status,
-
-          scheduledDate:
-            order.scheduledDate,
-
-          service:
-            order.title,
+          date: order.scheduledDate,
 
           technician:
             order.technicianName ??
-            "Unassigned",
-
-          date:
-            order.scheduledDate,
-
+            "Not assigned",
         }));
 
 
-      setWorkOrders(orders);
+      setWorkOrders(
+        mappedWorkOrders
+      );
 
     } catch (error) {
 
@@ -140,14 +135,28 @@ export default function WorkOrders() {
       );
 
       toast.error(
-        "Failed to load work orders."
+        "Failed to load your work orders."
       );
 
     } finally {
 
       setLoading(false);
     }
-  }
+  };
+
+
+  // ==========================================================
+  // LOAD WHEN USER IS AVAILABLE
+  // ==========================================================
+
+  useEffect(() => {
+
+    if (user?.email) {
+
+      loadWorkOrders();
+    }
+
+  }, [user?.email]);
 
 
   // ==========================================================
@@ -186,8 +195,8 @@ export default function WorkOrders() {
     if (editingWorkOrder) {
 
       // ------------------------------------------------------
-      // Currently update only UI.
-      // Backend UPDATE API can be connected next.
+      // Currently update UI.
+      // Backend UPDATE API will be connected separately.
       // ------------------------------------------------------
 
       setWorkOrders((prev) =>
@@ -211,7 +220,7 @@ export default function WorkOrders() {
     } else {
 
       // ------------------------------------------------------
-      // New order was already created in backend
+      // New order was created in backend
       // by NewWorkOrderDialog.
       // ------------------------------------------------------
 
@@ -240,18 +249,21 @@ export default function WorkOrders() {
   const handleCancel = () => {
 
     if (!workOrderToCancel) {
+
       return;
     }
 
 
     const cancelledOrder = {
+
       ...workOrderToCancel,
+
       status: "CANCELLED" as const,
     };
 
 
     // Currently update UI.
-    // Backend cancellation API can be connected next.
+    // Backend cancellation will be connected separately.
 
     setWorkOrders((prev) =>
       prev.map((order) =>
@@ -287,6 +299,7 @@ export default function WorkOrders() {
   if (loading) {
 
     return (
+
       <div className="space-y-6">
 
         <SectionHeader
@@ -295,7 +308,9 @@ export default function WorkOrders() {
         />
 
         <div className="rounded-xl border p-8 text-center text-muted-foreground">
+
           Loading your work orders...
+
         </div>
 
       </div>

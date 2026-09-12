@@ -48,9 +48,9 @@ export default function DispatcherWorkOrdersToolbar({
           className="rounded-md border px-3 py-2"
         >
           <option value="ALL">All Priority</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
         </select>
 
       </div>

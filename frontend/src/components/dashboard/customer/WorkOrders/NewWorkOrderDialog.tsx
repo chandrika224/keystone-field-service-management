@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 import { workOrderService } from "@/services/workOrderService";
-import { siteService, type Site } from "@/services/siteService";
+
 import { useAuth } from "@/contexts/AuthContext";
 
 import { toast } from "sonner";
@@ -23,8 +23,20 @@ import type {
 } from "@/types/workOrder";
 
 import { useEffect, useState } from "react";
+import type { Site } from "@/types/site";
+import { siteService } from "@/services/siteService";
 
+// ============================================================
+// SERVICE TYPE MAPPING
+// ============================================================
 
+const serviceTypeMap: Record<string, string> = {
+  "AC Repair": "AC_REPAIR",
+  Electrical: "ELECTRICAL",
+  Plumbing: "PLUMBING",
+  Painting: "PAINTING",
+  Cleaning: "CLEANING",
+};
 
 // ============================================================
 // PROPS
@@ -68,21 +80,18 @@ export default function NewWorkOrderDialog({
 
   const [time, setTime] = useState("");
 
-  const [description, setDescription] =
-    useState("");
+  const [description, setDescription] = useState("");
 
   // ==========================================================
   // SITE STATE
   // ==========================================================
 
-  const [sites, setSites] =
-    useState<Site[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
 
   const [siteId, setSiteId] =
     useState<number | null>(null);
 
-  const [address, setAddress] =
-    useState("");
+  const [address, setAddress] = useState("");
 
   const [loadingSites, setLoadingSites] =
     useState(false);
@@ -98,16 +107,6 @@ export default function NewWorkOrderDialog({
     const loadSites = async () => {
       try {
         setLoadingSites(true);
-
-        /*
-         * Get the logged-in customer's ID from AuthContext.
-         *
-         * Backend login response provides:
-         *
-         * user.id         = 26
-         * user.customerId = 1
-         * user.role       = CUSTOMER
-         */
 
         const customerId = user?.customerId;
 
@@ -139,27 +138,19 @@ export default function NewWorkOrderDialog({
 
         setSites(customerSites);
 
-        /*
-         * If editing an existing work order and
-         * the work order has a siteId, select it.
-         *
-         * Otherwise automatically select the
-         * first available site.
-         */
+        // ------------------------------------------------------
+        // EDITING EXISTING WORK ORDER
+        // ------------------------------------------------------
 
         if (
           editingWorkOrder &&
-          (editingWorkOrder as any).siteId
+          editingWorkOrder.siteId
         ) {
-          const existingSiteId =
-            Number(
-              (editingWorkOrder as any).siteId
-            );
-
           const existingSite =
             customerSites.find(
               (site) =>
-                site.id === existingSiteId
+                site.id ===
+                editingWorkOrder.siteId
             );
 
           if (existingSite) {
@@ -172,6 +163,11 @@ export default function NewWorkOrderDialog({
             return;
           }
         }
+
+        // ------------------------------------------------------
+        // CREATE NEW WORK ORDER
+        // Automatically select first site
+        // ------------------------------------------------------
 
         if (customerSites.length > 0) {
           const firstSite =
@@ -186,6 +182,7 @@ export default function NewWorkOrderDialog({
           setSiteId(null);
           setAddress("");
         }
+
       } catch (error) {
         console.error(
           "Failed to load customer sites:",
@@ -197,19 +194,21 @@ export default function NewWorkOrderDialog({
         );
 
         setSites([]);
+        setSiteId(null);
+        setAddress("");
+
       } finally {
         setLoadingSites(false);
       }
     };
 
-    /*
-     * Only load sites when the dialog is open
-     * and a customer ID is available.
-     */
-
-    if (open && user?.customerId) {
+    if (
+      open &&
+      user?.customerId
+    ) {
       loadSites();
     }
+
   }, [
     open,
     editingWorkOrder,
@@ -222,23 +221,42 @@ export default function NewWorkOrderDialog({
 
   useEffect(() => {
     if (editingWorkOrder) {
+      // ------------------------------------------------------
+      // Backend serviceType → UI service name
+      // ------------------------------------------------------
+
+      const serviceEntry =
+        Object.entries(serviceTypeMap)
+          .find(
+            ([, value]) =>
+              value ===
+              editingWorkOrder.serviceType
+          );
+
       setService(
-        editingWorkOrder.title
+        serviceEntry?.[0] ??
+        editingWorkOrder.service ??
+        editingWorkOrder.title ??
+        ""
       );
 
       setPriority(
-        editingWorkOrder.priority ?? "MEDIUM"
+        editingWorkOrder.priority ??
+        "MEDIUM"
       );
 
       setDate(
-        editingWorkOrder.scheduledDate ?? ""
+        editingWorkOrder.scheduledDate ??
+        ""
       );
 
       setTime("");
 
       setDescription(
-        editingWorkOrder.description ?? ""
+        editingWorkOrder.description ??
+        ""
       );
+
     } else {
       setService("");
 
@@ -250,7 +268,11 @@ export default function NewWorkOrderDialog({
 
       setDescription("");
     }
-  }, [editingWorkOrder, open]);
+
+  }, [
+    editingWorkOrder,
+    open,
+  ]);
 
   // ==========================================================
   // SITE SELECTION
@@ -290,6 +312,7 @@ export default function NewWorkOrderDialog({
   // ==========================================================
 
   const handleSubmit = async () => {
+
     // --------------------------------------------------------
     // VALIDATION
     // --------------------------------------------------------
@@ -326,7 +349,9 @@ export default function NewWorkOrderDialog({
       return;
     }
 
-    if (description.trim().length < 10) {
+    if (
+      description.trim().length < 10
+    ) {
       toast.error(
         "Description should be at least 10 characters."
       );
@@ -335,47 +360,64 @@ export default function NewWorkOrderDialog({
     }
 
     // --------------------------------------------------------
-    // API REQUEST
+    // AUTHENTICATION CHECK
+    // --------------------------------------------------------
+
+    if (!user?.email) {
+      toast.error(
+        "Unable to identify the logged-in customer."
+      );
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // SERVICE TYPE
+    // --------------------------------------------------------
+
+    const serviceType =
+      serviceTypeMap[service];
+
+    if (!serviceType) {
+      toast.error(
+        "Invalid service type selected."
+      );
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // API
     // --------------------------------------------------------
 
     try {
       setSubmitting(true);
 
-      /*
-       * CREATE REQUEST
-       *
-       * siteId is sent to the backend.
-       */
+      // ======================================================
+      // REQUEST
+      // ======================================================
 
-      const createRequest = {
+      const request = {
         title: service,
 
         description:
           description.trim(),
 
-        priority,
-
-        scheduledDate: date,
-
-        siteId: siteId,
-      };
-
-      /*
-       * UPDATE REQUEST
-       *
-       * Keep the existing update request unchanged.
-       */
-
-      const updateRequest = {
-        title: service,
-
-        description:
-          description.trim(),
+        serviceType,
 
         priority,
 
         scheduledDate: date,
+
+        siteId,
       };
+
+      console.log(
+        editingWorkOrder
+          ? "UPDATE WORK ORDER PAYLOAD:"
+          : "CREATE WORK ORDER PAYLOAD:",
+        request
+      );
 
       let backendOrder;
 
@@ -384,18 +426,19 @@ export default function NewWorkOrderDialog({
       // ======================================================
 
       if (editingWorkOrder) {
+
         backendOrder =
           await workOrderService.updateMyWorkOrder(
-            Number(
-              editingWorkOrder.id
-            ),
-            updateRequest
+            user.email,
+            editingWorkOrder.id,
+            request
           );
 
         console.log(
           "Updated Work Order:",
           backendOrder
         );
+
       }
 
       // ======================================================
@@ -403,14 +446,11 @@ export default function NewWorkOrderDialog({
       // ======================================================
 
       else {
-        console.log(
-          "CREATE WORK ORDER PAYLOAD:",
-          createRequest
-        );
 
         backendOrder =
           await workOrderService.createMyWorkOrder(
-            createRequest
+            user.email,
+            request
           );
 
         console.log(
@@ -420,14 +460,11 @@ export default function NewWorkOrderDialog({
       }
 
       // ======================================================
-      // CONVERT BACKEND RESPONSE
-      // TO FRONTEND MODEL
+      // BACKEND → FRONTEND MODEL
       // ======================================================
 
       const frontendOrder: CustomerWorkOrder = {
-        id: String(
-          backendOrder.id
-        ),
+        id: backendOrder.id,
 
         title:
           backendOrder.title,
@@ -444,16 +481,79 @@ export default function NewWorkOrderDialog({
         scheduledDate:
           backendOrder.scheduledDate,
 
-        service:
-          backendOrder.title,
+        completedDate:
+          backendOrder.completedDate ??
+          null,
 
-        technician:
+        completedAt:
+          backendOrder.completedAt ??
+          null,
+
+        siteId:
+        backendOrder.siteId,
+
+      siteName:
+        backendOrder.siteName ??
+        sites.find(
+          (site) => site.id === backendOrder.siteId
+        )?.name ??
+        `Site #${backendOrder.siteId}`,
+
+      address:
+        backendOrder.address ??
+        null,
+
+      serviceType:
+        backendOrder.serviceType,
+
+        customerId:
+          backendOrder.customerId,
+
+        customerName:
+          backendOrder.customerName,
+
+        technicianId:
+          backendOrder.technicianId ??
+          null,
+
+        technicianName:
           backendOrder.technicianName ??
-          editingWorkOrder?.technician ??
-          "Unassigned",
+          null,
+
+        assignedById:
+          backendOrder.assignedById ??
+          null,
+
+        assignedAt:
+          backendOrder.assignedAt ??
+          null,
+
+        createdAt:
+          backendOrder.createdAt,
+
+        startedAt:
+          backendOrder.startedAt ??
+          null,
+
+        slaDueDate:
+          backendOrder.slaDueDate,
+
+        slaBreached:
+          backendOrder.slaBreached,
+
+        // ----------------------------------------------------
+        // Existing UI compatibility fields
+        // ----------------------------------------------------
+
+        service:
+          backendOrder.serviceType,
 
         date:
           backendOrder.scheduledDate,
+
+        technician:
+          backendOrder.technicianName ??
+          "Not assigned",
       };
 
       // ======================================================
@@ -465,7 +565,7 @@ export default function NewWorkOrderDialog({
       );
 
       // ======================================================
-      // SUCCESS MESSAGE
+      // SUCCESS
       // ======================================================
 
       toast.success(
@@ -475,7 +575,9 @@ export default function NewWorkOrderDialog({
       );
 
       onOpenChange(false);
+
     } catch (error: any) {
+
       console.error(
         "Failed to save work order:",
         error
@@ -491,6 +593,7 @@ export default function NewWorkOrderDialog({
           ? message
           : "Failed to save work order."
       );
+
     } finally {
       setSubmitting(false);
     }
@@ -506,7 +609,9 @@ export default function NewWorkOrderDialog({
       onOpenChange={onOpenChange}
     >
       <DialogContent className="max-w-2xl">
+
         <DialogHeader>
+
           <DialogTitle>
             {editingWorkOrder
               ? "Edit Work Order"
@@ -518,14 +623,18 @@ export default function NewWorkOrderDialog({
               ? "Update your service request details."
               : "Fill in the details below to create a new work order."}
           </DialogDescription>
+
         </DialogHeader>
 
+
         <div className="space-y-5">
+
           {/* ==================================================
               SERVICE
               ================================================== */}
 
           <div className="space-y-2">
+
             <Label>
               Service Type
             </Label>
@@ -533,10 +642,13 @@ export default function NewWorkOrderDialog({
             <select
               value={service}
               onChange={(e) =>
-                setService(e.target.value)
+                setService(
+                  e.target.value
+                )
               }
               className="w-full rounded-md border px-3 py-2"
             >
+
               <option value="">
                 Select Service
               </option>
@@ -560,14 +672,18 @@ export default function NewWorkOrderDialog({
               <option value="Cleaning">
                 Cleaning
               </option>
+
             </select>
+
           </div>
+
 
           {/* ==================================================
               PRIORITY
               ================================================== */}
 
           <div className="space-y-2">
+
             <Label>
               Priority
             </Label>
@@ -581,6 +697,7 @@ export default function NewWorkOrderDialog({
               }
               className="w-full rounded-md border px-3 py-2"
             >
+
               <option value="LOW">
                 Low
               </option>
@@ -592,15 +709,20 @@ export default function NewWorkOrderDialog({
               <option value="HIGH">
                 High
               </option>
+
             </select>
+
           </div>
+
 
           {/* ==================================================
               DATE + TIME
               ================================================== */}
 
           <div className="grid grid-cols-2 gap-4">
+
             <div className="space-y-2">
+
               <Label>
                 Preferred Date
               </Label>
@@ -609,12 +731,17 @@ export default function NewWorkOrderDialog({
                 type="date"
                 value={date}
                 onChange={(e) =>
-                  setDate(e.target.value)
+                  setDate(
+                    e.target.value
+                  )
                 }
               />
+
             </div>
 
+
             <div className="space-y-2">
+
               <Label>
                 Preferred Time
               </Label>
@@ -623,17 +750,23 @@ export default function NewWorkOrderDialog({
                 type="time"
                 value={time}
                 onChange={(e) =>
-                  setTime(e.target.value)
+                  setTime(
+                    e.target.value
+                  )
                 }
               />
+
             </div>
+
           </div>
+
 
           {/* ==================================================
               SERVICE LOCATION
               ================================================== */}
 
           <div className="space-y-2">
+
             <Label>
               Service Location
             </Label>
@@ -647,6 +780,7 @@ export default function NewWorkOrderDialog({
               }
               className="w-full rounded-md border px-3 py-2"
             >
+
               <option value="">
                 {loadingSites
                   ? "Loading locations..."
@@ -656,19 +790,25 @@ export default function NewWorkOrderDialog({
               </option>
 
               {sites.map((site) => (
+
                 <option
                   key={site.id}
                   value={site.id}
                 >
                   {site.name}
                 </option>
+
               ))}
+
             </select>
+
 
             {/* Selected site's address */}
 
             {address && (
+
               <div className="rounded-md bg-muted p-3">
+
                 <p className="text-sm font-medium">
                   Address
                 </p>
@@ -676,15 +816,20 @@ export default function NewWorkOrderDialog({
                 <p className="text-sm text-muted-foreground">
                   {address}
                 </p>
+
               </div>
+
             )}
+
           </div>
+
 
           {/* ==================================================
               DESCRIPTION
               ================================================== */}
 
           <div className="space-y-2">
+
             <Label>
               Description
             </Label>
@@ -699,14 +844,18 @@ export default function NewWorkOrderDialog({
               }
               placeholder="Describe the problem..."
             />
+
           </div>
+
         </div>
+
 
         {/* ====================================================
             BUTTONS
             ==================================================== */}
 
         <div className="mt-8 flex justify-end gap-3">
+
           <Button
             variant="outline"
             disabled={submitting}
@@ -732,9 +881,10 @@ export default function NewWorkOrderDialog({
                 ? "Update Request"
                 : "Submit Request"}
           </Button>
+
         </div>
+
       </DialogContent>
     </Dialog>
   );
 }
-
