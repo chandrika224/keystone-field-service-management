@@ -58,4 +58,9 @@ public interface WorkOrderRepository
     long countBySlaBreachedTrue();
 
     List<WorkOrder> findBySlaBreachedFalse();
+    
+    long countBySite_IdAndStatusIn(
+            Long siteId,
+            List<WorkOrderStatus> statuses
+    );
 }

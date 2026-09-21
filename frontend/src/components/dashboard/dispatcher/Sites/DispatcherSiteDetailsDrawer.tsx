@@ -11,15 +11,14 @@ import {
   MapPin,
   Building2,
   ClipboardList,
-  Hash,
 } from "lucide-react";
 
-import type { DispatcherSite } from "@/data/dispatcher/sites";
+import type { Site } from "@/types/site";
 
 interface DispatcherSiteDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  site: DispatcherSite | null;
+  site: Site | null;
 }
 
 export default function DispatcherSiteDetailsDrawer({
@@ -27,6 +26,7 @@ export default function DispatcherSiteDetailsDrawer({
   onOpenChange,
   site,
 }: DispatcherSiteDetailsDrawerProps) {
+
   if (!site) {
     return null;
   }
@@ -36,6 +36,7 @@ export default function DispatcherSiteDetailsDrawer({
       open={open}
       onOpenChange={onOpenChange}
     >
+
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
 
         <SheetHeader>
@@ -55,13 +56,15 @@ export default function DispatcherSiteDetailsDrawer({
             </div>
 
             <div>
+
               <h2 className="text-2xl font-bold">
                 {site.name}
               </h2>
 
               <p className="text-sm text-muted-foreground">
-                {site.id}
+                Site #{site.id}
               </p>
+
             </div>
 
           </div>
@@ -79,13 +82,19 @@ export default function DispatcherSiteDetailsDrawer({
               <Building2 className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Customer
                 </p>
 
                 <p className="font-medium">
-                  {site.customer}
+                  {site.customerName ?? "Unknown"}
                 </p>
+
+                <p className="text-sm text-muted-foreground">
+                  Customer ID: {site.customerId}
+                </p>
+
               </div>
 
             </div>
@@ -105,6 +114,7 @@ export default function DispatcherSiteDetailsDrawer({
               <MapPin className="mt-1 h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Address
                 </p>
@@ -113,9 +123,6 @@ export default function DispatcherSiteDetailsDrawer({
                   {site.address}
                 </p>
 
-                <p className="text-sm text-muted-foreground">
-                  {site.city}, {site.state} - {site.postalCode}
-                </p>
               </div>
 
             </div>
@@ -135,13 +142,15 @@ export default function DispatcherSiteDetailsDrawer({
               <ClipboardList className="h-5 w-5 text-primary" />
 
               <div>
+
                 <p className="text-sm text-muted-foreground">
                   Active Work Orders
                 </p>
 
                 <p className="font-medium">
-                  {site.activeWorkOrders}
+                  {site.activeWorkOrders ?? 0}
                 </p>
+
               </div>
 
             </div>
@@ -165,6 +174,7 @@ export default function DispatcherSiteDetailsDrawer({
         </div>
 
       </SheetContent>
+
     </Sheet>
   );
 }

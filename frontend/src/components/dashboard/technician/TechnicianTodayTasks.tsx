@@ -1,23 +1,54 @@
 import { Button } from "@/components/ui/button";
 
-import type { TechnicianJob } from "@/data/technician/jobs";
+import type { TechnicianWorkOrder } from "@/types/workOrder";
 
 interface TechnicianTodayTasksProps {
-  jobs: TechnicianJob[];
-  onView: (job: TechnicianJob) => void;
+  jobs: TechnicianWorkOrder[];
+  onView: (job: TechnicianWorkOrder) => void;
+}
+
+function formatServiceType(serviceType: string | null) {
+  if (!serviceType) {
+    return "—";
+  }
+
+  return serviceType
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatStatus(status: string) {
+  return status.replaceAll("_", " ");
+}
+
+function formatDate(date: string | null) {
+  if (!date) {
+    return "—";
+  }
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return date;
+  }
+
+  return parsedDate.toLocaleDateString();
 }
 
 export default function TechnicianTodayTasks({
   jobs,
   onView,
 }: TechnicianTodayTasksProps) {
-  const todayJobs = jobs.filter(
-    (job) => job.scheduledDate === "10 Aug 2026"
-  );
-
   return (
     <div className="rounded-lg border">
+
+      {/* ---------------------------------------------
+          HEADER
+      --------------------------------------------- */}
+
       <div className="border-b p-6">
+
         <h2 className="text-xl font-semibold">
           Today's Tasks
         </h2>
@@ -25,13 +56,22 @@ export default function TechnicianTodayTasks({
         <p className="text-sm text-muted-foreground">
           Complete your assigned jobs.
         </p>
+
       </div>
 
+
+      {/* ---------------------------------------------
+          TABLE
+      --------------------------------------------- */}
+
       <div className="overflow-x-auto">
+
         <table className="w-full">
 
           <thead className="bg-muted">
+
             <tr>
+
               <th className="px-6 py-4 text-left">
                 Work Order
               </th>
@@ -49,60 +89,118 @@ export default function TechnicianTodayTasks({
               </th>
 
               <th className="px-6 py-4 text-left">
-                Time
+                Status
+              </th>
+
+              <th className="px-6 py-4 text-left">
+                Scheduled
               </th>
 
               <th className="px-6 py-4 text-right">
                 Action
               </th>
+
             </tr>
+
           </thead>
 
+
           <tbody>
-            {todayJobs.length === 0 ? (
+
+            {jobs.length === 0 ? (
+
               <tr>
+
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-10 text-center text-muted-foreground"
                 >
                   No tasks scheduled for today.
                 </td>
+
               </tr>
+
             ) : (
-              todayJobs.map((job) => (
+
+              jobs.map((job) => (
+
                 <tr
                   key={job.id}
                   className="border-t"
                 >
+
+                  {/* ---------------------------------
+                      WORK ORDER
+                  --------------------------------- */}
+
                   <td className="px-6 py-4">
+
                     <div>
+
                       <p className="font-medium">
-                        {job.workOrderCode}
+                        #{job.id} — {job.title}
                       </p>
 
                       <p className="text-sm text-muted-foreground">
-                        {job.site}
+                        {job.siteName ?? "No site"}
                       </p>
+
                     </div>
+
                   </td>
 
-                  <td className="px-6 py-4">
-                    {job.customer}
-                  </td>
+
+                  {/* ---------------------------------
+                      CUSTOMER
+                  --------------------------------- */}
 
                   <td className="px-6 py-4">
-                    {job.service}
+                    {job.customerName ?? "—"}
                   </td>
+
+
+                  {/* ---------------------------------
+                      SERVICE
+                  --------------------------------- */}
+
+                  <td className="px-6 py-4">
+                    {formatServiceType(job.serviceType)}
+                  </td>
+
+
+                  {/* ---------------------------------
+                      PRIORITY
+                  --------------------------------- */}
 
                   <td className="px-6 py-4">
                     {job.priority}
                   </td>
 
+
+                  {/* ---------------------------------
+                      STATUS
+                  --------------------------------- */}
+
                   <td className="px-6 py-4">
-                    {job.scheduledTime}
+                    {formatStatus(job.status)}
                   </td>
 
+
+                  {/* ---------------------------------
+                      SCHEDULED DATE
+                  --------------------------------- */}
+
+                  <td className="px-6 py-4">
+                    {formatDate(job.scheduledDate)}
+                  </td>
+
+
+                  {/* ---------------------------------
+                      ACTION
+                  --------------------------------- */}
+
                   <td className="px-6 py-4 text-right">
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -117,14 +215,21 @@ export default function TechnicianTodayTasks({
                     >
                       View
                     </Button>
+
                   </td>
+
                 </tr>
+
               ))
+
             )}
+
           </tbody>
 
         </table>
+
       </div>
+
     </div>
   );
 }

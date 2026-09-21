@@ -1,38 +1,71 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import SectionHeader from "@/components/dashboard/shared/SectionHeader";
-import { dispatcherSites } from "@/data/dispatcher/sites";
+
 import DispatcherSitesToolbar
   from "@/components/dashboard/dispatcher/Sites/DispatcherSitesToolbar";
+
 import DispatcherSitesTable
   from "@/components/dashboard/dispatcher/Sites/DispatcherSitesTable";
-import type { DispatcherSite } from "@/data/dispatcher/sites";
 
 import DispatcherSiteDetailsDrawer
   from "@/components/dashboard/dispatcher/Sites/DispatcherSiteDetailsDrawer";
 
+import { siteService } from "@/services/siteService";
+import type { Site } from "@/types/site";
+
 export default function DispatcherSites() {
   const [search, setSearch] = useState("");
+
+  const [sites, setSites] = useState<Site[]>([]);
+
   const [selectedSite, setSelectedSite] =
-  useState<DispatcherSite | null>(null);
+    useState<Site | null>(null);
 
   const [drawerOpen, setDrawerOpen] =
-  useState(false);
+    useState(false);
 
-  const filteredSites = dispatcherSites.filter((site) => {
-    const value = search.toLowerCase().trim();
+  const [loading, setLoading] =
+    useState(true);
 
-    if (!value) {
-      return true;
+  const [error, setError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await siteService.getAllSites();
+
+        setSites(data);
+      } catch (error) {
+        console.error("Failed to load sites:", error);
+
+        setError("Failed to load sites.");
+        toast.error("Failed to load sites.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSites();
+  }, []);
+
+  const handleViewSite = async (site: Site) => {
+    try {
+      const data = await siteService.getSiteById(site.id);
+
+      setSelectedSite(data);
+      setDrawerOpen(true);
+    } catch (error) {
+      console.error("Failed to load site details:", error);
+
+      toast.error("Failed to load site details.");
     }
-
-    return (
-      site.name.toLowerCase().includes(value) ||
-      site.customer.toLowerCase().includes(value) ||
-      site.city.toLowerCase().includes(value) ||
-      site.state.toLowerCase().includes(value)
-    );
-  });
+  };
 
   return (
     <div className="space-y-6">
@@ -47,22 +80,28 @@ export default function DispatcherSites() {
         onSearchChange={setSearch}
       />
 
-      <DispatcherSitesTable
-        sites={dispatcherSites}
-        search={search}
-        onView={(site) => {
-          console.log("Site View clicked:", site);
-
-          setSelectedSite(site);
-          setDrawerOpen(true);
-        }}
-      />
+      {loading ? (
+        <div className="py-10 text-center text-muted-foreground">
+          Loading sites...
+        </div>
+      ) : error ? (
+        <div className="py-10 text-center text-destructive">
+          {error}
+        </div>
+      ) : (
+        <DispatcherSitesTable
+          sites={sites}
+          search={search}
+          onView={handleViewSite}
+        />
+      )}
 
       <DispatcherSiteDetailsDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         site={selectedSite}
       />
-      </div>
+
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import type { Technician } from "@/types/technician";
 
 export const technicianService = {
+
   // ============================================================
   // GET ALL TECHNICIANS
   // GET /api/technicians
@@ -15,6 +16,7 @@ export const technicianService = {
     return response.data;
   },
 
+
   // ============================================================
   // GET AVAILABLE TECHNICIANS
   // GET /api/technicians/available
@@ -27,6 +29,7 @@ export const technicianService = {
 
     return response.data;
   },
+
 
   // ============================================================
   // GET TECHNICIAN BY ID
@@ -42,4 +45,38 @@ export const technicianService = {
 
     return response.data;
   },
+
+
+  // ============================================================
+  // GET CURRENT LOGGED-IN TECHNICIAN
+  // GET /api/technicians/me
+  // ============================================================
+
+  getMyTechnician: async (): Promise<Technician> => {
+    const response = await api.get<Technician>(
+      "/technicians/me"
+    );
+
+    return response.data;
+  },
+
+
+  // ============================================================
+  // UPDATE MY AVAILABILITY
+  // PATCH /api/technicians/me/availability
+  // ============================================================
+
+  updateMyAvailability: async (
+    available: boolean
+  ): Promise<Technician> => {
+    const response = await api.patch<Technician>(
+      "/technicians/me/availability",
+      {
+        available,
+      }
+    );
+
+    return response.data;
+  },
+
 };

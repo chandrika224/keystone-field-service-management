@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import type { DispatcherCustomer } from "@/data/dispatcher/customers";
+import type { Customer } from "@/types/customer";
 
 interface DispatcherCustomersTableProps {
-  customers: DispatcherCustomer[];
+  customers: Customer[];
   search: string;
-  onView: (customer: DispatcherCustomer) => void;
+  onView: (customer: Customer) => void;
 }
 
 export default function DispatcherCustomersTable({
@@ -22,16 +22,23 @@ export default function DispatcherCustomersTable({
     }
 
     return (
-      customer.companyName
+      (customer.customerName ?? "")
         .toLowerCase()
         .includes(searchValue) ||
-      customer.contactPerson
+
+      (customer.email ?? "")
         .toLowerCase()
         .includes(searchValue) ||
-      customer.email
+
+      (customer.phone ?? "")
         .toLowerCase()
         .includes(searchValue) ||
-      customer.phone
+
+      (customer.address ?? "")
+        .toLowerCase()
+        .includes(searchValue) ||
+
+      (customer.customerCode ?? "")
         .toLowerCase()
         .includes(searchValue)
     );
@@ -40,7 +47,6 @@ export default function DispatcherCustomersTable({
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full">
-
         <thead className="bg-muted">
           <tr>
             <th className="px-6 py-4 text-left">
@@ -52,11 +58,11 @@ export default function DispatcherCustomersTable({
             </th>
 
             <th className="px-6 py-4 text-left">
-              Sites
+              Address
             </th>
 
             <th className="px-6 py-4 text-left">
-              Active Work Orders
+              Customer Code
             </th>
 
             <th className="px-6 py-4 text-right">
@@ -76,90 +82,89 @@ export default function DispatcherCustomersTable({
               </td>
             </tr>
           ) : (
-            filteredCustomers.map((customer) => (
-              <tr
-                key={customer.id}
-                className="border-t"
-              >
+            filteredCustomers.map((customer) => {
+              const customerName =
+                customer.customerName ?? "Unknown Customer";
 
-                {/* Customer */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
+              const initials = customerName
+                .split(" ")
+                .filter(Boolean)
+                .map((word) => word[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
 
-                    <Avatar>
-                      <AvatarFallback>
-                        {customer.companyName
-                          .split(" ")
-                          .map((word) => word[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+              return (
+                <tr
+                  key={customer.customerId}
+                  className="border-t"
+                >
+                  {/* Customer */}
 
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div>
+                        <p className="font-medium">
+                          {customerName}
+                        </p>
+
+                        <p className="text-sm text-muted-foreground">
+                          #{customer.customerId}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Contact */}
+
+                  <td className="px-6 py-4">
                     <div>
                       <p className="font-medium">
-                        {customer.companyName}
+                        {customer.email ?? "—"}
                       </p>
 
                       <p className="text-sm text-muted-foreground">
-                        {customer.id}
+                        {customer.phone ?? "—"}
                       </p>
                     </div>
+                  </td>
 
-                  </div>
-                </td>
+                  {/* Address */}
 
-                {/* Contact */}
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium">
-                      {customer.contactPerson}
+                  <td className="px-6 py-4">
+                    <p className="max-w-xs truncate">
+                      {customer.address ?? "—"}
                     </p>
+                  </td>
 
-                    <p className="text-sm text-muted-foreground">
-                      {customer.email}
-                    </p>
+                  {/* Customer Code */}
 
-                    <p className="text-sm text-muted-foreground">
-                      {customer.phone}
-                    </p>
-                  </div>
-                </td>
+                  <td className="px-6 py-4">
+                    {customer.customerCode ?? "—"}
+                  </td>
 
-                {/* Sites */}
-                <td className="px-6 py-4">
-                  {customer.sites}
-                </td>
+                  {/* Action */}
 
-                {/* Active Work Orders */}
-                <td className="px-6 py-4">
-                  {customer.activeWorkOrders}
-                </td>
-
-                {/* Action */}
-                <td className="px-6 py-4 text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      console.log(
-                        "Customer View clicked:",
-                        customer
-                      );
-
-                      onView(customer);
-                    }}
-                  >
-                    View
-                  </Button>
-                </td>
-
-              </tr>
-            ))
+                  <td className="px-6 py-4 text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onView(customer)}
+                    >
+                      View
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
-
       </table>
     </div>
   );

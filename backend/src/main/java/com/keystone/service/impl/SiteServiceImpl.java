@@ -9,9 +9,11 @@ import com.keystone.dto.SiteResponse;
 import com.keystone.entity.Customer;
 import com.keystone.entity.Site;
 import com.keystone.enums.ErrorCode;
+import com.keystone.enums.WorkOrderStatus;
 import com.keystone.exception.KeystoneException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.WorkOrderRepository;
 import com.keystone.service.SiteService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class SiteServiceImpl implements SiteService {
 
     private final SiteRepository siteRepository;
     private final CustomerRepository customerRepository;
+    private final WorkOrderRepository workOrderRepository;
 
 	@Override
 	public SiteResponse createSite(SiteRequest request) {
@@ -146,23 +149,43 @@ public class SiteServiceImpl implements SiteService {
     // ENTITY → RESPONSE
     // ==============================================
 
-    private SiteResponse mapToResponse(Site site) {
+	private SiteResponse mapToResponse(Site site) {
 
-        SiteResponse response = new SiteResponse();
+	    SiteResponse response = new SiteResponse();
 
-        response.setId(site.getId());
-        response.setName(site.getName());
-        response.setAddress(site.getAddress());
+	    response.setId(site.getId());
+	    response.setName(site.getName());
+	    response.setAddress(site.getAddress());
 
-        if (site.getCustomer() != null) {
-            response.setCustomerId(
-                    site.getCustomer().getCustomerId()
-            );
-        }
+	    if (site.getCustomer() != null) {
 
-        return response;
-    }
+	        response.setCustomerId(
+	                site.getCustomer().getCustomerId()
+	        );
 
+	        response.setCustomerName(
+	                site.getCustomer().getCustomerName()
+	        );
+	    }
+
+	    List<WorkOrderStatus> activeStatuses = List.of(
+	            WorkOrderStatus.NEW,
+	            WorkOrderStatus.ASSIGNED,
+	            WorkOrderStatus.ACCEPTED,
+	            WorkOrderStatus.IN_PROGRESS,
+	            WorkOrderStatus.ON_HOLD
+	    );
+
+	    long activeWorkOrders =
+	            workOrderRepository.countBySite_IdAndStatusIn(
+	                    site.getId(),
+	                    activeStatuses
+	            );
+
+	    response.setActiveWorkOrders(activeWorkOrders);
+
+	    return response;
+	}
 
 	@Override
 	public SiteResponse updateSite(Long siteId, SiteRequest request) {
@@ -212,5 +235,19 @@ public class SiteServiceImpl implements SiteService {
 	        return mapToResponse(updatedSite);
 	}
     
+	@Override
+	public List<SiteResponse> getAllSites() {
+
+	    log.debug("Fetching all sites");
+
+	    List<SiteResponse> sites = siteRepository.findAll()
+	            .stream()
+	            .map(this::mapToResponse)
+	            .toList();
+
+	    log.debug("Found {} site(s)", sites.size());
+
+	    return sites;
+	}
     
 }

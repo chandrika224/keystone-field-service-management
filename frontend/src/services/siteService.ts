@@ -3,10 +3,22 @@ import type { Site, SiteRequest, SiteResponse } from "@/types/site";
 
 export const siteService = {
   // ==========================================
+  // GET ALL SITES
+  // GET /api/sites
+  // ==========================================
+  getAllSites: async (): Promise<Site[]> => {
+    const response = await api.get<Site[]>("/sites");
+
+    return response.data;
+  },
+
+  // ==========================================
   // GET ALL SITES FOR CUSTOMER
   // GET /api/sites/customer/{customerId}
   // ==========================================
-  getSitesByCustomerId: async (customerId: number): Promise<Site[]> => {
+  getSitesByCustomerId: async (
+    customerId: number
+  ): Promise<Site[]> => {
     const response = await api.get<Site[]>(
       `/sites/customer/${customerId}`
     );
@@ -33,7 +45,9 @@ export const siteService = {
   // GET SITE BY ID
   // GET /api/sites/{siteId}
   // ==========================================
-  getSiteById: async (siteId: number): Promise<SiteResponse> => {
+  getSiteById: async (
+    siteId: number
+  ): Promise<SiteResponse> => {
     const response = await api.get<SiteResponse>(
       `/sites/${siteId}`
     );

@@ -20,5 +20,7 @@ public interface SiteService {
 	
 	public void deleteSite(Long siteId);
 	
+	public List<SiteResponse> getAllSites();
+	
 	
 }

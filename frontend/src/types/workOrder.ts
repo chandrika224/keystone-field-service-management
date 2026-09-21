@@ -95,3 +95,37 @@ export interface DispatcherWorkOrder {
   slaBreached: boolean;
 }
 
+export interface TechnicianWorkOrder {
+  id: number;
+  title: string;
+  description: string;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+
+  scheduledDate: string;
+
+  completedDate: string | null;
+  completedAt: string | null;
+
+  siteId: number | null;
+  siteName: string | null;
+
+  address: string | null;
+
+  serviceType: string | null;
+
+  customerId: number;
+  customerName: string;
+
+  technicianId: number | null;
+  technicianName: string | null;
+
+  assignedById: number | null;
+  assignedAt: string | null;
+
+  createdAt: string;
+  startedAt: string | null;
+
+  slaDueDate: string | null;
+  slaBreached: boolean;
+}

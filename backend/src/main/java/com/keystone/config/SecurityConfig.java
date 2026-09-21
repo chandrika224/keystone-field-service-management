@@ -119,10 +119,14 @@ public class SecurityConfig {
                 // CUSTOMER APIs
                 // ==========================================
 
-                .requestMatchers(
-                    "/api/customers/**"
-                ).hasRole("MANAGER")
-
+             .requestMatchers(
+            		    HttpMethod.GET,
+            		    "/api/customers",
+            		    "/api/customers/**"
+            		).hasAnyRole(
+            		    "MANAGER",
+            		    "DISPATCHER"
+            		)
 
                 // ==========================================
                 // INVENTORY

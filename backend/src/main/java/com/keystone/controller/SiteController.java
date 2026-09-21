@@ -77,6 +77,20 @@ public class SiteController {
     }
     
 	 // ==========================================
+	 // GET ALL SITES
+	 // GET /api/sites
+	 // ==========================================
+	 @GetMapping
+	 public ResponseEntity<List<SiteResponse>> getAllSites() {
+	
+	     log.info("Received request to fetch all sites");
+	
+	     List<SiteResponse> sites = siteService.getAllSites();
+	
+	     return ResponseEntity.ok(sites);
+	 }
+    
+	 // ==========================================
 	 // UPDATE SITE
 	 // PUT /api/sites/{siteId}
 	 // ==========================================

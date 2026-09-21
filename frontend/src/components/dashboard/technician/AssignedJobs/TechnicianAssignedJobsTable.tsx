@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import type { TechnicianJob } from "@/data/technician/jobs";
+
+import type { TechnicianWorkOrder } from "@/types/workOrder";
 
 interface TechnicianAssignedJobsTableProps {
-  jobs: TechnicianJob[];
+  jobs: TechnicianWorkOrder[];
   search: string;
   status: string;
-  onView: (job: TechnicianJob) => void;
+  onView: (job: TechnicianWorkOrder) => void;
 }
 
 export default function TechnicianAssignedJobsTable({
@@ -18,10 +19,17 @@ export default function TechnicianAssignedJobsTable({
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
-      job.workOrderCode.toLowerCase().includes(searchValue) ||
-      job.customer.toLowerCase().includes(searchValue) ||
-      job.site.toLowerCase().includes(searchValue) ||
-      job.service.toLowerCase().includes(searchValue);
+      job.id.toString().includes(searchValue) ||
+      job.title.toLowerCase().includes(searchValue) ||
+      (job.customerName ?? "")
+        .toLowerCase()
+        .includes(searchValue) ||
+      (job.siteName ?? "")
+        .toLowerCase()
+        .includes(searchValue) ||
+      (job.serviceType ?? "")
+        .toLowerCase()
+        .includes(searchValue);
 
     const matchesStatus =
       status === "ALL" ||
@@ -82,43 +90,58 @@ export default function TechnicianAssignedJobsTable({
                 key={job.id}
                 className="border-t"
               >
+
+                {/* Work Order */}
+
                 <td className="px-6 py-4">
                   <div>
                     <p className="font-medium">
-                      {job.workOrderCode}
+                      #{job.id} — {job.title}
                     </p>
 
                     <p className="text-sm text-muted-foreground">
-                      {job.site}
+                      {job.siteName ?? "No site"}
                     </p>
                   </div>
                 </td>
 
-                <td className="px-6 py-4">
-                  {job.customer}
-                </td>
+
+                {/* Customer */}
 
                 <td className="px-6 py-4">
-                  {job.service}
+                  {job.customerName ?? "—"}
                 </td>
+
+
+                {/* Service */}
+
+                <td className="px-6 py-4">
+                  {job.serviceType ?? "—"}
+                </td>
+
+
+                {/* Priority */}
 
                 <td className="px-6 py-4">
                   {job.priority}
                 </td>
 
-                <td className="px-6 py-4">
-                  {job.status.replace("_", " ")}
-                </td>
+
+                {/* Status */}
 
                 <td className="px-6 py-4">
-                  <div>
-                    <p>{job.scheduledDate}</p>
-
-                    <p className="text-sm text-muted-foreground">
-                      {job.scheduledTime}
-                    </p>
-                  </div>
+                  {job.status.replaceAll("_", " ")}
                 </td>
+
+
+                {/* Scheduled */}
+
+                <td className="px-6 py-4">
+                  {job.scheduledDate ?? "—"}
+                </td>
+
+
+                {/* Action */}
 
                 <td className="px-6 py-4 text-right">
                   <Button
@@ -136,6 +159,7 @@ export default function TechnicianAssignedJobsTable({
                     View
                   </Button>
                 </td>
+
               </tr>
             ))
           )}

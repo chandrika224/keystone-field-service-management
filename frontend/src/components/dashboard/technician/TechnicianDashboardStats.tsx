@@ -7,10 +7,10 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card";
 
-import type { TechnicianJob } from "@/data/technician/jobs";
+import type { TechnicianWorkOrder } from "@/types/workOrder";
 
 interface TechnicianDashboardStatsProps {
-  jobs: TechnicianJob[];
+  jobs: TechnicianWorkOrder[];
 }
 
 export default function TechnicianDashboardStats({
@@ -31,6 +31,7 @@ export default function TechnicianDashboardStats({
   const pendingJobs = jobs.filter(
     (job) =>
       job.status === "ASSIGNED" ||
+      job.status === "ACCEPTED" ||
       job.status === "ON_HOLD"
   ).length;
 

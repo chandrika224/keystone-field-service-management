@@ -8,11 +8,10 @@ import {
   BarChart3,
   Settings,
   User,
-  Clock3,
   CalendarDays,
 } from "lucide-react";
-import type { SidebarNavigationItem } from "./types";
 
+import type { SidebarNavigationItem } from "./types";
 
 
 /* ---------------- Customer ---------------- */
@@ -29,17 +28,17 @@ export const customerNavigation: SidebarNavigationItem[] = [
     path: "/customer/work-orders",
   },
   {
-    title: "My sites",
-    icon: ClipboardList,
+    title: "My Sites",
+    icon: MapPinned,
     path: "/customer/sites",
   },
-
   {
     title: "Profile",
     icon: User,
     path: "/customer/profile",
   },
 ];
+
 
 /* ---------------- Dispatcher ---------------- */
 
@@ -76,7 +75,6 @@ export const dispatcherNavigation: SidebarNavigationItem[] = [
   },
 ];
 
-/* ---------------- Technician ---------------- */
 
 /* ---------------- Technician ---------------- */
 
@@ -96,7 +94,6 @@ export const technicianNavigation: SidebarNavigationItem[] = [
     icon: CalendarDays,
     path: "/technician/schedule",
   },
-
   {
     title: "Inventory",
     icon: Package,
@@ -113,6 +110,7 @@ export const technicianNavigation: SidebarNavigationItem[] = [
     path: "/technician/settings",
   },
 ];
+
 
 /* ---------------- Manager ---------------- */
 
@@ -142,7 +140,7 @@ export const managerNavigation: SidebarNavigationItem[] = [
     icon: User,
     path: "/manager/technicians",
   },
-   {
+  {
     title: "Sites",
     icon: MapPinned,
     path: "/manager/sites",
@@ -163,6 +161,7 @@ export const managerNavigation: SidebarNavigationItem[] = [
     path: "/manager/settings",
   },
 ];
+
 
 export function getSidebarNavigation(role: string) {
   switch (role) {

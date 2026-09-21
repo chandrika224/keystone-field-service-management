@@ -8,20 +8,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import {
-  Building2,
   User,
   Mail,
   Phone,
   MapPin,
-  ClipboardList,
+  Hash,
+  ShieldCheck,
 } from "lucide-react";
 
-import type { DispatcherCustomer } from "@/data/dispatcher/customers";
+import type { Customer } from "@/types/customer";
 
 interface DispatcherCustomerDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customer: DispatcherCustomer | null;
+  customer: Customer | null;
 }
 
 export default function DispatcherCustomerDetailsDrawer({
@@ -38,7 +38,7 @@ export default function DispatcherCustomerDetailsDrawer({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
 
         <SheetHeader>
           <SheetTitle>
@@ -54,21 +54,69 @@ export default function DispatcherCustomerDetailsDrawer({
             <div className="flex items-center gap-3">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Building2 className="h-6 w-6 text-primary" />
+                <User className="h-6 w-6 text-primary" />
               </div>
 
               <div>
                 <h2 className="text-2xl font-bold">
-                  {customer.companyName}
+                  {customer.customerName}
                 </h2>
 
                 <p className="text-sm text-muted-foreground">
-                  {customer.id}
+                  Customer #{customer.customerId}
                 </p>
               </div>
 
             </div>
           </div>
+
+
+          {/* Customer Information */}
+
+          <div className="space-y-4">
+
+            <h3 className="font-semibold">
+              Customer Information
+            </h3>
+
+            {/* Customer Code */}
+
+            <div className="flex items-center gap-3">
+
+              <Hash className="h-5 w-5 text-primary" />
+
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Customer Code
+                </p>
+
+                <p className="font-medium">
+                  {customer.customerCode ?? "—"}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Customer Name */}
+
+            <div className="flex items-center gap-3">
+
+              <User className="h-5 w-5 text-primary" />
+
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Customer Name
+                </p>
+
+                <p className="font-medium">
+                  {customer.customerName}
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
 
           {/* Contact Information */}
 
@@ -77,24 +125,6 @@ export default function DispatcherCustomerDetailsDrawer({
             <h3 className="font-semibold">
               Contact Information
             </h3>
-
-            {/* Contact Person */}
-
-            <div className="flex items-center gap-3">
-
-              <User className="h-5 w-5 text-primary" />
-
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Contact Person
-                </p>
-
-                <p className="font-medium">
-                  {customer.contactPerson}
-                </p>
-              </div>
-
-            </div>
 
             {/* Email */}
 
@@ -107,7 +137,7 @@ export default function DispatcherCustomerDetailsDrawer({
                   Email
                 </p>
 
-                <p className="font-medium">
+                <p className="font-medium break-all">
                   {customer.email}
                 </p>
               </div>
@@ -134,45 +164,26 @@ export default function DispatcherCustomerDetailsDrawer({
 
           </div>
 
-          {/* Customer Summary */}
+
+          {/* Address */}
 
           <div className="space-y-4">
 
             <h3 className="font-semibold">
-              Service Summary
+              Address
             </h3>
 
-            {/* Sites */}
+            <div className="flex items-start gap-3">
 
-            <div className="flex items-center gap-3">
-
-              <MapPin className="h-5 w-5 text-primary" />
+              <MapPin className="mt-1 h-5 w-5 shrink-0 text-primary" />
 
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Sites
+                  Registered Address
                 </p>
 
                 <p className="font-medium">
-                  {customer.sites}
-                </p>
-              </div>
-
-            </div>
-
-            {/* Active Work Orders */}
-
-            <div className="flex items-center gap-3">
-
-              <ClipboardList className="h-5 w-5 text-primary" />
-
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Active Work Orders
-                </p>
-
-                <p className="font-medium">
-                  {customer.activeWorkOrders}
+                  {customer.address}
                 </p>
               </div>
 
@@ -180,13 +191,49 @@ export default function DispatcherCustomerDetailsDrawer({
 
           </div>
 
+
+          {/* Account Information */}
+
+          <div className="space-y-4">
+
+            <h3 className="font-semibold">
+              Account Information
+            </h3>
+
+            {/* User ID */}
+
+            <div className="flex items-center gap-3">
+
+              <Hash className="h-5 w-5 text-primary" />
+
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  User ID
+                </p>
+
+                <p className="font-medium">
+                  {customer.userId ?? "—"}
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+
           {/* Status */}
 
           <div>
 
-            <p className="mb-2 text-sm text-muted-foreground">
-              Customer Status
-            </p>
+            <div className="mb-2 flex items-center gap-2">
+
+              <ShieldCheck className="h-5 w-5 text-primary" />
+
+              <p className="text-sm text-muted-foreground">
+                Customer Status
+              </p>
+
+            </div>
 
             <Badge variant="default">
               Active

@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import type {
   CustomerWorkOrder,
   DispatcherWorkOrder,
+  TechnicianWorkOrder,
   WorkOrderPriority,
   WorkOrderStatus,
 } from "@/types/workOrder";
@@ -147,4 +148,99 @@ export const workOrderService = {
 
     return response.data;
   },
+
+  getAssignedWorkOrders: async (
+    email: string
+  ): Promise<TechnicianWorkOrder[]> => {
+    const response = await api.get<TechnicianWorkOrder[]>(
+      `/workorders/technician/my?email=${encodeURIComponent(email)}`
+    );
+
+    return response.data;
+  },
+
+  verifyWorkOrderStatus: async (
+  workOrderId: number
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.get<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}`
+  );
+
+  return response.data;
+},
+
+  acceptWorkOrder: async (
+    workOrderId: number,
+    email: string
+  ): Promise<TechnicianWorkOrder> => {
+    const response = await api.put<TechnicianWorkOrder>(
+      `/workorders/${workOrderId}/accept?email=${encodeURIComponent(email)}`
+    );
+
+    return response.data;
+  },
+
+  startWorkOrder: async (
+  workOrderId: number,
+  email: string
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.put<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}/start?email=${encodeURIComponent(email)}`
+  );
+
+  return response.data;
+},
+
+holdWorkOrder: async (
+  workOrderId: number,
+  email: string
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.put<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}/hold?email=${encodeURIComponent(email)}`
+  );
+
+  return response.data;
+},
+
+resumeWorkOrder: async (
+  workOrderId: number,
+  email: string
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.put<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}/resume?email=${encodeURIComponent(email)}`
+  );
+
+  return response.data;
+},
+
+completeWorkOrder: async (
+  workOrderId: number,
+  email: string
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.put<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}/complete?email=${encodeURIComponent(email)}`
+  );
+
+  return response.data;
+},
+
+cancelWorkOrder: async (
+  workOrderId: number,
+  email: string
+): Promise<TechnicianWorkOrder> => {
+  const response = await api.put<TechnicianWorkOrder>(
+    `/workorders/${workOrderId}/cancel?email=${encodeURIComponent(email)}`
+  );
+
+  return response.data;
+},
 };
+
+console.log(
+  "========== WORK ORDER SERVICE LOADED =========="
+);
+
+console.log(
+  "AVAILABLE WORK ORDER METHODS:",
+  Object.keys(workOrderService)
+);
