@@ -12,7 +12,7 @@ export interface Technician {
   lastName: string;
   email: string;
   phone: string;
-  specialization: string;
+  specialization: TechnicianSpecialization;
   active: boolean;
   available: boolean;
   role: "TECHNICIAN";

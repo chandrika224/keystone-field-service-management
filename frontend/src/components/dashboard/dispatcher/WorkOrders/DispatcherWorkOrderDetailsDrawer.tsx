@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   Sheet,
   SheetContent,
@@ -20,16 +22,10 @@ import {
   Clock,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
-
 import StatusBadge from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 
-import {
-  workOrderService,
-  type CustomerWorkOrderResponse,
-} from "@/services/workOrderService";
-
+import { workOrderService } from "@/services/workOrderService";
 import type { DispatcherWorkOrder } from "@/types/workOrder";
 
 interface DispatcherWorkOrderDetailsDrawerProps {
@@ -45,426 +41,191 @@ export default function DispatcherWorkOrderDetailsDrawer({
   workOrder,
   onAssign,
 }: DispatcherWorkOrderDetailsDrawerProps) {
-
   const [details, setDetails] =
-    useState<CustomerWorkOrderResponse | null>(null);
+    useState<DispatcherWorkOrder | null>(null);
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState<string | null>(null);
-
-
-  // ============================================================
-  // FETCH WORK ORDER DETAILS
-  // ============================================================
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-
     if (!open || !workOrder) {
+      setDetails(null);
+      setLoading(false);
+      setError(null);
       return;
     }
 
+    let isCurrent = true;
+
     const fetchWorkOrderDetails = async () => {
+      setLoading(true);
+      setError(null);
+      setDetails(null);
 
       try {
-
-        setLoading(true);
-        setError(null);
-        setDetails(null);
-
-        console.log(
-          "Fetching work order details:",
-          workOrder.id,
-          "Type:",
-          typeof workOrder.id
+        const data = await workOrderService.getWorkOrderById(
+          workOrder.id
         );
 
-        // IMPORTANT:
-        // workOrder.id is already a number.
-        // Do NOT use Number(workOrder.id).
-
-        if (
-          typeof workOrder.id !== "number" ||
-          !Number.isFinite(workOrder.id)
-        ) {
-
-          console.error(
-            "Invalid work order ID:",
-            workOrder.id
-          );
-
-          setError(
-            "Invalid work order ID."
-          );
-
-          return;
+        if (isCurrent) {
+          setDetails(data);
         }
-
-        const data =
-          await workOrderService.getWorkOrderById(
-            workOrder.id
-          );
-
-        console.log(
-          "Work order details received:",
-          data
-        );
-
-        setDetails(data);
-
       } catch (err) {
+        console.error("Failed to fetch work order details:", err);
 
-        console.error(
-          "Failed to fetch work order details:",
-          err
-        );
-
-        setError(
-          "Failed to load work order details."
-        );
-
+        if (isCurrent) {
+          setError("Failed to load work order details.");
+        }
       } finally {
-
-        setLoading(false);
-
+        if (isCurrent) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchWorkOrderDetails();
+    void fetchWorkOrderDetails();
 
-  }, [open, workOrder]);
-
-
-  // ============================================================
-  // NO WORK ORDER
-  // ============================================================
+    return () => {
+      isCurrent = false;
+    };
+  }, [open, workOrder?.id]);
 
   if (!workOrder) {
     return null;
   }
 
-
-  // ============================================================
-  // DISPLAY DATA
-  // ============================================================
-
-  const displayWorkOrder =
-    details ?? workOrder;
-
-
-  // ============================================================
-  // LOADING
-  // ============================================================
-
-  if (loading) {
-
-    return (
-      <Sheet
-        open={open}
-        onOpenChange={onOpenChange}
-      >
-
-        <SheetContent className="sm:max-w-xl">
-
-          <SheetHeader>
-
-            <SheetTitle>
-              Loading Work Order...
-            </SheetTitle>
-
-            <SheetDescription>
-              Work Order #{workOrder.id}
-            </SheetDescription>
-
-          </SheetHeader>
-
-          <div className="flex items-center justify-center py-12">
-
-            <p className="text-muted-foreground">
-              Loading work order details...
-            </p>
-
-          </div>
-
-        </SheetContent>
-
-      </Sheet>
-    );
-  }
-
-
-  // ============================================================
-  // ERROR
-  // ============================================================
-
-  if (error) {
-
-    return (
-      <Sheet
-        open={open}
-        onOpenChange={onOpenChange}
-      >
-
-        <SheetContent className="sm:max-w-xl">
-
-          <SheetHeader>
-
-            <SheetTitle>
-              Work Order Details
-            </SheetTitle>
-
-            <SheetDescription>
-              Work Order #{workOrder.id}
-            </SheetDescription>
-
-          </SheetHeader>
-
-          <div className="py-8 text-center">
-
-            <p className="text-destructive">
-              {error}
-            </p>
-
-          </div>
-
-        </SheetContent>
-
-      </Sheet>
-    );
-  }
-
-
-  // ============================================================
-  // DRAWER
-  // ============================================================
+  const displayWorkOrder = details ?? workOrder;
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-
-      <SheetContent className="sm:max-w-xl overflow-y-auto">
-
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="overflow-y-auto sm:max-w-xl">
         <SheetHeader>
-
           <SheetTitle>
-            {displayWorkOrder.title}
+            {loading
+              ? "Loading Work Order..."
+              : displayWorkOrder.title}
           </SheetTitle>
 
           <SheetDescription>
-            Work Order #{displayWorkOrder.id}
+            Work Order #{workOrder.id}
           </SheetDescription>
 
-          <div className="pt-2">
-
-            <StatusBadge
-              status={displayWorkOrder.status}
-            />
-
-          </div>
-
+          {!loading && !error && (
+            <div className="pt-2">
+              <StatusBadge status={displayWorkOrder.status} />
+            </div>
+          )}
         </SheetHeader>
 
-
-        <div className="mt-8 space-y-6">
-
-          <Card>
-
-            <CardContent className="space-y-5 p-6">
-
-              {/* CUSTOMER */}
-
-              <div className="flex justify-between gap-4">
-
-                <div className="flex gap-2 items-center">
-
-                  <User className="h-4 w-4" />
-
-                  <span>
-                    Customer
-                  </span>
-
-                </div>
-
-                <span className="font-medium text-right">
-
-                  {"customerName" in displayWorkOrder
-                    ? displayWorkOrder.customerName ||
-                      "Unknown"
-                    : "Unknown"}
-
-                </span>
-
-              </div>
-
-
-              {/* SERVICE */}
-
-              <div className="flex justify-between gap-4">
-
-                <div className="flex gap-2 items-center">
-
-                  <ClipboardList className="h-4 w-4" />
-
-                  <span>
-                    Service
-                  </span>
-
-                </div>
-
-                <span className="font-medium text-right">
-
-                  {displayWorkOrder.title}
-
-                </span>
-
-              </div>
-
-
-              {/* DESCRIPTION */}
-
-              <div className="space-y-2">
-
-                <div className="flex gap-2 items-center">
-
-                  <ClipboardList className="h-4 w-4" />
-
-                  <span>
-                    Description
-                  </span>
-
-                </div>
-
-                <p className="text-sm text-muted-foreground">
-
-                  {displayWorkOrder.description}
-
-                </p>
-
-              </div>
-
-
-              {/* TECHNICIAN */}
-
-              <div className="flex justify-between gap-4">
-
-                <div className="flex gap-2 items-center">
-
-                  <Wrench className="h-4 w-4" />
-
-                  <span>
-                    Technician
-                  </span>
-
-                </div>
-
-                <span className="font-medium text-right">
-
-                  {"technicianName" in displayWorkOrder
-                    ? displayWorkOrder.technicianName ||
-                      "Unassigned"
-                    : "Unassigned"}
-
-                </span>
-
-              </div>
-
-
-              {/* SCHEDULED DATE */}
-
-              <div className="flex justify-between gap-4">
-
-                <div className="flex gap-2 items-center">
-
-                  <CalendarDays className="h-4 w-4" />
-
-                  <span>
-                    Scheduled Date
-                  </span>
-
-                </div>
-
-                <span className="font-medium text-right">
-
-                  {displayWorkOrder.scheduledDate ||
-                    "Not scheduled"}
-
-                </span>
-
-              </div>
-
-
-              {/* PRIORITY */}
-
-              <div className="flex justify-between gap-4">
-
-                <div className="flex gap-2 items-center">
-
-                  <AlertTriangle className="h-4 w-4" />
-
-                  <span>
-                    Priority
-                  </span>
-
-                </div>
-
-                <span className="font-medium">
-
-                  {displayWorkOrder.priority}
-
-                </span>
-
-              </div>
-
-
-              {/* SLA DUE DATE */}
-
-              {"slaDueDate" in displayWorkOrder && (
-
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">
+              Loading work order details...
+            </p>
+          </div>
+        ) : error ? (
+          <div role="alert" className="py-8 text-center">
+            <p className="text-destructive">{error}</p>
+          </div>
+        ) : (
+          <div className="mt-8 space-y-6">
+            <Card>
+              <CardContent className="space-y-5 p-6">
+                {/* Customer */}
                 <div className="flex justify-between gap-4">
-
-                  <div className="flex gap-2 items-center">
-
-                    <Clock className="h-4 w-4" />
-
-                    <span>
-                      SLA Due
-                    </span>
-
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>Customer</span>
                   </div>
 
-                  <span className="font-medium text-right">
+                  <span className="text-right font-medium">
+                    {displayWorkOrder.customerName || "Unknown"}
+                  </span>
+                </div>
 
+                {/* Service */}
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    <span>Service</span>
+                  </div>
+
+                  <span className="text-right font-medium">
+                    {displayWorkOrder.serviceType ||
+                      displayWorkOrder.title ||
+                      "Not specified"}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    <span>Description</span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    {displayWorkOrder.description || "No description provided."}
+                  </p>
+                </div>
+
+                {/* Technician */}
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4" />
+                    <span>Technician</span>
+                  </div>
+
+                  <span className="text-right font-medium">
+                    {displayWorkOrder.technicianName || "Unassigned"}
+                  </span>
+                </div>
+
+                {/* Scheduled date */}
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>Scheduled Date</span>
+                  </div>
+
+                  <span className="text-right font-medium">
+                    {displayWorkOrder.scheduledDate || "Not scheduled"}
+                  </span>
+                </div>
+
+                {/* Priority */}
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>Priority</span>
+                  </div>
+
+                  <span className="font-medium">
+                    {displayWorkOrder.priority}
+                  </span>
+                </div>
+
+                {/* SLA due date */}
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>SLA Due</span>
+                  </div>
+
+                  <span className="text-right font-medium">
                     {displayWorkOrder.slaDueDate
                       ? new Date(
                           displayWorkOrder.slaDueDate
                         ).toLocaleString()
                       : "Not available"}
-
                   </span>
-
                 </div>
 
-              )}
-
-
-              {/* SLA STATUS */}
-
-              {"slaBreached" in displayWorkOrder && (
-
+                {/* SLA status */}
                 <div className="flex justify-between gap-4">
-
-                  <div className="flex gap-2 items-center">
-
+                  <div className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-
-                    <span>
-                      SLA Status
-                    </span>
-
+                    <span>SLA Status</span>
                   </div>
 
                   <span
@@ -474,48 +235,25 @@ export default function DispatcherWorkOrderDetailsDrawer({
                         : "font-medium"
                     }
                   >
-
                     {displayWorkOrder.slaBreached
                       ? "Breached"
                       : "Within SLA"}
-
                   </span>
-
                 </div>
+              </CardContent>
+            </Card>
 
-              )}
-
-            </CardContent>
-
-          </Card>
-
-
-          {/* ASSIGN BUTTON */}
-
-          <div className="flex justify-end">
-
-            {onAssign &&
-              ("technicianName" in displayWorkOrder
-                ? displayWorkOrder.technicianName ===
-                  "Unassigned"
-                : false) && (
-
-                <Button
-                  onClick={() =>
-                    onAssign(workOrder)
-                  }
-                >
+            {/* Assign button */}
+            {onAssign && displayWorkOrder.technicianId == null && (
+              <div className="flex justify-end">
+                <Button onClick={() => onAssign(displayWorkOrder)}>
                   Assign Technician
                 </Button>
-
-              )}
-
+              </div>
+            )}
           </div>
-
-        </div>
-
+        )}
       </SheetContent>
-
     </Sheet>
   );
 }

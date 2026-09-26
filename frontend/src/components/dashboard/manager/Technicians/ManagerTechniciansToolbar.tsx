@@ -44,18 +44,12 @@ export default function ManagerTechniciansToolbar({
         </SelectTrigger>
 
         <SelectContent>
-          <SelectItem value="ALL">
-            All Technicians
-          </SelectItem>
-
-          <SelectItem value="Available">
-            Available
-          </SelectItem>
-
-          <SelectItem value="Busy">
-            Busy
-          </SelectItem>
+          <SelectItem value="ALL">All Technicians</SelectItem>
+          <SelectItem value="Available">Available</SelectItem>
+          <SelectItem value="Unavailable">Unavailable</SelectItem>
+          <SelectItem value="Inactive">Inactive</SelectItem>
         </SelectContent>
+        
       </Select>
 
     </div>
