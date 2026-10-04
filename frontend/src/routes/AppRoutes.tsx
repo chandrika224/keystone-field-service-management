@@ -1,5 +1,5 @@
-
 import { Routes, Route } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ============================================================
 // LAYOUTS
@@ -42,6 +42,7 @@ import CustomerDashboard from "@/pages/customer/Dashboard";
 import WorkOrders from "@/pages/customer/WorkOrders";
 import Profile from "@/pages/customer/Profile";
 import CustomerSupport from "@/pages/customer/Support";
+import MySites from "@/pages/customer/Sites";
 
 // ============================================================
 // DISPATCHER PAGES
@@ -79,99 +80,57 @@ import ManagerInventory from "@/pages/manager/ManagerInventory";
 import ManagerReports from "@/pages/manager/ManagerReports";
 import ManagerStaff from "@/pages/manager/ManagerStaff";
 import ManagerSettings from "@/pages/manager/ManagerSettings";
-import MySites from "@/pages/customer/Sites";
 
 // ============================================================
 // APP ROUTES
 // ============================================================
 
 export default function AppRoutes() {
+  // Get the currently authenticated user from AuthContext.
+  const { user } = useAuth();
+
   return (
     <Routes>
-
       {/* ======================================================
           PUBLIC WEBSITE
           ====================================================== */}
 
       <Route element={<PublicLayout />}>
-
-        <Route
-          path="/"
-          element={<Home />}
-        />
-
-        <Route
-          path="/about"
-          element={<About />}
-        />
-
-        <Route
-          path="/services"
-          element={<Services />}
-        />
-
-        <Route
-          path="/contact"
-          element={<Contact />}
-        />
-
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
-
 
       {/* ======================================================
           PUBLIC AUTHENTICATION
-
-          These pages are accessible when NOT authenticated.
           ====================================================== */}
 
-        <Route element={<AuthLayout />}>
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
-
-          <Route
-            path="/reset-password"
-            element={<ResetPassword />}
-          />
-
-        </Route>
-
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+      </Route>
 
       {/* ======================================================
           PROTECTED APPLICATION
-
-          Everything inside ProtectedRoute requires login.
           ====================================================== */}
 
       <Route element={<ProtectedRoute />}>
-
         <Route element={<DashboardLayout />}>
-
-
           {/* ==================================================
               CUSTOMER
               ================================================== */}
 
           <Route
             path="/customer"
-            element={<CustomerDashboard />}
+            element={<CustomerDashboard email={user?.email ?? ""} />}
           />
 
           <Route
             path="/customer/dashboard"
-            element={<CustomerDashboard />}
+            element={<CustomerDashboard email={user?.email ?? ""} />}
           />
 
           <Route
@@ -180,19 +139,19 @@ export default function AppRoutes() {
           />
 
           <Route
-              path="/customer/sites"
-              element={<MySites />}
-            />
+            path="/customer/sites"
+            element={<MySites />}
+          />
 
           <Route
             path="/customer/profile"
             element={<Profile />}
           />
-          <Route
-             path="/customer/support"
-             element={<CustomerSupport />}
-          />
 
+          <Route
+            path="/customer/support"
+            element={<CustomerSupport />}
+          />
 
           {/* ==================================================
               DISPATCHER
@@ -227,7 +186,6 @@ export default function AppRoutes() {
             path="/dispatcher/sites"
             element={<DispatcherSites />}
           />
-
 
           {/* ==================================================
               TECHNICIAN
@@ -267,7 +225,6 @@ export default function AppRoutes() {
             path="/technician/settings"
             element={<TechnicianSettings />}
           />
-
 
           {/* ==================================================
               MANAGER
@@ -317,12 +274,8 @@ export default function AppRoutes() {
             path="/manager/settings"
             element={<ManagerSettings />}
           />
-
         </Route>
-
       </Route>
-
     </Routes>
   );
 }
-

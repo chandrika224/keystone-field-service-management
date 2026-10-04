@@ -1,50 +1,71 @@
-import { upcomingSchedule } from "@/data/dashboard/upcomingSchedule";
+import type { CustomerWorkOrder } from "@/types/workOrder";
 
-export default function UpcomingSchedule() {
+type UpcomingScheduleProps = {
+  workOrders: CustomerWorkOrder[];
+};
+
+export default function UpcomingSchedule({
+  workOrders,
+}: UpcomingScheduleProps) {
   return (
     <div className="rounded-2xl border bg-card shadow-sm">
+      {workOrders.length === 0 ? (
+        <div className="p-5 text-sm text-muted-foreground">
+          You have no upcoming service appointments.
+        </div>
+      ) : (
+        <div className="divide-y">
+          {workOrders.map((order) => {
+            const scheduledDate = order.scheduledDate
+              ? new Date(order.scheduledDate)
+              : null;
 
-      <div className="divide-y">
+            const formattedDate =
+              scheduledDate && !Number.isNaN(scheduledDate.getTime())
+                ? scheduledDate.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Date not available";
 
-        {upcomingSchedule.map((item) => (
+            const location =
+              order.address || order.siteName || "Location not available";
 
-          <div
-            key={item.time}
-            className="flex items-center justify-between p-5"
-          >
+            return (
+              <div
+                key={order.id}
+                className="flex items-center justify-between gap-4 p-5"
+              >
+                <div className="min-w-0">
+                  <h3 className="truncate font-semibold">
+                    {order.title}
+                  </h3>
 
-            <div>
+                  <p className="text-sm text-muted-foreground">
+                    {location}
+                  </p>
+                </div>
 
-              <h3 className="font-semibold">
-                {item.title}
-              </h3>
-
-              <p className="text-sm text-muted-foreground">
-                {item.location}
-              </p>
-
-            </div>
-
-            <span
-              className="
-                rounded-lg
-                bg-primary/10
-                px-3
-                py-1
-                text-sm
-                font-medium
-                text-primary
-              "
-            >
-              {item.time}
-            </span>
-
-          </div>
-
-        ))}
-
-      </div>
-
+                <span
+                  className="
+                    shrink-0
+                    rounded-lg
+                    bg-primary/10
+                    px-3
+                    py-1
+                    text-sm
+                    font-medium
+                    text-primary
+                  "
+                >
+                  {formattedDate}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

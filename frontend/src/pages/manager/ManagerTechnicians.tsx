@@ -112,6 +112,8 @@ const handleViewTechnician = async (technician: Technician) => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         technician={selectedTechnician}
+        loading={detailLoading}
+        error={detailError}
       />
     </div>
   );

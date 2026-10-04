@@ -1,50 +1,43 @@
-import { recentWorkOrders } from "@/data/dashboard/recentWorkOrders";
-import StatusBadge from "@/components/common/StatusBadge";
-import type { WorkOrderStatus } from "@/types/status";
+import type { CustomerWorkOrder } from "@/types/workOrder";
 
-export default function RecentWorkOrders() {
+type RecentWorkOrdersProps = {
+  workOrders: CustomerWorkOrder[];
+};
+
+export default function RecentWorkOrders({
+  workOrders,
+}: RecentWorkOrdersProps) {
+  if (workOrders.length === 0) {
+    return (
+      <div className="rounded-xl border p-6 text-sm text-muted-foreground">
+        You don't have any recent work orders yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl border bg-card shadow-sm">
-
-      <div className="divide-y">
-
-        {recentWorkOrders.map((order) => (
-
-          <div
-            key={order.id}
-            className="flex items-center justify-between p-5"
-          >
-
-            <div>
-
-              <h3 className="font-semibold">
-                {order.service}
-              </h3>
-
-              <p className="text-sm text-muted-foreground">
-                {order.id}
-              </p>
-
-            </div>
-
-            <div className="text-right">
-
-              <StatusBadge
-                status={order.status as WorkOrderStatus}
-              />
-
-              <p className="text-sm text-muted-foreground">
-                {order.date}
-              </p>
-
-            </div>
-
+    <div className="space-y-3">
+      {workOrders.map((order) => (
+        <div key={order.id} className="rounded-xl border p-4">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 className="font-medium">{order.title}</h3>
+            <span className="rounded-full bg-muted px-2 py-1 text-xs">
+              {order.status.replaceAll("_", " ")}
+            </span>
           </div>
 
-        ))}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {order.serviceType || "Service"}
+          </p>
 
-      </div>
-
+          <p className="mt-2 text-xs text-muted-foreground">
+            Created:{" "}
+            {order.createdAt
+              ? new Date(order.createdAt).toLocaleDateString()
+              : "Date unavailable"}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

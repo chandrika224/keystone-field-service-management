@@ -1,19 +1,34 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type {
+  WorkOrderStatus,
+  WorkOrderPriority,
+} from "@/types/workOrder";
+
+interface ManagerWorkOrderSummary {
+  id: number;
+  customer: string;
+  service: string;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+}
 
 interface ManagerRecentWorkOrdersProps {
-  workOrders: DispatcherWorkOrder[];
-  onView?: (workOrder: DispatcherWorkOrder) => void;
+  workOrders: ManagerWorkOrderSummary[];
+  onView?: (workOrder: ManagerWorkOrderSummary) => void;
 }
 
 export default function ManagerRecentWorkOrders({
   workOrders,
   onView,
 }: ManagerRecentWorkOrdersProps) {
-
   const recentWorkOrders = workOrders.slice(0, 5);
 
   return (
@@ -23,19 +38,15 @@ export default function ManagerRecentWorkOrders({
       </CardHeader>
 
       <CardContent>
-
         {recentWorkOrders.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             No recent work orders.
           </div>
         ) : (
           <div className="overflow-x-auto">
-
             <table className="w-full">
-
               <thead>
                 <tr className="border-b text-sm text-muted-foreground">
-
                   <th className="px-4 py-3 text-left">
                     Work Order
                   </th>
@@ -59,25 +70,19 @@ export default function ManagerRecentWorkOrders({
                   <th className="px-4 py-3 text-right">
                     Action
                   </th>
-
                 </tr>
               </thead>
 
               <tbody>
-
                 {recentWorkOrders.map((workOrder) => (
-
                   <tr
                     key={workOrder.id}
                     className="border-b last:border-0"
                   >
-
                     <td className="px-4 py-4">
-
                       <p className="font-medium">
                         {workOrder.id}
                       </p>
-
                     </td>
 
                     <td className="px-4 py-4">
@@ -89,23 +94,18 @@ export default function ManagerRecentWorkOrders({
                     </td>
 
                     <td className="px-4 py-4">
-
                       <Badge variant="outline">
                         {workOrder.priority}
                       </Badge>
-
                     </td>
 
                     <td className="px-4 py-4">
-
                       <Badge>
-                        {workOrder.status.replace("_", " ")}
+                        {workOrder.status.replaceAll("_", " ")}
                       </Badge>
-
                     </td>
 
                     <td className="px-4 py-4 text-right">
-
                       <Button
                         variant="outline"
                         size="sm"
@@ -113,20 +113,13 @@ export default function ManagerRecentWorkOrders({
                       >
                         View
                       </Button>
-
                     </td>
-
                   </tr>
-
                 ))}
-
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </CardContent>
     </Card>
   );
