@@ -1,37 +1,75 @@
+
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-import type { TechnicianPerformance } from "@/data/manager/reports";
-
-import {
-  getTechnicianCompletionRate,
-} from "@/data/manager/reports";
+import type { DispatcherWorkOrder } from "@/types/workOrder";
 
 interface ManagerTechnicianPerformanceChartProps {
-  data: TechnicianPerformance[];
+  workOrders: DispatcherWorkOrder[];
 }
 
 export default function ManagerTechnicianPerformanceChart({
-  data,
+  workOrders,
 }: ManagerTechnicianPerformanceChartProps) {
-  const chartData = data.map((technician) => ({
-    name: technician.name,
-    completionRate:
-      getTechnicianCompletionRate(technician),
-  }));
+  const technicians = Object.values(
+    workOrders.reduce<
+      Record<
+        string,
+        {
+          id: string;
+          name: string;
+          assigned: number;
+          completed: number;
+        }
+      >
+    >((result, order) => {
+      if (!order.technicianId) return result;
+
+      const id = String(order.technicianId);
+
+      if (!result[id]) {
+        result[id] = {
+          id,
+          name: order.technicianName || `Technician ${id}`,
+          assigned: 0,
+          completed: 0,
+        };
+      }
+
+      result[id].assigned++;
+
+      if (
+        order.status === "COMPLETED" ||
+        order.status === "CLOSED"
+      ) {
+        result[id].completed++;
+      }
+
+      return result;
+    }, {})
+  );
+
+  const chartData = technicians
+    .map((technician) => ({
+      name: technician.name,
+      completionRate:
+        technician.assigned === 0
+          ? 0
+          : Math.round(
+              (technician.completed / technician.assigned) * 100
+            ),
+    }))
+    .sort((a, b) => b.completionRate - a.completionRate);
 
   return (
     <div className="rounded-xl border bg-card p-5 shadow-sm">
-      {/* Header */}
-
       <div className="mb-6">
         <h2 className="text-lg font-semibold">
           Technician Performance
@@ -43,8 +81,6 @@ export default function ManagerTechnicianPerformanceChart({
         </p>
       </div>
 
-      {/* Chart */}
-
       <div className="h-[360px]">
         {chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -53,10 +89,7 @@ export default function ManagerTechnicianPerformanceChart({
             </p>
           </div>
         ) : (
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               layout="vertical"
@@ -95,14 +128,9 @@ export default function ManagerTechnicianPerformanceChart({
               <Bar
                 dataKey="completionRate"
                 name="Completion Rate"
+                fill="#2563eb"
                 radius={[0, 6, 6, 0]}
-              >
-                {chartData.map((technician) => (
-                  <Cell
-                    key={technician.name}
-                  />
-                ))}
-              </Bar>
+              />
             </BarChart>
           </ResponsiveContainer>
         )}

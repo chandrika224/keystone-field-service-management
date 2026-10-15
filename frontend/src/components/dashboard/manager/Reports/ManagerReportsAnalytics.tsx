@@ -1,64 +1,36 @@
-import ManagerWorkOrderTrendsChart
-  from "@/components/dashboard/manager/Reports/ManagerWorkOrderTrendsChart";
 
-import ManagerWorkOrderStatusChart
-  from "@/components/dashboard/manager/Reports/ManagerWorkOrderStatusChart";
+import ManagerWorkOrderTrendsChart from "@/components/dashboard/manager/Reports/ManagerWorkOrderTrendsChart";
+import ManagerWorkOrderStatusChart from "@/components/dashboard/manager/Reports/ManagerWorkOrderStatusChart";
+import ManagerServiceDistributionChart from "@/components/dashboard/manager/Reports/ManagerServiceDistributionChart";
+import ManagerTechnicianPerformanceChart from "@/components/dashboard/manager/Reports/ManagerTechnicianPerformanceChart";
 
-import ManagerServiceDistributionChart
-  from "@/components/dashboard/manager/Reports/ManagerServiceDistributionChart";
-
-import ManagerTechnicianPerformanceChart
-  from "@/components/dashboard/manager/Reports/ManagerTechnicianPerformanceChart";
-
-import {
-  reportSummary,
-  workOrderPerformance,
-  servicePerformance,
-  technicianPerformance,
-} from "@/data/manager/reports";
+import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type { ReportSummary } from "@/data/manager/reports";
 
 interface ManagerReportsAnalyticsProps {
-  workOrderData: typeof workOrderPerformance;
+  workOrderData: DispatcherWorkOrder[];
+  summary: ReportSummary;
 }
 
 export default function ManagerReportsAnalytics({
-  workOrderData,
+  workOrderData = [],
+  summary,
 }: ManagerReportsAnalyticsProps) {
   return (
     <div className="space-y-6">
-
-      {/* ========================================= */}
-      {/* Work Order Trends */}
-      {/* ========================================= */}
-
-      <ManagerWorkOrderTrendsChart
-        data={workOrderData}
-      />
-
-      {/* ========================================= */}
-      {/* Status + Service */}
-      {/* ========================================= */}
+      <ManagerWorkOrderTrendsChart data={workOrderData} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-
-        <ManagerWorkOrderStatusChart
-          summary={reportSummary}
-        />
+        <ManagerWorkOrderStatusChart summary={summary} />
 
         <ManagerServiceDistributionChart
-          data={servicePerformance}
+          workOrders={workOrderData}
         />
-
       </div>
 
-      {/* ========================================= */}
-      {/* Technician Performance */}
-      {/* ========================================= */}
-
       <ManagerTechnicianPerformanceChart
-        data={technicianPerformance}
+        workOrders={workOrderData}
       />
-
     </div>
   );
 }

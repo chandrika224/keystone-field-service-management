@@ -1,28 +1,17 @@
+
 import { useEffect, useMemo, useState } from "react";
 
-import SectionHeader
-  from "@/components/dashboard/shared/SectionHeader";
-
-import ManagerReportsStats
-  from "@/components/dashboard/manager/Reports/ManagerReportsStats";
-
-import ManagerReportsToolbar
-  from "@/components/dashboard/manager/Reports/ManagerReportsToolbar";
-
-import ManagerReportsAnalytics
-  from "@/components/dashboard/manager/Reports/ManagerReportsAnalytics";
-
-import ManagerTechnicianPerformance
-  from "@/components/dashboard/manager/Reports/ManagerTechnicianPerformance";
-
-import ManagerCustomerServicePerformance
-  from "@/components/dashboard/manager/Reports/ManagerCustomerServicePerformance";
+import SectionHeader from "@/components/dashboard/shared/SectionHeader";
+import ManagerReportsStats from "@/components/dashboard/manager/Reports/ManagerReportsStats";
+import ManagerReportsToolbar from "@/components/dashboard/manager/Reports/ManagerReportsToolbar";
+import ManagerReportsAnalytics from "@/components/dashboard/manager/Reports/ManagerReportsAnalytics";
+import ManagerTechnicianPerformance from "@/components/dashboard/manager/Reports/ManagerTechnicianPerformance";
+import ManagerCustomerServicePerformance from "@/components/dashboard/manager/Reports/ManagerCustomerServicePerformance";
 
 import {
-  technicianPerformance,
   customerPerformance,
   servicePerformance,
-  workOrderPerformance,
+  technicianPerformance,
 } from "@/data/manager/reports";
 
 import type { ReportSummary } from "@/data/manager/reports";
@@ -41,6 +30,7 @@ export default function ManagerReports() {
   const [period, setPeriod] = useState("Last 6 Months");
   const [customer, setCustomer] = useState("All");
 
+  const [workOrders, setWorkOrders] = useState<DispatcherWorkOrder[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(initialSummary);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,129 +39,151 @@ export default function ManagerReports() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadReportSummary() {
+    async function loadReports() {
       try {
         setLoading(true);
         setError("");
 
-        const workOrders: DispatcherWorkOrder[] =
+        const result: DispatcherWorkOrder[] =
           await workOrderService.getAllWorkOrders();
 
         if (!isMounted) return;
 
-        const completedWorkOrders = workOrders.filter(
+        const orders = Array.isArray(result) ? result : [];
+
+        setWorkOrders(orders);
+
+        const completed = orders.filter(
           (order) =>
             order.status === "COMPLETED" ||
             order.status === "CLOSED"
         ).length;
 
-        const cancelledWorkOrders = workOrders.filter(
+        const cancelled = orders.filter(
           (order) => order.status === "CANCELLED"
         ).length;
 
-        const pendingWorkOrders = workOrders.filter(
-          (order) =>
-            order.status === "NEW" ||
-            order.status === "ASSIGNED" ||
-            order.status === "ACCEPTED" ||
-            order.status === "IN_PROGRESS" ||
-            order.status === "ON_HOLD"
+        const pending = orders.filter((order) =>
+          [
+            "NEW",
+            "ASSIGNED",
+            "ACCEPTED",
+            "IN_PROGRESS",
+            "ON_HOLD",
+          ].includes(order.status)
         ).length;
 
-        const totalWorkOrders = workOrders.length;
-
-        const completionRate =
-          totalWorkOrders === 0
-            ? 0
-            : Math.round(
-                (completedWorkOrders / totalWorkOrders) * 100
-              );
-
         setSummary({
-          totalWorkOrders,
-          completedWorkOrders,
-          pendingWorkOrders,
-          cancelledWorkOrders,
-          completionRate,
+          totalWorkOrders: orders.length,
+          completedWorkOrders: completed,
+          pendingWorkOrders: pending,
+          cancelledWorkOrders: cancelled,
+          completionRate:
+            orders.length === 0
+              ? 0
+              : Math.round((completed / orders.length) * 100),
         });
       } catch (err) {
-        console.error("Failed to load manager report summary:", err);
+        console.error("Failed to load manager reports:", err);
 
         if (isMounted) {
           setError(
-            "Could not load report summary. Check the API connection and try again."
+            "Could not load reports. Check the API connection and try again."
           );
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
 
-    loadReportSummary();
+    loadReports();
 
     return () => {
       isMounted = false;
     };
   }, [retryKey]);
 
-  // These customer options and detail datasets are still local/mock data.
-  const customers = useMemo(() => {
-    return customerPerformance.map((item) => item.customer);
-  }, []);
+  const customers = useMemo(
+    () => [...new Set(
+      workOrders
+        .map((order) => order.customerName)
+        .filter((name): name is string => Boolean(name))
+    )],
+    [workOrders]
+  );
 
-  const handlePeriodChange = (value: string) => {
-    setPeriod(value);
-  };
+  const filteredWorkOrders = useMemo(() => {
+    const now = new Date();
+    let startDate: Date;
 
-  const handleCustomerChange = (value: string) => {
-    setCustomer(value);
-  };
+    switch (period) {
+      case "This Month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "Last Month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        break;
+      case "This Quarter":
+        startDate = new Date(
+          now.getFullYear(),
+          Math.floor(now.getMonth() / 3) * 3,
+          1
+        );
+        break;
+      case "This Year":
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    }
+
+    return workOrders.filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      if (Number.isNaN(orderDate.getTime())) return false;
+
+      const matchesPeriod =
+        orderDate >= startDate && orderDate <= now;
+
+      const matchesCustomer =
+        customer === "All" || order.customerName === customer;
+
+      return matchesPeriod && matchesCustomer;
+    });
+  }, [workOrders, period, customer]);
+
+  const filteredSummary = useMemo(() => {
+    const completed = filteredWorkOrders.filter(
+      (order) =>
+        order.status === "COMPLETED" ||
+        order.status === "CLOSED"
+    ).length;
+
+    const cancelled = filteredWorkOrders.filter(
+      (order) => order.status === "CANCELLED"
+    ).length;
+
+    const pending = filteredWorkOrders.filter((order) =>
+      ["NEW", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "ON_HOLD"].includes(
+        order.status
+      )
+    ).length;
+
+    return {
+      totalWorkOrders: filteredWorkOrders.length,
+      completedWorkOrders: completed,
+      pendingWorkOrders: pending,
+      cancelledWorkOrders: cancelled,
+      completionRate:
+        filteredWorkOrders.length === 0
+          ? 0
+          : Math.round((completed / filteredWorkOrders.length) * 100),
+    };
+  }, [filteredWorkOrders]);
 
   const handleClearFilters = () => {
     setPeriod("Last 6 Months");
     setCustomer("All");
   };
-
-  const filteredCustomers = useMemo(() => {
-    if (customer === "All") {
-      return customerPerformance;
-    }
-
-    return customerPerformance.filter(
-      (item) => item.customer === customer
-    );
-  }, [customer]);
-
-  // This month mapping is still fixed demo data, not a live date range.
-  const getPeriodMonths = (selectedPeriod: string) => {
-    switch (selectedPeriod) {
-      case "This Month":
-        return ["Jun"];
-
-      case "Last Month":
-        return ["May"];
-
-      case "This Quarter":
-        return ["Apr", "May", "Jun"];
-
-      case "This Year":
-        return ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-
-      case "Last 6 Months":
-      default:
-        return ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-    }
-  };
-
-  const filteredWorkOrderPerformance = useMemo(() => {
-    const months = getPeriodMonths(period);
-
-    return workOrderPerformance.filter((item) =>
-      months.includes(item.period)
-    );
-  }, [period]);
 
   return (
     <div className="space-y-6">
@@ -182,12 +194,11 @@ export default function ManagerReports() {
 
       {loading ? (
         <p className="text-sm text-muted-foreground">
-          Loading report summary...
+          Loading reports...
         </p>
       ) : error ? (
         <div className="rounded-md border border-destructive/30 p-4">
           <p className="text-sm text-destructive">{error}</p>
-
           <button
             type="button"
             className="mt-2 text-sm font-medium underline"
@@ -197,29 +208,29 @@ export default function ManagerReports() {
           </button>
         </div>
       ) : (
-        <ManagerReportsStats summary={summary} />
+        <ManagerReportsStats summary={filteredSummary} />
       )}
 
       <ManagerReportsToolbar
         period={period}
         customer={customer}
-        customers={customers}
-        onPeriodChange={handlePeriodChange}
-        onCustomerChange={handleCustomerChange}
+        customers={["All", ...customers]}
+        onPeriodChange={setPeriod}
+        onCustomerChange={setCustomer}
         onClearFilters={handleClearFilters}
       />
 
       <ManagerReportsAnalytics
-        workOrderData={filteredWorkOrderPerformance}
+        workOrderData={filteredWorkOrders}
+        summary={filteredSummary}
       />
 
       <ManagerTechnicianPerformance
-        technicians={technicianPerformance}
+        workOrders={filteredWorkOrders}
       />
 
       <ManagerCustomerServicePerformance
-        customers={filteredCustomers}
-        services={servicePerformance}
+        workOrders={filteredWorkOrders}
       />
     </div>
   );

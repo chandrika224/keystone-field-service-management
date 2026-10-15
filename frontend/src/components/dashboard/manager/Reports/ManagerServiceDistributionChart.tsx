@@ -1,3 +1,4 @@
+
 import {
   Bar,
   BarChart,
@@ -8,19 +9,32 @@ import {
   YAxis,
 } from "recharts";
 
-import type { ServicePerformance } from "@/data/manager/reports";
+import type { DispatcherWorkOrder } from "@/types/workOrder";
 
 interface ManagerServiceDistributionChartProps {
-  data: ServicePerformance[];
+  workOrders?: DispatcherWorkOrder[];
 }
 
 export default function ManagerServiceDistributionChart({
-  data,
+  workOrders = [],
 }: ManagerServiceDistributionChartProps) {
+  const data = Object.values(
+    workOrders.reduce<
+      Record<string, { service: string; workOrders: number }>
+    >((result, order) => {
+      const service = order.serviceType?.trim() || "Unspecified";
+
+      if (!result[service]) {
+        result[service] = { service, workOrders: 0 };
+      }
+
+      result[service].workOrders++;
+      return result;
+    }, {})
+  ).sort((a, b) => b.workOrders - a.workOrders);
+
   return (
     <div className="rounded-xl border bg-card p-5 shadow-sm">
-      {/* Header */}
-
       <div className="mb-6">
         <h2 className="text-lg font-semibold">
           Service Distribution
@@ -31,8 +45,6 @@ export default function ManagerServiceDistributionChart({
         </p>
       </div>
 
-      {/* Chart */}
-
       <div className="h-[320px]">
         {data.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -41,10 +53,7 @@ export default function ManagerServiceDistributionChart({
             </p>
           </div>
         ) : (
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               margin={{
@@ -54,9 +63,7 @@ export default function ManagerServiceDistributionChart({
                 bottom: 50,
               }}
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-              />
+              <CartesianGrid strokeDasharray="3 3" />
 
               <XAxis
                 dataKey="service"
