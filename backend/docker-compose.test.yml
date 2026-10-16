@@ -1,0 +1,20 @@
+
+services:
+  backend-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: keystone-backend-test
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/keystone_restore_test
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: "1234"
+    ports:
+      - "8081:8080"
+    networks:
+      - backend_default
+
+networks:
+  backend_default:
+    external: true
+    name: backend_default
