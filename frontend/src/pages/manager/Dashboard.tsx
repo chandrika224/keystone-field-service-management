@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import ManagerDashboardStats
@@ -9,17 +10,25 @@ import ManagerRecentWorkOrders
 import ManagerTechnicianOverview
   from "@/components/dashboard/manager/ManagerTechnicianOverview";
 
-import { technicians } from "@/data/dispatcher/technicians";
-
 import { workOrderService } from "@/services/workOrderService";
 import { technicianService } from "@/services/technicianService";
+
 import type { DispatcherWorkOrder } from "@/types/workOrder";
+import type { Technician as ApiTechnician } from "@/types/technician";
 
 interface ManagerStats {
   totalWorkOrders: number;
   activeJobs: number;
   completedJobs: number;
   availableTechnicians: number;
+}
+
+interface ManagerTechnician {
+  id: number;
+  name: string;
+  specialization: string;
+  status: "Available" | "Busy";
+  currentJobs: number;
 }
 
 const initialStats: ManagerStats = {
@@ -32,6 +41,7 @@ const initialStats: ManagerStats = {
 export default function ManagerDashboard() {
   const [stats, setStats] = useState<ManagerStats>(initialStats);
   const [workOrders, setWorkOrders] = useState<DispatcherWorkOrder[]>([]);
+  const [technicians, setTechnicians] = useState<ApiTechnician[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
@@ -44,15 +54,16 @@ export default function ManagerDashboard() {
         setLoading(true);
         setError("");
 
-        const [fetchedWorkOrders, availableTechnicians] =
+        const [fetchedWorkOrders, fetchedTechnicians] =
           await Promise.all([
             workOrderService.getAllWorkOrders(),
-            technicianService.getAvailableTechnicians(),
+            technicianService.getAllTechnicians(),
           ]);
 
         if (!isMounted) return;
 
         setWorkOrders(fetchedWorkOrders);
+        setTechnicians(fetchedTechnicians);
 
         const activeJobs = fetchedWorkOrders.filter(
           (workOrder) =>
@@ -66,11 +77,16 @@ export default function ManagerDashboard() {
             workOrder.status === "CLOSED"
         ).length;
 
+        const availableTechnicians = fetchedTechnicians.filter(
+          (technician) =>
+            technician.active && technician.available
+        ).length;
+
         setStats({
           totalWorkOrders: fetchedWorkOrders.length,
           activeJobs,
           completedJobs,
-          availableTechnicians: availableTechnicians.length,
+          availableTechnicians,
         });
       } catch (err) {
         console.error(
@@ -96,6 +112,27 @@ export default function ManagerDashboard() {
       isMounted = false;
     };
   }, [retryKey]);
+
+  const managerTechnicians: ManagerTechnician[] = technicians
+    .filter((technician) => technician.active)
+    .map((technician) => {
+      const currentJobs = workOrders.filter(
+        (workOrder) =>
+          workOrder.technicianId === technician.id &&
+          (
+            workOrder.status === "IN_PROGRESS" ||
+            workOrder.status === "ON_HOLD"
+          )
+      ).length;
+
+      return {
+        id: technician.id,
+        name: `${technician.firstName} ${technician.lastName}`,
+        specialization: technician.specialization,
+        status: technician.available ? "Available" : "Busy",
+        currentJobs,
+      };
+    });
 
   const recentWorkOrderSummaries = workOrders.map((workOrder) => ({
     id: workOrder.id,
@@ -143,9 +180,8 @@ export default function ManagerDashboard() {
         workOrders={recentWorkOrderSummaries}
       />
 
-      {/* Still using local/mock data; we'll connect this next. */}
       <ManagerTechnicianOverview
-        technicians={technicians}
+        technicians={managerTechnicians}
       />
     </div>
   );

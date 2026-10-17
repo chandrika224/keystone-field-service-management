@@ -1,11 +1,18 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import type { Technician } from "@/types/workOrder";
+interface ManagerTechnician {
+  id: number;
+  name: string;
+  specialization: string;
+  status: "Available" | "Busy";
+  currentJobs: number;
+}
 
 interface ManagerTechnicianOverviewProps {
-  technicians: Technician[];
+  technicians: ManagerTechnician[];
 }
 
 export default function ManagerTechnicianOverview({
