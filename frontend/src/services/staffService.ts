@@ -9,7 +9,7 @@ import type {
 
 import { getAccessToken } from "@/utils/token";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = "https://keystone-field-service-management-production-700e.up.railway.app/api";
 
 /* ------------------------------------------------
    AUTH HEADERS
