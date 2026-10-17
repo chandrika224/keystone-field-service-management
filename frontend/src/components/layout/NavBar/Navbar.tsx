@@ -1,7 +1,6 @@
 import Breadcrumb from "./Breadcrumb";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
-import SidebarToggle from "./SidebarToggle";
 import ThemeToggle from "./ThemeToggle";
 import UserMenu from "./UserMenu";
 

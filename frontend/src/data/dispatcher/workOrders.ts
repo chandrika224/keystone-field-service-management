@@ -1,4 +1,4 @@
-import type { CustomerWorkOrder, WorkOrderStatus } from "@/types/workOrder";
+import type {  WorkOrderStatus } from "@/types/workOrder";
 
 export const dispatcherWorkOrders: {
   id: string;

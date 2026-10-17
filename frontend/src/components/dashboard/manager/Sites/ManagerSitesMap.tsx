@@ -5,7 +5,7 @@ import {
   TileLayer,
 } from "react-leaflet";
 
-import type { Site } from "@/services/siteService";
+import type { Site } from "@/types/site";
 
 import {
   temporarySiteCoordinates,
@@ -21,7 +21,6 @@ interface ManagerSitesMapProps {
 
 export default function ManagerSitesMap({
   sites,
-  selectedSite,
   onView,
 }: ManagerSitesMapProps) {
 
@@ -62,9 +61,6 @@ export default function ManagerSitesMap({
           if (!coordinates) {
             return null;
           }
-
-          const isSelected =
-            selectedSite?.id === site.id;
 
           return (
             <Marker

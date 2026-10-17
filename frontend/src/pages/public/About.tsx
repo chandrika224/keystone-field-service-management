@@ -7,9 +7,6 @@ import AboutOverview
 import AboutRoles
   from "@/components/public/About/AboutRoles";
 
-import AboutCTA
-  from "@/components/public/About/AboutCTA";
-
 
 export default function About() {
   return (

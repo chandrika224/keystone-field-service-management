@@ -58,7 +58,7 @@ export default function ManagerWorkOrderTrendsChart({
 
     const monthIndexes = new Map<string, number>();
 
-    months.forEach((month, index) => {
+    months.forEach((_, index) => {
       const date = new Date();
       const offset = 5 - index;
       date.setDate(1);

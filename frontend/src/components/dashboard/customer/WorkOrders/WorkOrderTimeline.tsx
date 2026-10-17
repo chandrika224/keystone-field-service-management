@@ -35,13 +35,13 @@ export default function WorkOrderTimeline({
   const completedSteps: Record<WorkOrderStatus, number> = {
     NEW: 1,
     ASSIGNED: 2,
+    ACCEPTED: 2,
     IN_PROGRESS: 3,
     ON_HOLD: 3,
     COMPLETED: 5,
     CLOSED: 5,
     CANCELLED: 1,
   };
-
   console.log("Timeline Status:", status);
   console.log("Completed Steps:", completedSteps[status]);
 

@@ -1,5 +1,4 @@
 import {
-  ShieldCheck,
   Users,
   ClipboardList,
   Package,

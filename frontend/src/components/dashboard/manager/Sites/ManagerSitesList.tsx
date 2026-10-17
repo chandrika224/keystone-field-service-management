@@ -5,7 +5,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-import type { Site } from "@/services/siteService";
+import type { Site } from "@/types/site";
 
 interface ManagerSitesListProps {
   sites: Site[];

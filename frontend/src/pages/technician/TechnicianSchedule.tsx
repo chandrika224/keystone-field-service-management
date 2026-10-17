@@ -99,16 +99,10 @@ export default function TechnicianSchedule() {
   /* --------------------------------------------------
      OPEN WORK ORDER
   -------------------------------------------------- */
-
-  const handleOpenWorkOrder = (
-      item: TechnicianScheduleItem
-    ) => {
-      setDetailsOpen(false);
-
-      navigate(
-        `/technician/track-jobs`
-      );
-    };
+const handleOpenWorkOrder = () => {
+  setDetailsOpen(false);
+  navigate("/technician/track-jobs");
+};
         // We will connect this to the existing
         // Job Tracking page in the next step.
       

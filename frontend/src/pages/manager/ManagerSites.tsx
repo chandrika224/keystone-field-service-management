@@ -14,10 +14,8 @@ import ManagerSitesMap
 import ManagerSiteDetailsDrawer
   from "@/components/dashboard/manager/Sites/ManagerSiteDetailsDrawer";
 
-import {
-  siteService,
-  type Site,
-} from "@/services/siteService";
+import { siteService } from "@/services/siteService";
+import type { Site } from "@/types/site";
 
 export default function ManagerSites() {
   const [search, setSearch] = useState("");

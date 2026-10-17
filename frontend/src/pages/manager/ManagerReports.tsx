@@ -8,30 +8,17 @@ import ManagerReportsAnalytics from "@/components/dashboard/manager/Reports/Mana
 import ManagerTechnicianPerformance from "@/components/dashboard/manager/Reports/ManagerTechnicianPerformance";
 import ManagerCustomerServicePerformance from "@/components/dashboard/manager/Reports/ManagerCustomerServicePerformance";
 
-import {
-  customerPerformance,
-  servicePerformance,
-  technicianPerformance,
-} from "@/data/manager/reports";
 
-import type { ReportSummary } from "@/data/manager/reports";
 import { workOrderService } from "@/services/workOrderService";
 import type { DispatcherWorkOrder } from "@/types/workOrder";
 
-const initialSummary: ReportSummary = {
-  totalWorkOrders: 0,
-  completedWorkOrders: 0,
-  pendingWorkOrders: 0,
-  cancelledWorkOrders: 0,
-  completionRate: 0,
-};
 
 export default function ManagerReports() {
   const [period, setPeriod] = useState("Last 6 Months");
   const [customer, setCustomer] = useState("All");
 
   const [workOrders, setWorkOrders] = useState<DispatcherWorkOrder[]>([]);
-  const [summary, setSummary] = useState<ReportSummary>(initialSummary);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
@@ -53,36 +40,6 @@ export default function ManagerReports() {
 
         setWorkOrders(orders);
 
-        const completed = orders.filter(
-          (order) =>
-            order.status === "COMPLETED" ||
-            order.status === "CLOSED"
-        ).length;
-
-        const cancelled = orders.filter(
-          (order) => order.status === "CANCELLED"
-        ).length;
-
-        const pending = orders.filter((order) =>
-          [
-            "NEW",
-            "ASSIGNED",
-            "ACCEPTED",
-            "IN_PROGRESS",
-            "ON_HOLD",
-          ].includes(order.status)
-        ).length;
-
-        setSummary({
-          totalWorkOrders: orders.length,
-          completedWorkOrders: completed,
-          pendingWorkOrders: pending,
-          cancelledWorkOrders: cancelled,
-          completionRate:
-            orders.length === 0
-              ? 0
-              : Math.round((completed / orders.length) * 100),
-        });
       } catch (err) {
         console.error("Failed to load manager reports:", err);
 

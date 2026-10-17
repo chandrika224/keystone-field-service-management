@@ -46,7 +46,9 @@ export default function DispatcherChangeAvailabilityDialog({
 
           <DialogDescription>
             Update the availability status of{" "}
-            <strong>{technician.name}</strong>.
+            <strong>
+              {technician.firstName} {technician.lastName}
+            </strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -57,7 +59,7 @@ export default function DispatcherChangeAvailabilityDialog({
             </p>
 
             <p className="text-sm text-muted-foreground">
-              {technician.status}
+              {technician.available ? "Available" : "Busy"}
             </p>
           </div>
 
@@ -67,7 +69,7 @@ export default function DispatcherChangeAvailabilityDialog({
             </p>
 
             <Select
-              defaultValue={technician.status}
+              defaultValue={technician.available ? "Available" : "Busy"}
               onValueChange={(value) =>
                 onConfirm(value as "Available" | "Busy")
               }

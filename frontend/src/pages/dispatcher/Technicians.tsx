@@ -126,9 +126,19 @@ export default function DispatcherTechnicians() {
         }}
       />
 
-      {/* ========================================================
-          TECHNICIANS TABLE
-      ======================================================== */}
+      {/* TECHNICIANS TABLE */}
+
+      {loading && (
+        <p className="text-sm text-muted-foreground">
+          Loading technicians...
+        </p>
+      )}
+
+      {!loading && techniciansData.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No technicians found.
+        </p>
+      )}
 
       <DispatcherTechniciansTable
         technicians={techniciansData}

@@ -129,3 +129,13 @@ export interface TechnicianWorkOrder {
   slaDueDate: string | null;
   slaBreached: boolean;
 }
+
+export interface Technician {
+  id: string;
+  name: string;
+  specialization: string;
+  email: string;
+  phone: string;
+  status: "Available" | "Busy";
+  currentJobs: number;
+}

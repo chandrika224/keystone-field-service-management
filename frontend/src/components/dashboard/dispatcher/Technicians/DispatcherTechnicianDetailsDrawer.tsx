@@ -16,6 +16,8 @@ import {
 
 import type { Technician } from "@/types/technician";
 
+import { Button } from "@/components/ui/button";
+
 interface DispatcherTechnicianDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -154,23 +156,26 @@ export default function DispatcherTechnicianDetailsDrawer({
           </div>
 
           {/* Availability */}
-
           <div>
             <p className="mb-2 text-sm text-muted-foreground">
               Availability
             </p>
 
-            <Badge
-              variant={
-                technician.available
-                  ? "default"
-                  : "destructive"
-              }
-            >
-              {technician.available
-                ? "Available"
-                : "Unavailable"}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge
+                variant={technician.available ? "default" : "destructive"}
+              >
+                {technician.available ? "Available" : "Unavailable"}
+              </Badge>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onChangeStatus(technician)}
+              >
+                Change Availability
+              </Button>
+            </div>
           </div>
 
         </div>

@@ -76,10 +76,7 @@ export default function DispatcherTechniciansTable({
               .map((word) => word[0])
               .join("");
 
-            const technicianStatus = tech.available
-              ? "Available"
-              : "Unavailable";
-
+            
             return (
               <tr
                 key={tech.id}

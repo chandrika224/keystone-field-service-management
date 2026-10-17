@@ -13,7 +13,6 @@ import DashboardLayout from "@/layouts/DashboardLayout/DashboardLayout";
 // ROUTE GUARDS
 // ============================================================
 
-import PublicRoute from "@/guards/PublicRoute";
 import ProtectedRoute from "@/guards/ProtectedRoute";
 
 // ============================================================
