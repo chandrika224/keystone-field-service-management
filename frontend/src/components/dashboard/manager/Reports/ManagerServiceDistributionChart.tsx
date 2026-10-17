@@ -33,6 +33,8 @@ export default function ManagerServiceDistributionChart({
     }, {})
   ).sort((a, b) => b.workOrders - a.workOrders);
 
+  // Keep your existing JSX return below unchanged.
+
   return (
     <div className="rounded-xl border bg-card p-5 shadow-sm">
       <div className="mb-6">

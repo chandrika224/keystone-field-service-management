@@ -1,3 +1,4 @@
+
 package com.keystone.config;
 
 import org.springframework.context.annotation.Bean;
@@ -5,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import java.util.List;
 
 @Configuration
 public class CorsConfig {
@@ -14,11 +17,16 @@ public class CorsConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("http://localhost:3000");
-        config.addAllowedOrigin("http://localhost:5173");
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://keystone-field-service-management-livid.vercel.app"
+        ));
 
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
 
         config.setAllowCredentials(true);
 

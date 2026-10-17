@@ -12,11 +12,11 @@ import {
 import type { DispatcherWorkOrder } from "@/types/workOrder";
 
 interface ManagerTechnicianPerformanceChartProps {
-  workOrders: DispatcherWorkOrder[];
+  workOrders?: DispatcherWorkOrder[];
 }
 
 export default function ManagerTechnicianPerformanceChart({
-  workOrders,
+  workOrders = [],
 }: ManagerTechnicianPerformanceChartProps) {
   const technicians = Object.values(
     workOrders.reduce<
