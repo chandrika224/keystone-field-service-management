@@ -49,6 +49,9 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
+            .requestMatchers("/error").permitAll()
+
+
                 // ==========================================
                 // PUBLIC AUTH APIs
                 // ==========================================
